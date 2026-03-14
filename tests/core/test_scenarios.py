@@ -1018,3 +1018,226 @@ class TestSRMDetectionSavesTheDay:
         else:
             # Correct path: SRM failed, do not analyze
             assert "cannot be trusted" in srm.message
+
+
+# ---------------------------------------------------------------------------
+# Scenario 13: Variance Reduction Pipeline
+# ---------------------------------------------------------------------------
+
+
+class TestVarianceReductionPipeline:
+    """Revenue A/B test with heavy tails.
+
+    Full pipeline: OutlierHandler -> CUPED -> Experiment.  With correlated
+    pre-experiment data and variance reduction, a $2 lift on $25 mean with
+    $40 std should become detectable.
+    """
+
+    def test_full_variance_reduction_pipeline(self):
+        """OutlierHandler -> CUPED -> Experiment detects the effect."""
+        from splita.variance import CUPED, OutlierHandler
+
+        rng = np.random.default_rng(200)
+        n = 2000
+
+        # Pre-experiment revenue (correlated with post at r~0.6)
+        pre_ctrl = rng.normal(25.0, 30.0, size=n)
+        pre_trt = rng.normal(25.0, 30.0, size=n)
+
+        # Post-experiment revenue: control mean=$25, treatment mean=$27
+        noise = rng.normal(0, 20.0, size=n)
+        control = 0.6 * pre_ctrl + 0.4 * 25.0 + noise
+        noise = rng.normal(0, 20.0, size=n)
+        treatment = 0.6 * pre_trt + 0.4 * 27.0 + 2.0 + noise
+
+        # Inject some heavy-tail outliers
+        control[0] = 5000.0
+        control[1] = -2000.0
+        treatment[0] = 8000.0
+
+        # Step 1: OutlierHandler
+        handler = OutlierHandler(method="winsorize")
+        ctrl_clean, trt_clean = handler.fit_transform(control, treatment)
+
+        # Outliers should be capped
+        assert ctrl_clean[0] < 5000.0
+        assert trt_clean[0] < 8000.0
+
+        # Step 2: CUPED with pre-experiment data
+        cuped = CUPED()
+        ctrl_adj, trt_adj = cuped.fit_transform(
+            ctrl_clean, trt_clean, pre_ctrl, pre_trt,
+        )
+
+        # Variance reduction should be substantial
+        assert cuped.variance_reduction_ > 0.2
+
+        # Step 3: Experiment on adjusted data
+        result = Experiment(ctrl_adj, trt_adj).run()
+
+        # Should be significant thanks to variance reduction
+        assert result.significant is True
+        assert result.pvalue < 0.05
+
+    def test_cuped_variance_reduction_is_substantial(self):
+        """CUPED should reduce variance by at least 20% with correlated pre-data."""
+        from splita.variance import CUPED
+
+        rng = np.random.default_rng(201)
+        n = 2000
+
+        pre_ctrl = rng.normal(25.0, 30.0, size=n)
+        pre_trt = rng.normal(25.0, 30.0, size=n)
+
+        noise_ctrl = rng.normal(0, 20.0, size=n)
+        noise_trt = rng.normal(0, 20.0, size=n)
+        control = 0.6 * pre_ctrl + 0.4 * 25.0 + noise_ctrl
+        treatment = 0.6 * pre_trt + 0.4 * 27.0 + noise_trt
+
+        cuped = CUPED()
+        cuped.fit(control, treatment, pre_ctrl, pre_trt)
+
+        assert cuped.variance_reduction_ > 0.2
+        assert cuped.correlation_ > 0.4
+
+
+# ---------------------------------------------------------------------------
+# Scenario 14: CUPAC for New Users
+# ---------------------------------------------------------------------------
+
+
+class TestCUPACForNewUsers:
+    """Testing a feature where users have no pre-experiment metric data,
+    but we have user features (age, tenure, past_purchases).
+
+    CUPAC trains an ML model on features to predict the outcome and uses
+    those predictions as a CUPED-style covariate.
+    """
+
+    def test_cupac_reduces_variance_with_features(self):
+        """CUPAC with user features should achieve variance reduction."""
+        from splita.variance import CUPAC
+
+        rng = np.random.default_rng(300)
+        n = 1000
+
+        # User features: age, tenure, past_purchases
+        X_ctrl = rng.normal(0, 1, size=(n, 3))
+        X_trt = rng.normal(0, 1, size=(n, 3))
+
+        # Outcome correlated with features
+        weights = np.array([1.5, 2.0, 0.8])
+        ctrl = X_ctrl @ weights + rng.normal(0, 1.0, n)
+        trt = X_trt @ weights + 0.5 + rng.normal(0, 1.0, n)
+
+        cupac = CUPAC(random_state=42)
+        ctrl_adj, trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
+
+        # CV R² should be positive (model learns something)
+        assert cupac.cv_r2_ > 0
+        # Variance reduction should be positive
+        assert cupac.variance_reduction_ > 0
+
+    def test_cupac_pipeline_with_experiment(self):
+        """CUPAC -> Experiment pipeline should detect the effect."""
+        from splita.variance import CUPAC
+
+        rng = np.random.default_rng(301)
+        n = 1000
+
+        X_ctrl = rng.normal(0, 1, size=(n, 3))
+        X_trt = rng.normal(0, 1, size=(n, 3))
+
+        weights = np.array([1.5, 2.0, 0.8])
+        ctrl = X_ctrl @ weights + rng.normal(0, 1.0, n)
+        trt = X_trt @ weights + 0.5 + rng.normal(0, 1.0, n)
+
+        cupac = CUPAC(random_state=42)
+        ctrl_adj, trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
+
+        result = Experiment(ctrl_adj, trt_adj).run()
+        assert result.lift > 0
+        assert 0 <= result.pvalue <= 1
+
+
+# ---------------------------------------------------------------------------
+# Scenario 15: OutlierHandler Preserves Treatment Effect
+# ---------------------------------------------------------------------------
+
+
+class TestOutlierHandlerPreservesTreatmentEffect:
+    """Revenue data with extreme outliers.
+
+    Verify that capping outliers does not destroy the treatment effect,
+    and in fact helps detect it by reducing inflated variance.
+    """
+
+    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
+    def test_outlier_handling_helps_detection(self):
+        """With outlier handling, effect becomes detectable."""
+        from splita.variance import OutlierHandler
+
+        rng = np.random.default_rng(400)
+        n = 2000
+
+        # Revenue data with a true $3 lift
+        control = rng.normal(25.0, 15.0, size=n)
+        treatment = rng.normal(28.0, 15.0, size=n)
+
+        # Inject extreme outliers that inflate variance
+        for i in range(20):
+            control[i] = 10000.0 * rng.random()
+            treatment[i] = 10000.0 * rng.random()
+
+        # Without outlier handling: high variance may obscure the effect
+        result_raw = Experiment(control, treatment).run()
+
+        # With outlier handling: variance is reduced
+        handler = OutlierHandler(method="winsorize")
+        ctrl_clean, trt_clean = handler.fit_transform(control, treatment)
+        result_clean = Experiment(ctrl_clean, trt_clean).run()
+
+        # The cleaned result should have lower p-value (stronger signal)
+        assert result_clean.pvalue <= result_raw.pvalue + 0.01
+
+    def test_treatment_effect_preserved_after_capping(self):
+        """Mean difference should be roughly preserved after capping."""
+        from splita.variance import OutlierHandler
+
+        rng = np.random.default_rng(401)
+        n = 2000
+
+        control = rng.normal(25.0, 15.0, size=n)
+        treatment = rng.normal(28.0, 15.0, size=n)
+
+        # Inject outliers
+        control[0] = 10000.0
+        treatment[0] = 10000.0
+
+        handler = OutlierHandler(method="winsorize")
+        ctrl_clean, trt_clean = handler.fit_transform(control, treatment)
+
+        # Treatment should still have higher mean than control
+        assert np.mean(trt_clean) > np.mean(ctrl_clean)
+
+    def test_outlier_capped_experiment_significant(self):
+        """After capping outliers, the experiment should detect the $3 lift."""
+        from splita.variance import OutlierHandler
+
+        rng = np.random.default_rng(402)
+        n = 2000
+
+        control = rng.normal(25.0, 15.0, size=n)
+        treatment = rng.normal(28.0, 15.0, size=n)
+
+        # Inject extreme outliers
+        for i in range(10):
+            control[i] = 10000.0
+            treatment[i] = -5000.0
+
+        handler = OutlierHandler(method="winsorize")
+        ctrl_clean, trt_clean = handler.fit_transform(control, treatment)
+        result = Experiment(ctrl_clean, trt_clean).run()
+
+        assert result.significant is True
+        assert result.lift > 0

@@ -283,6 +283,14 @@ def check_array_like(
             )
         ) from exc
 
+    if arr.ndim > 1:
+        raise ValueError(
+            format_error(
+                f"`{name}` must be a 1-D array, got {arr.ndim}-D array with shape {arr.shape}.",
+                hint="pass a 1-D list, numpy array, or pandas Series.",
+            )
+        )
+
     if not allow_nan:
         nan_mask = np.isnan(arr)
         nan_count = int(nan_mask.sum())
@@ -297,6 +305,17 @@ def check_array_like(
                 stacklevel=2,
             )
             arr = arr[~nan_mask]
+
+        inf_mask = np.isinf(arr)
+        if np.any(inf_mask):
+            n_inf = int(np.sum(inf_mask))
+            warnings.warn(
+                f"`{name}` contains {n_inf} infinite value{'s' if n_inf > 1 else ''} "
+                f"(out of {len(arr)}). Infinite values have been dropped.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            arr = arr[~inf_mask]
 
     if min_length is not None and len(arr) < min_length:
         raise ValueError(

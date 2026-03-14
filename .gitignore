@@ -16,3 +16,4 @@ htmlcov/
 venv/
 *.so
 .DS_Store
+splita_api_spec.docx

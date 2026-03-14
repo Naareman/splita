@@ -283,10 +283,15 @@ class TestValidation:
         with pytest.raises(ValueError, match=r"must be one of"):
             OutlierHandler(method="bogus")
 
-    def test_clustering_deferred(self):
-        """Test 19: method='clustering' raises ValueError with v0.2.0 hint."""
-        with pytest.raises(ValueError, match=r"v0.2.0"):
-            OutlierHandler(method="clustering")
+    def test_clustering_invalid_eps(self):
+        """Test 19: method='clustering' with eps<=0 raises ValueError."""
+        with pytest.raises(ValueError, match=r"eps"):
+            OutlierHandler(method="clustering", eps=0.0)
+
+    def test_clustering_invalid_min_cluster_samples(self):
+        """Test 19b: method='clustering' with bad min_cluster_samples."""
+        with pytest.raises(ValueError, match=r"min_cluster_samples"):
+            OutlierHandler(method="clustering", min_cluster_samples=0)
 
     def test_lower_gte_upper(self):
         """Test 20: invalid lower/upper combos raise ValueError."""
@@ -419,3 +424,105 @@ class TestInvalidSide:
     def test_invalid_side_raises(self):
         with pytest.raises(ValueError, match=r"side"):
             OutlierHandler(side="left")
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Clustering method
+# ═══════════════════════════════════════════════════════════════════════
+
+
+class TestClustering:
+    """Tests for method='clustering' using DBSCAN."""
+
+    def test_clustering_caps_outliers(self, normal_data):
+        """Clustering should identify and cap extreme outliers."""
+        ctrl, trt = normal_data
+        handler = OutlierHandler(method="clustering", eps=2.0, min_cluster_samples=5)
+        ctrl_c, trt_c = handler.fit_transform(ctrl, trt)
+        # The extreme outliers (100, -50, 200, -80) should be capped
+        assert ctrl_c[0] < 100.0
+        assert trt_c[0] < 200.0
+
+    def test_clustering_preserves_length(self, normal_data):
+        """Clustering winsorizes (does not trim), so length is preserved."""
+        ctrl, trt = normal_data
+        handler = OutlierHandler(method="clustering", eps=2.0, min_cluster_samples=5)
+        ctrl_c, trt_c = handler.fit_transform(ctrl, trt)
+        assert len(ctrl_c) == len(ctrl)
+        assert len(trt_c) == len(trt)
+
+    def test_clustering_sets_thresholds(self, normal_data):
+        """After fit, lower/upper thresholds should be set."""
+        ctrl, trt = normal_data
+        handler = OutlierHandler(method="clustering", eps=2.0, min_cluster_samples=5)
+        handler.fit(ctrl, trt)
+        assert handler.lower_threshold_ is not None
+        assert handler.upper_threshold_ is not None
+
+    def test_clustering_no_outliers(self):
+        """When all points form one cluster, no capping should occur."""
+        rng = np.random.default_rng(99)
+        ctrl = rng.normal(10, 0.5, size=100)
+        trt = rng.normal(10, 0.5, size=100)
+        handler = OutlierHandler(method="clustering", eps=3.0, min_cluster_samples=5)
+        ctrl_c, trt_c = handler.fit_transform(ctrl, trt)
+        # With tight cluster and generous eps, no outliers detected
+        np.testing.assert_array_almost_equal(ctrl_c, ctrl, decimal=10)
+
+    def test_clustering_custom_params(self, normal_data):
+        """Custom eps and min_cluster_samples should work."""
+        ctrl, trt = normal_data
+        handler = OutlierHandler(method="clustering", eps=1.0, min_cluster_samples=3)
+        ctrl_c, trt_c = handler.fit_transform(ctrl, trt)
+        assert isinstance(ctrl_c, np.ndarray)
+        assert isinstance(trt_c, np.ndarray)
+
+    def test_clustering_fit_transform_matches(self, normal_data):
+        """fit_transform should match fit+transform."""
+        ctrl, trt = normal_data
+
+        h1 = OutlierHandler(method="clustering", eps=2.0, min_cluster_samples=5)
+        ctrl_ft, trt_ft = h1.fit_transform(ctrl, trt)
+
+        h2 = OutlierHandler(method="clustering", eps=2.0, min_cluster_samples=5)
+        h2.fit(ctrl, trt)
+        ctrl_t, trt_t = h2.transform(ctrl, trt)
+
+        np.testing.assert_array_equal(ctrl_ft, ctrl_t)
+        np.testing.assert_array_equal(trt_ft, trt_t)
+
+    def test_clustering_n_capped(self, normal_data):
+        """n_capped_ should reflect outlier winsorization."""
+        ctrl, trt = normal_data
+        handler = OutlierHandler(method="clustering", eps=2.0, min_cluster_samples=5)
+        handler.fit_transform(ctrl, trt)
+        assert handler.n_capped_ >= 0
+
+    def test_clustering_all_outliers(self):
+        """When DBSCAN marks all as outliers (scattered data),
+        thresholds should be None (no capping)."""
+        # Very spread out data with tiny eps, unique values => all outliers
+        ctrl = np.array([1.0, 100.0, 200.0, 300.0, 400.0])
+        trt = np.array([500.0, 600.0, 700.0, 800.0, 900.0])
+        handler = OutlierHandler(method="clustering", eps=0.001, min_cluster_samples=3)
+        handler.fit(ctrl, trt)
+        # All points are outliers, so thresholds should be None
+        assert handler.lower_threshold_ is None
+        assert handler.upper_threshold_ is None
+
+    def test_clustering_default_params(self):
+        """Default eps=0.5 and min_cluster_samples=5 should work."""
+        rng = np.random.default_rng(42)
+        ctrl = rng.normal(10, 1, size=200)
+        trt = rng.normal(10, 1, size=200)
+        ctrl[0] = 100.0
+        handler = OutlierHandler(method="clustering")
+        ctrl_c, trt_c = handler.fit_transform(ctrl, trt)
+        assert isinstance(ctrl_c, np.ndarray)
+
+    def test_clustering_returns_self_from_fit(self, normal_data):
+        """fit() should return self for method chaining."""
+        ctrl, trt = normal_data
+        handler = OutlierHandler(method="clustering", eps=2.0, min_cluster_samples=5)
+        result = handler.fit(ctrl, trt)
+        assert result is handler

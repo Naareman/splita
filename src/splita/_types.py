@@ -595,6 +595,128 @@ class mSPRTResult(_DictMixin):
         return "\n".join(lines)
 
 
+# ─── EValueState ─────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class EValueState(_DictMixin):
+    """Intermediate state of an E-value sequential test.
+
+    Attributes
+    ----------
+    e_value : float
+        Current e-value (mixture likelihood ratio).
+    n_control : int
+        Cumulative control observations so far.
+    n_treatment : int
+        Cumulative treatment observations so far.
+    should_stop : bool
+        Whether the rejection threshold has been reached.
+    """
+
+    e_value: float
+    n_control: int
+    n_treatment: int
+    should_stop: bool
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "EValueState",
+            _line(w),
+            f"  {'e_value':<20}{_fmt(self.e_value)}",
+            f"  {'n_control':<20}{self.n_control}",
+            f"  {'n_treatment':<20}{self.n_treatment}",
+            f"  {'should_stop':<20}{_fmt(self.should_stop)}",
+        ]
+        return "\n".join(lines)
+
+
+# ─── EValueResult ────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class EValueResult(_DictMixin):
+    """Final result of an E-value sequential test.
+
+    Extends :class:`EValueState` with stopping metadata.
+
+    Attributes
+    ----------
+    e_value : float
+        Final e-value at termination.
+    n_control : int
+        Total control observations.
+    n_treatment : int
+        Total treatment observations.
+    should_stop : bool
+        Whether the test recommended stopping.
+    stopping_reason : str
+        Human-readable reason for stopping.
+    """
+
+    e_value: float
+    n_control: int
+    n_treatment: int
+    should_stop: bool
+    stopping_reason: str
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "EValueResult",
+            _line(w),
+            f"  {'e_value':<20}{_fmt(self.e_value)}",
+            f"  {'n_control':<20}{self.n_control}",
+            f"  {'n_treatment':<20}{self.n_treatment}",
+            f"  {'should_stop':<20}{_fmt(self.should_stop)}",
+            f"  {'stopping_reason':<20}{self.stopping_reason}",
+        ]
+        return "\n".join(lines)
+
+
+# ─── BayesianStoppingResult ─────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class BayesianStoppingResult(_DictMixin):
+    """Result of a Bayesian stopping rule evaluation.
+
+    Attributes
+    ----------
+    should_stop : bool
+        Whether the stopping criterion has been met.
+    rule : str
+        The stopping rule used.
+    threshold : float
+        The threshold for the stopping rule.
+    current_value : float
+        The current value of the stopping metric.
+    message : str
+        Human-readable summary of the evaluation.
+    """
+
+    should_stop: bool
+    rule: str
+    threshold: float
+    current_value: float
+    message: str
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "BayesianStoppingResult",
+            _line(w),
+            f"  {'should_stop':<20}{_fmt(self.should_stop)}",
+            f"  {'rule':<20}{self.rule}",
+            f"  {'threshold':<20}{_fmt(self.threshold)}",
+            f"  {'current_value':<20}{_fmt(self.current_value)}",
+            _line(w),
+            f"  {self.message}",
+        ]
+        return "\n".join(lines)
+
+
 # ─── BoundaryResult ──────────────────────────────────────────────────
 
 
@@ -686,6 +808,103 @@ class GSResult(_DictMixin):
         return "\n".join(lines)
 
 
+# ─── BayesianResult ──────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class BayesianResult(_DictMixin):
+    """Result of a Bayesian A/B test via :class:`~splita.BayesianExperiment`.
+
+    All fields are read-only (frozen dataclass).  Use :meth:`to_dict` to
+    serialise for logging or storage.
+
+    Attributes
+    ----------
+    prob_b_beats_a : float
+        Posterior probability that treatment > control.
+    expected_loss_a : float
+        Expected loss if choosing control (A).
+    expected_loss_b : float
+        Expected loss if choosing treatment (B).
+    lift : float
+        Posterior mean of (treatment - control).
+    relative_lift : float
+        Posterior mean of relative lift.
+    ci_lower : float
+        Lower bound of the 95% credible interval for the lift.
+    ci_upper : float
+        Upper bound of the 95% credible interval for the lift.
+    credible_level : float
+        Credible interval level (default 0.95).
+    control_mean : float
+        Posterior mean of the control group.
+    treatment_mean : float
+        Posterior mean of the treatment group.
+    prob_in_rope : float or None
+        P(effect in ROPE) if ROPE was set, else None.
+    rope : tuple of (float, float) or None
+        ROPE bounds, if set.
+    metric : str
+        Metric type (``'conversion'`` or ``'continuous'``).
+    control_n : int
+        Number of observations in the control group.
+    treatment_n : int
+        Number of observations in the treatment group.
+    """
+
+    prob_b_beats_a: float
+    expected_loss_a: float
+    expected_loss_b: float
+    lift: float
+    relative_lift: float
+    ci_lower: float
+    ci_upper: float
+    credible_level: float
+    control_mean: float
+    treatment_mean: float
+    prob_in_rope: float | None
+    rope: tuple[float, float] | None
+    metric: str
+    control_n: int
+    treatment_n: int
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "BayesianResult",
+            _line(w),
+            f"  {'metric':<16}{self.metric}",
+            f"  {'control_n':<16}{self.control_n}",
+            f"  {'treatment_n':<16}{self.treatment_n}",
+            _line(w),
+            f"  {'P(B > A)':<16}{_fmt(self.prob_b_beats_a)}",
+            f"  {'expected_loss_a':<16}{_fmt(self.expected_loss_a)}",
+            f"  {'expected_loss_b':<16}{_fmt(self.expected_loss_b)}",
+            _line(w),
+            f"  {'lift':<16}{_fmt(self.lift)}",
+            f"  {'relative_lift':<16}{_fmt(self.relative_lift, as_pct=True)}",
+            (
+                f"  {int(self.credible_level * 100)}% credible"
+                f"      [{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]"
+            ),
+        ]
+        if self.prob_in_rope is not None:
+            lines.append(f"  {'P(in ROPE)':<16}{_fmt(self.prob_in_rope)}")
+            lines.append(f"  {'ROPE':<16}[{_fmt(self.rope[0])}, {_fmt(self.rope[1])}]")
+        lines.append(_line(w))
+
+        # Decision line
+        if self.prob_b_beats_a > 0.5:
+            decision = "Choose Treatment (B)"
+            loss = self.expected_loss_b
+        else:
+            decision = "Choose Control (A)"
+            loss = self.expected_loss_a
+        lines.append(f"  Decision: {decision}")
+        lines.append(f"  Expected loss: {_fmt(loss, as_pct=True)}")
+        return "\n".join(lines)
+
+
 # ─── BanditResult ────────────────────────────────────────────────────
 
 
@@ -749,4 +968,807 @@ class BanditResult(_DictMixin):
                 f"{_fmt(self.prob_best[i]):<10}"
                 f"{_fmt(self.expected_loss[i]):<10}"
             )
+        return "\n".join(lines)
+
+
+# ─── NoveltyCurveResult ─────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class NoveltyCurveResult(_DictMixin):
+    """Result of a novelty/primacy effect analysis.
+
+    Attributes
+    ----------
+    windows : list[dict[str, Any]]
+        Per-window results.  Each dict contains ``window_start``,
+        ``lift``, ``pvalue``, ``ci_lower``, and ``ci_upper``.
+    has_novelty_effect : bool
+        ``True`` if the treatment effect decreases significantly over time
+        (last window lift < first window lift * 0.5).
+    trend_direction : str
+        One of ``'stable'``, ``'decreasing'``, or ``'increasing'``.
+
+    Examples
+    --------
+    >>> from splita._types import NoveltyCurveResult
+    >>> r = NoveltyCurveResult(
+    ...     windows=[{"window_start": 0, "lift": 0.05, "pvalue": 0.01,
+    ...               "ci_lower": 0.01, "ci_upper": 0.09}],
+    ...     has_novelty_effect=False,
+    ...     trend_direction="stable",
+    ... )
+    >>> r.has_novelty_effect
+    False
+    """
+
+    windows: list[dict[str, Any]]
+    has_novelty_effect: bool
+    trend_direction: str
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "NoveltyCurveResult",
+            _line(w),
+            f"  {'n_windows':<20}{len(self.windows)}",
+            f"  {'has_novelty_effect':<20}{_fmt(self.has_novelty_effect)}",
+            f"  {'trend_direction':<20}{self.trend_direction}",
+            _line(w),
+        ]
+        for win in self.windows:
+            lines.append(
+                f"  start={win['window_start']}  "
+                f"lift={_fmt(win['lift'])}  "
+                f"p={_fmt(win['pvalue'])}"
+            )
+        return "\n".join(lines)
+
+
+# ─── AATestResult ───────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class AATestResult(_DictMixin):
+    """Result of an A/A test validation.
+
+    Attributes
+    ----------
+    false_positive_rate : float
+        Observed fraction of simulations that were significant.
+    expected_rate : float
+        Expected false positive rate (equal to alpha).
+    passed : bool
+        ``True`` if the false positive rate is within expected bounds.
+    p_values : list[float]
+        p-values from each simulation.
+    n_simulations : int
+        Number of random splits performed.
+    message : str
+        Human-readable summary.
+
+    Examples
+    --------
+    >>> from splita._types import AATestResult
+    >>> r = AATestResult(
+    ...     false_positive_rate=0.048,
+    ...     expected_rate=0.05,
+    ...     passed=True,
+    ...     p_values=[0.1, 0.9],
+    ...     n_simulations=2,
+    ...     message="A/A test passed.",
+    ... )
+    >>> r.passed
+    True
+    """
+
+    false_positive_rate: float
+    expected_rate: float
+    passed: bool
+    p_values: list[float]
+    n_simulations: int
+    message: str
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "AATestResult",
+            _line(w),
+            f"  {'false_positive_rate':<22}{_fmt(self.false_positive_rate)}",
+            f"  {'expected_rate':<22}{_fmt(self.expected_rate)}",
+            f"  {'passed':<22}{_fmt(self.passed)}",
+            f"  {'n_simulations':<22}{self.n_simulations}",
+            _line(w),
+            f"  {self.message}",
+        ]
+        return "\n".join(lines)
+
+
+# ─── EffectTimeSeriesResult ─────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class EffectTimeSeriesResult(_DictMixin):
+    """Result of a cumulative treatment-effect time series analysis.
+
+    Attributes
+    ----------
+    time_points : list[dict[str, Any]]
+        Per-timestamp cumulative results.  Each dict contains
+        ``timestamp``, ``cumulative_lift``, ``pvalue``, ``ci_lower``,
+        ``ci_upper``, ``n_control``, and ``n_treatment``.
+    is_stable : bool
+        ``True`` if the treatment effect is stable over time.
+    final_lift : float
+        Cumulative lift at the last time point.
+    final_pvalue : float
+        p-value at the last time point.
+
+    Examples
+    --------
+    >>> from splita._types import EffectTimeSeriesResult
+    >>> r = EffectTimeSeriesResult(
+    ...     time_points=[{"timestamp": 1, "cumulative_lift": 0.05,
+    ...                   "pvalue": 0.03, "ci_lower": 0.01,
+    ...                   "ci_upper": 0.09, "n_control": 100,
+    ...                   "n_treatment": 100}],
+    ...     is_stable=True,
+    ...     final_lift=0.05,
+    ...     final_pvalue=0.03,
+    ... )
+    >>> r.is_stable
+    True
+    """
+
+    time_points: list[dict[str, Any]]
+    is_stable: bool
+    final_lift: float
+    final_pvalue: float
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "EffectTimeSeriesResult",
+            _line(w),
+            f"  {'n_time_points':<20}{len(self.time_points)}",
+            f"  {'is_stable':<20}{_fmt(self.is_stable)}",
+            f"  {'final_lift':<20}{_fmt(self.final_lift)}",
+            f"  {'final_pvalue':<20}{_fmt(self.final_pvalue)}",
+            _line(w),
+        ]
+        for tp in self.time_points:
+            lines.append(
+                f"  t={tp['timestamp']}  "
+                f"lift={_fmt(tp['cumulative_lift'])}  "
+                f"p={_fmt(tp['pvalue'])}  "
+                f"n={tp['n_control']}+{tp['n_treatment']}"
+            )
+        return "\n".join(lines)
+
+
+# ─── PowerSimulationResult ────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class PowerSimulationResult(_DictMixin):
+    """Result of a Monte Carlo power simulation via :class:`~splita.PowerSimulation`.
+
+    Attributes
+    ----------
+    power : float
+        Fraction of simulations that rejected H0.
+    rejection_rate : float
+        Alias for *power*.
+    n_simulations : int
+        Number of Monte Carlo replications.
+    n_per_variant : int
+        Sample size per variant.
+    alpha : float
+        Significance level used in each simulation.
+    mean_effect : float
+        Average observed effect (lift) across simulations.
+    mean_pvalue : float
+        Average p-value across simulations.
+    ci_power_lower : float
+        Lower bound of the 95% Wilson score CI on the power estimate.
+    ci_power_upper : float
+        Upper bound of the 95% Wilson score CI on the power estimate.
+
+    Examples
+    --------
+    >>> from splita import PowerSimulation
+    >>> result = PowerSimulation.for_mean(
+    ...     10.0, 2.0, 1.0, 500, n_simulations=200, random_state=0
+    ... )
+    >>> 0.0 <= result.power <= 1.0
+    True
+    """
+
+    power: float
+    rejection_rate: float
+    n_simulations: int
+    n_per_variant: int
+    alpha: float
+    mean_effect: float
+    mean_pvalue: float
+    ci_power_lower: float
+    ci_power_upper: float
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "PowerSimulationResult",
+            _line(w),
+            f"  {'power':<20}{_fmt(self.power)}",
+            f"  {'n_simulations':<20}{self.n_simulations}",
+            f"  {'n_per_variant':<20}{self.n_per_variant}",
+            f"  {'alpha':<20}{_fmt(self.alpha)}",
+            _line(w),
+            f"  {'mean_effect':<20}{_fmt(self.mean_effect)}",
+            f"  {'mean_pvalue':<20}{_fmt(self.mean_pvalue)}",
+            f"  {'95% CI on power':<20}"
+            f"[{_fmt(self.ci_power_lower)}, {_fmt(self.ci_power_upper)}]",
+        ]
+        return "\n".join(lines)
+
+
+# ─── QuantileResult ───────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class QuantileResult(_DictMixin):
+    """Result of a quantile-based A/B test via :class:`~splita.QuantileExperiment`.
+
+    All fields are read-only (frozen dataclass).  Use :meth:`to_dict` to
+    serialise for logging or storage.
+
+    Attributes
+    ----------
+    quantiles : list[float]
+        Which quantiles were tested.
+    control_quantiles : list[float]
+        Quantile values for the control group.
+    treatment_quantiles : list[float]
+        Quantile values for the treatment group.
+    differences : list[float]
+        Treatment minus control at each quantile.
+    ci_lower : list[float]
+        Lower bound of the confidence interval for each difference.
+    ci_upper : list[float]
+        Upper bound of the confidence interval for each difference.
+    pvalues : list[float]
+        Bootstrap p-value for each quantile.
+    significant : list[bool]
+        Whether ``pvalue < alpha`` for each quantile.
+    alpha : float
+        Significance level used.
+    control_n : int
+        Number of observations in the control group.
+    treatment_n : int
+        Number of observations in the treatment group.
+
+    Examples
+    --------
+    >>> from splita import QuantileExperiment
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(42)
+    >>> ctrl = rng.normal(10, 2, size=500)
+    >>> trt = ctrl + 1
+    >>> result = QuantileExperiment(ctrl, trt, quantiles=0.5, random_state=0).run()
+    >>> result.significant[0]
+    True
+    """
+
+    quantiles: list[float]
+    control_quantiles: list[float]
+    treatment_quantiles: list[float]
+    differences: list[float]
+    ci_lower: list[float]
+    ci_upper: list[float]
+    pvalues: list[float]
+    significant: list[bool]
+    alpha: float
+    control_n: int
+    treatment_n: int
+
+    def __repr__(self) -> str:
+        w = 56
+        lines = [
+            "QuantileResult",
+            _line(w),
+            f"  {'control_n':<16}{self.control_n}",
+            f"  {'treatment_n':<16}{self.treatment_n}",
+            f"  {'alpha':<16}{_fmt(self.alpha)}",
+            _line(w),
+            f"  {'quantile':<10}{'diff':<12}{'ci':<24}{'pvalue':<10}{'sig':<6}",
+        ]
+        for i, q in enumerate(self.quantiles):
+            ci_str = f"[{_fmt(self.ci_lower[i])}, {_fmt(self.ci_upper[i])}]"
+            sig_str = "\u2713" if self.significant[i] else "\u2717"
+            lines.append(
+                f"  {_fmt(q):<10}{_fmt(self.differences[i]):<12}"
+                f"{ci_str:<24}{_fmt(self.pvalues[i]):<10}{sig_str}"
+            )
+        return "\n".join(lines)
+
+
+# ─── HTEResult ───────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class HTEResult(_DictMixin):
+    """Result of heterogeneous treatment effect estimation.
+
+    Attributes
+    ----------
+    cate_estimates : list[float]
+        Conditional average treatment effect estimates for each observation.
+    mean_cate : float
+        Mean of the CATE estimates.
+    cate_std : float
+        Standard deviation of the CATE estimates.
+    top_features : list[int] or None
+        Indices of the most important features, if the estimator
+        exposes ``feature_importances_``.
+    method : str
+        Estimation method used (``'t_learner'`` or ``'s_learner'``).
+    """
+
+    cate_estimates: list[float]
+    mean_cate: float
+    cate_std: float
+    top_features: list[int] | None
+    method: str
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "HTEResult",
+            _line(w),
+            f"  {'method':<16}{self.method}",
+            f"  {'n_estimates':<16}{len(self.cate_estimates)}",
+            f"  {'mean_cate':<16}{_fmt(self.mean_cate)}",
+            f"  {'cate_std':<16}{_fmt(self.cate_std)}",
+            _line(w),
+        ]
+        if self.top_features is not None:
+            lines.append(f"  {'top_features':<16}{self.top_features}")
+        return "\n".join(lines)
+
+
+# ─── MetricSensitivityResult ─────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class MetricSensitivityResult(_DictMixin):
+    """Result of a metric sensitivity analysis.
+
+    Attributes
+    ----------
+    estimated_std : float
+        Estimated standard deviation of the metric.
+    estimated_power : float
+        Estimated statistical power at the given MDE.
+    recommended_n : int
+        Recommended sample size per variant to achieve 80% power.
+    is_sensitive : bool
+        Whether the metric can detect the given MDE with 80% power
+        at a reasonable sample size.
+    mde : float
+        Minimum detectable effect used.
+    n_simulations : int
+        Number of simulations performed.
+    alpha : float
+        Significance level used.
+    """
+
+    estimated_std: float
+    estimated_power: float
+    recommended_n: int
+    is_sensitive: bool
+    mde: float
+    n_simulations: int
+    alpha: float
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "MetricSensitivityResult",
+            _line(w),
+            f"  {'estimated_std':<20}{_fmt(self.estimated_std)}",
+            f"  {'estimated_power':<20}{_fmt(self.estimated_power)}",
+            f"  {'recommended_n':<20}{self.recommended_n}",
+            f"  {'is_sensitive':<20}{_fmt(self.is_sensitive)}",
+            _line(w),
+            f"  {'mde':<20}{_fmt(self.mde)}",
+            f"  {'n_simulations':<20}{self.n_simulations}",
+            f"  {'alpha':<20}{_fmt(self.alpha)}",
+        ]
+        return "\n".join(lines)
+
+
+# ─── VarianceEstimateResult ──────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class VarianceEstimateResult(_DictMixin):
+    """Result of a variance estimation analysis.
+
+    Attributes
+    ----------
+    mean : float
+        Sample mean.
+    std : float
+        Sample standard deviation.
+    skewness : float
+        Sample skewness.
+    kurtosis : float
+        Sample excess kurtosis.
+    percentiles : dict[str, float]
+        Key percentiles (5, 25, 50, 75, 95).
+    is_heavy_tailed : bool
+        ``True`` if kurtosis > 5.
+    is_skewed : bool
+        ``True`` if ``|skewness| > 2``.
+    recommendations : list[str]
+        Suggested actions based on the distributional properties.
+    """
+
+    mean: float
+    std: float
+    skewness: float
+    kurtosis: float
+    percentiles: dict[str, float]
+    is_heavy_tailed: bool
+    is_skewed: bool
+    recommendations: list[str]
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "VarianceEstimateResult",
+            _line(w),
+            f"  {'mean':<20}{_fmt(self.mean)}",
+            f"  {'std':<20}{_fmt(self.std)}",
+            f"  {'skewness':<20}{_fmt(self.skewness)}",
+            f"  {'kurtosis':<20}{_fmt(self.kurtosis)}",
+            _line(w),
+            f"  {'is_heavy_tailed':<20}{_fmt(self.is_heavy_tailed)}",
+            f"  {'is_skewed':<20}{_fmt(self.is_skewed)}",
+            _line(w),
+        ]
+        for r in self.recommendations:
+            lines.append(f"  {r}")
+        return "\n".join(lines)
+
+
+# ─── TriggeredResult ─────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class TriggeredResult(_DictMixin):
+    """Result of a triggered experiment analysis.
+
+    Attributes
+    ----------
+    itt_result : ExperimentResult
+        Intent-to-treat result (all assigned users).
+    per_protocol_result : ExperimentResult
+        Per-protocol result (only triggered users).
+    trigger_rate_control : float
+        Fraction of control users who were triggered.
+    trigger_rate_treatment : float
+        Fraction of treatment users who were triggered.
+    """
+
+    itt_result: ExperimentResult
+    per_protocol_result: ExperimentResult
+    trigger_rate_control: float
+    trigger_rate_treatment: float
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert the result to a plain Python dictionary."""
+        return {
+            "itt_result": self.itt_result.to_dict(),
+            "per_protocol_result": self.per_protocol_result.to_dict(),
+            "trigger_rate_control": _to_python(self.trigger_rate_control),
+            "trigger_rate_treatment": _to_python(self.trigger_rate_treatment),
+        }
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "TriggeredResult",
+            _line(w),
+            f"  {'trigger_rate_ctrl':<20}{_fmt(self.trigger_rate_control)}",
+            f"  {'trigger_rate_trt':<20}{_fmt(self.trigger_rate_treatment)}",
+            _line(w),
+            f"  {'ITT lift':<20}{_fmt(self.itt_result.lift)}",
+            f"  {'ITT pvalue':<20}{_fmt(self.itt_result.pvalue)}",
+            f"  {'PP lift':<20}{_fmt(self.per_protocol_result.lift)}",
+            f"  {'PP pvalue':<20}{_fmt(self.per_protocol_result.pvalue)}",
+        ]
+        return "\n".join(lines)
+
+
+# ─── InteractionResult ───────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class InteractionResult(_DictMixin):
+    """Result of an interaction (heterogeneity) test across segments.
+
+    Attributes
+    ----------
+    segment_results : list[dict[str, Any]]
+        Per-segment experiment results.
+    has_interaction : bool
+        Whether the treatment effect significantly differs across segments.
+    interaction_pvalue : float
+        p-value of the heterogeneity (chi-square) test.
+    strongest_segment : str
+        Label of the segment with the largest absolute effect.
+    """
+
+    segment_results: list[dict[str, Any]]
+    has_interaction: bool
+    interaction_pvalue: float
+    strongest_segment: str
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "InteractionResult",
+            _line(w),
+            f"  {'n_segments':<20}{len(self.segment_results)}",
+            f"  {'has_interaction':<20}{_fmt(self.has_interaction)}",
+            f"  {'interaction_pvalue':<20}{_fmt(self.interaction_pvalue)}",
+            f"  {'strongest_segment':<20}{self.strongest_segment}",
+            _line(w),
+        ]
+        for seg in self.segment_results:
+            lines.append(
+                f"  {seg['segment']!s:<12} "
+                f"lift={_fmt(seg['lift'])}  "
+                f"p={_fmt(seg['pvalue'])}"
+            )
+        return "\n".join(lines)
+
+
+# ─── SurrogateResult ─────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class SurrogateResult(_DictMixin):
+    """Result of long-run effect estimation via surrogacy.
+
+    Attributes
+    ----------
+    predicted_long_term_lift : float
+        Predicted long-term treatment effect inferred from short-term data.
+    prediction_ci : tuple[float, float]
+        Confidence interval for the predicted long-term lift.
+    surrogate_r2 : float
+        R-squared of the surrogate model on the training data.
+    is_valid_surrogate : bool
+        Whether the surrogate is considered valid (r2 > 0.3).
+    """
+
+    predicted_long_term_lift: float
+    prediction_ci: tuple[float, float]
+    surrogate_r2: float
+    is_valid_surrogate: bool
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "SurrogateResult",
+            _line(w),
+            f"  {'long_term_lift':<20}{_fmt(self.predicted_long_term_lift)}",
+            f"  {'prediction_ci':<20}"
+            f"({_fmt(self.prediction_ci[0])}, {_fmt(self.prediction_ci[1])})",
+            f"  {'surrogate_r2':<20}{_fmt(self.surrogate_r2)}",
+            f"  {'is_valid_surrogate':<20}{_fmt(self.is_valid_surrogate)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── ClusterResult ───────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class ClusterResult(_DictMixin):
+    """Result of a cluster-randomized experiment.
+
+    Attributes
+    ----------
+    lift : float
+        Difference in means (treatment - control).
+    pvalue : float
+        p-value from the cluster-robust t-test.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    significant : bool
+        Whether the result is significant at the given alpha.
+    n_clusters_control : int
+        Number of clusters in the control group.
+    n_clusters_treatment : int
+        Number of clusters in the treatment group.
+    icc : float
+        Intraclass correlation coefficient.
+    """
+
+    lift: float
+    pvalue: float
+    ci_lower: float
+    ci_upper: float
+    significant: bool
+    n_clusters_control: int
+    n_clusters_treatment: int
+    icc: float
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "ClusterResult",
+            _line(w),
+            f"  {'lift':<20}{_fmt(self.lift)}",
+            f"  {'pvalue':<20}{_fmt(self.pvalue)}",
+            f"  {'ci':<20}({_fmt(self.ci_lower)}, {_fmt(self.ci_upper)})",
+            f"  {'significant':<20}{_fmt(self.significant)}",
+            f"  {'clusters_ctrl':<20}{self.n_clusters_control}",
+            f"  {'clusters_trt':<20}{self.n_clusters_treatment}",
+            f"  {'icc':<20}{_fmt(self.icc)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── SwitchbackResult ────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class SwitchbackResult(_DictMixin):
+    """Result of a switchback experiment.
+
+    Attributes
+    ----------
+    lift : float
+        Difference in period-level means (treatment - control).
+    pvalue : float
+        p-value from the period-level t-test.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    significant : bool
+        Whether the result is significant at the given alpha.
+    n_periods : int
+        Total number of time periods.
+    n_treatment_periods : int
+        Number of treatment periods.
+    n_control_periods : int
+        Number of control periods.
+    """
+
+    lift: float
+    pvalue: float
+    ci_lower: float
+    ci_upper: float
+    significant: bool
+    n_periods: int
+    n_treatment_periods: int
+    n_control_periods: int
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "SwitchbackResult",
+            _line(w),
+            f"  {'lift':<20}{_fmt(self.lift)}",
+            f"  {'pvalue':<20}{_fmt(self.pvalue)}",
+            f"  {'ci':<20}({_fmt(self.ci_lower)}, {_fmt(self.ci_upper)})",
+            f"  {'significant':<20}{_fmt(self.significant)}",
+            f"  {'n_periods':<20}{self.n_periods}",
+            f"  {'n_treatment':<20}{self.n_treatment_periods}",
+            f"  {'n_control':<20}{self.n_control_periods}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── DiDResult ───────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class DiDResult(_DictMixin):
+    """Result of a Difference-in-Differences analysis.
+
+    Attributes
+    ----------
+    att : float
+        Average treatment effect on the treated.
+    se : float
+        Standard error of the ATT estimate.
+    pvalue : float
+        p-value for the ATT.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    significant : bool
+        Whether the result is significant at the given alpha.
+    pre_trend_diff : float
+        Difference in pre-treatment trends (treatment - control).
+    parallel_trends_pvalue : float
+        p-value for the parallel trends assumption test.
+    """
+
+    att: float
+    se: float
+    pvalue: float
+    ci_lower: float
+    ci_upper: float
+    significant: bool
+    pre_trend_diff: float
+    parallel_trends_pvalue: float
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "DiDResult",
+            _line(w),
+            f"  {'att':<20}{_fmt(self.att)}",
+            f"  {'se':<20}{_fmt(self.se)}",
+            f"  {'pvalue':<20}{_fmt(self.pvalue)}",
+            f"  {'ci':<20}({_fmt(self.ci_lower)}, {_fmt(self.ci_upper)})",
+            f"  {'significant':<20}{_fmt(self.significant)}",
+            f"  {'pre_trend_diff':<20}{_fmt(self.pre_trend_diff)}",
+            f"  {'parallel_trends_p':<20}{_fmt(self.parallel_trends_pvalue)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── SyntheticControlResult ──────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class SyntheticControlResult(_DictMixin):
+    """Result of a Synthetic Control analysis.
+
+    Attributes
+    ----------
+    effect : float
+        Average post-treatment effect (treated - synthetic).
+    weights : tuple[float, ...]
+        Weights assigned to each donor unit.
+    pre_treatment_rmse : float
+        Root mean squared error of the synthetic control in the pre-treatment period.
+    donor_contributions : dict[int, float]
+        Mapping from donor index to its weight.
+    effect_series : list[float]
+        Per-period post-treatment effects (treated - synthetic).
+    """
+
+    effect: float
+    weights: tuple[float, ...]
+    pre_treatment_rmse: float
+    donor_contributions: dict[int, float]
+    effect_series: list[float]
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "SyntheticControlResult",
+            _line(w),
+            f"  {'effect':<20}{_fmt(self.effect)}",
+            f"  {'pre_rmse':<20}{_fmt(self.pre_treatment_rmse)}",
+            f"  {'n_donors':<20}{len(self.weights)}",
+            f"  {'effect_periods':<20}{len(self.effect_series)}",
+            _line(w),
+        ]
         return "\n".join(lines)

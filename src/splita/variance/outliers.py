@@ -20,7 +20,7 @@ from splita._validation import (
 
 ArrayLike = list | tuple | np.ndarray
 
-_VALID_METHODS = ("winsorize", "trim", "iqr")
+_VALID_METHODS = ("winsorize", "trim", "iqr", "clustering")
 
 
 class OutlierHandler:
@@ -33,7 +33,7 @@ class OutlierHandler:
 
     Parameters
     ----------
-    method : {'winsorize', 'trim', 'iqr'}, default 'winsorize'
+    method : {'winsorize', 'trim', 'iqr', 'clustering'}, default 'winsorize'
         Outlier handling strategy:
 
         - ``'winsorize'``: cap values at the lower/upper percentile
@@ -42,6 +42,9 @@ class OutlierHandler:
           shrink).
         - ``'iqr'``: cap values using IQR-based fences
           (Q1 - k*IQR, Q3 + k*IQR).
+        - ``'clustering'``: use DBSCAN to identify outlier clusters.
+          Requires scikit-learn.  Outlier values (label=-1) are
+          winsorized to the nearest non-outlier percentile.
     lower : float or None, default 0.01
         Lower percentile cap (e.g. 0.01 = 1st percentile).  ``None``
         means no lower capping.  Must be in [0, 0.5).
@@ -57,6 +60,11 @@ class OutlierHandler:
     iqr_multiplier : float, default 1.5
         Multiplier for the IQR method (Tukey's rule).  Use 3.0 for less
         aggressive capping.
+    eps : float, default 0.5
+        DBSCAN neighbourhood radius (only used when ``method='clustering'``).
+    min_cluster_samples : int, default 5
+        Minimum number of points to form a dense region in DBSCAN
+        (only used when ``method='clustering'``).
 
     Attributes
     ----------
@@ -85,21 +93,15 @@ class OutlierHandler:
     def __init__(
         self,
         *,
-        method: Literal["winsorize", "trim", "iqr"] = "winsorize",
+        method: Literal["winsorize", "trim", "iqr", "clustering"] = "winsorize",
         lower: float | None = 0.01,
         upper: float | None = 0.99,
         side: Literal["both", "upper", "lower"] | None = None,
         iqr_multiplier: float = 1.5,
+        eps: float = 0.5,
+        min_cluster_samples: int = 5,
     ) -> None:
         # ── validate method ──────────────────────────────────────────
-        if method == "clustering":
-            raise ValueError(
-                format_error(
-                    "`method` 'clustering' is not yet supported.",
-                    detail="clustering-based outlier detection is planned for v0.2.0.",
-                    hint="use 'winsorize', 'trim', or 'iqr' for now.",
-                )
-            )
         if method not in _VALID_METHODS:
             raise ValueError(
                 format_error(
@@ -141,6 +143,18 @@ class OutlierHandler:
         # ── validate iqr_multiplier ──────────────────────────────────
         check_positive(iqr_multiplier, "iqr_multiplier")
 
+        # ── validate clustering params ───────────────────────────────
+        if method == "clustering":
+            check_positive(eps, "eps", hint="DBSCAN eps must be > 0.")
+            if not isinstance(min_cluster_samples, int) or min_cluster_samples < 1:
+                raise ValueError(
+                    format_error(
+                        f"`min_cluster_samples` must be a positive integer, "
+                        f"got {min_cluster_samples}.",
+                        hint="typical values are 3 to 10.",
+                    )
+                )
+
         # ── apply side convenience ───────────────────────────────────
         if side == "upper":
             lower = None
@@ -158,6 +172,8 @@ class OutlierHandler:
         self.upper = upper
         self.side = side
         self.iqr_multiplier = iqr_multiplier
+        self.eps = eps
+        self.min_cluster_samples = min_cluster_samples
 
         # Fitted attributes (set by fit)
         self.lower_threshold_: float | None = None
@@ -220,6 +236,8 @@ class OutlierHandler:
             # IQR method respects the lower/upper=None settings
             self.lower_threshold_ = q1 - k * iqr if self.lower is not None else None
             self.upper_threshold_ = q3 + k * iqr if self.upper is not None else None
+        elif self.method == "clustering":
+            self._fit_clustering(combined)
 
         self._is_fitted = True
         return self
@@ -263,7 +281,7 @@ class OutlierHandler:
         control_arr = check_array_like(control, "control", min_length=2)
         treatment_arr = check_array_like(treatment, "treatment", min_length=2)
 
-        if self.method in ("winsorize", "iqr"):
+        if self.method in ("winsorize", "iqr", "clustering"):
             ctrl_out, n_ctrl = self._cap(control_arr)
             trt_out, n_trt = self._cap(treatment_arr)
         else:
@@ -331,3 +349,37 @@ class OutlierHandler:
 
         n_removed = int((~mask).sum())
         return arr[mask], n_removed
+
+    def _fit_clustering(self, combined: np.ndarray) -> None:
+        """Fit DBSCAN on pooled data and set thresholds from non-outlier range.
+
+        Points labelled -1 by DBSCAN are outliers.  Thresholds are set to
+        the min/max of the non-outlier points so that :meth:`_cap` winsorizes
+        outlier values to the nearest non-outlier boundary.
+        """
+        try:
+            from sklearn.cluster import DBSCAN
+        except ImportError as exc:
+            raise ImportError(
+                format_error(
+                    "method='clustering' requires scikit-learn.",
+                    detail="DBSCAN is used for outlier detection.",
+                    hint="install scikit-learn: pip install scikit-learn.",
+                )
+            ) from exc
+
+        X = combined.reshape(-1, 1)
+        db = DBSCAN(eps=self.eps, min_samples=self.min_cluster_samples)
+        labels = db.fit_predict(X)
+
+        non_outlier_mask = labels != -1
+
+        if not np.any(non_outlier_mask):
+            # All points are outliers — fall back to no capping
+            self.lower_threshold_ = None
+            self.upper_threshold_ = None
+            return
+
+        non_outlier_values = combined[non_outlier_mask]
+        self.lower_threshold_ = float(np.min(non_outlier_values))
+        self.upper_threshold_ = float(np.max(non_outlier_values))

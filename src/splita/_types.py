@@ -18,7 +18,7 @@ def _to_python(val: Any) -> Any:
             return bool(val)
         if isinstance(val, np.ndarray):
             return val.tolist()
-    except ImportError:
+    except ImportError:  # pragma: no cover
         pass
 
     if isinstance(val, list):

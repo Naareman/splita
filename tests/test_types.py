@@ -278,6 +278,20 @@ class TestToDict:
         assert type(inner["look"]) is int
         assert type(inner["pvalue"]) is float
 
+    def test_to_dict_with_numpy_ndarray(self) -> None:
+        """Verify numpy ndarray inside a dict field is converted to a list."""
+        np = pytest.importorskip("numpy")
+        result = GSResult(
+            analysis_results=[{"scores": np.array([1.0, 2.0, 3.0])}],
+            crossed_efficacy=False,
+            crossed_futility=False,
+            recommended_action="continue",
+        )
+        d = result.to_dict()
+        inner = d["analysis_results"][0]
+        assert isinstance(inner["scores"], list)
+        assert inner["scores"] == [1.0, 2.0, 3.0]
+
     def test_to_dict_with_numpy_types(self) -> None:
         """Verify numpy types are converted to plain Python."""
         np = pytest.importorskip("numpy")
@@ -375,6 +389,59 @@ class TestRepr:
     def test_experiment_result_repr_conversion(self, experiment_result: ExperimentResult) -> None:
         r = repr(experiment_result)
         assert "Cohen's h" in r
+
+    def test_experiment_result_repr_ratio_no_effect_label(self) -> None:
+        """Ratio metric should have empty effect-size label (no Cohen's)."""
+        result = ExperimentResult(
+            control_mean=0.05,
+            treatment_mean=0.06,
+            lift=0.01,
+            relative_lift=0.20,
+            pvalue=0.03,
+            statistic=2.1,
+            ci_lower=0.002,
+            ci_upper=0.018,
+            significant=True,
+            alpha=0.05,
+            method="ztest",
+            metric="ratio",
+            control_n=1000,
+            treatment_n=1000,
+            power=0.70,
+            effect_size=0.10,
+        )
+        r = repr(result)
+        assert "Cohen's" not in r
+
+    def test_experiment_result_repr_tiny_pvalue_scientific(self) -> None:
+        """Very small p-value should be formatted in scientific notation."""
+        result = ExperimentResult(
+            control_mean=0.10,
+            treatment_mean=0.15,
+            lift=0.05,
+            relative_lift=0.50,
+            pvalue=0.00001,
+            statistic=4.5,
+            ci_lower=0.03,
+            ci_upper=0.07,
+            significant=True,
+            alpha=0.05,
+            method="ztest",
+            metric="conversion",
+            control_n=5000,
+            treatment_n=5000,
+            power=0.99,
+            effect_size=0.15,
+        )
+        r = repr(result)
+        assert "e-" in r or "E-" in r
+
+    def test_fmt_str_fallback_for_non_float_non_bool(self) -> None:
+        """_fmt should use str() fallback for integer values."""
+        from splita._types import _fmt
+
+        assert _fmt(42) == "42"
+        assert _fmt("hello") == "hello"
 
     def test_experiment_result_repr_continuous(self) -> None:
         result = ExperimentResult(

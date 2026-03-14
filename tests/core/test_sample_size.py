@@ -373,3 +373,8 @@ class TestAdditionalCoverage:
         """Non-integer n (e.g. 3.5) raises ValueError."""
         with pytest.raises(ValueError, match="n"):
             SampleSize.mde_for_proportion(0.10, n=3.5)
+
+    def test_mde_for_proportion_extreme_baseline_near_zero(self):
+        """Baseline extremely close to 0 (< 1e-9) raises ValueError about max_mde <= 0."""
+        with pytest.raises(ValueError, match="Cannot compute MDE"):
+            SampleSize.mde_for_proportion(baseline=1e-10, n=1000)

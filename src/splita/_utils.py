@@ -96,7 +96,7 @@ def to_array(data: object, name: str, dtype: str = "float64") -> np.ndarray:
 
         if isinstance(data, pd.Series):
             data = data.to_numpy()
-    except ImportError:
+    except ImportError:  # pragma: no cover
         pass
 
     try:

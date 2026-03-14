@@ -265,7 +265,7 @@ def check_array_like(
 
         if isinstance(pd.Series, type) and isinstance(value, pd.Series):
             value = value.to_numpy()
-    except ImportError:
+    except ImportError:  # pragma: no cover
         pass
 
     if not isinstance(value, (list, tuple, np.ndarray)):

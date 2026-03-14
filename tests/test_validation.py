@@ -223,6 +223,11 @@ class TestCheckArrayLike:
         with pytest.raises(TypeError, match="must be array-like"):
             check_array_like("hello", "data")  # type: ignore[arg-type]
 
+    def test_list_with_unconvertible_objects_raises_type_error(self):
+        """A list containing objects that can't be cast to float raises TypeError."""
+        with pytest.raises(TypeError, match="can't be converted to a numeric array"):
+            check_array_like([object(), object()], "data")
+
     def test_pandas_series_converts(self):
         pd = pytest.importorskip("pandas")
         series = pd.Series([10, 20, 30])

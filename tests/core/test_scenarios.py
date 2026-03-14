@@ -1241,3 +1241,192 @@ class TestOutlierHandlerPreservesTreatmentEffect:
 
         assert result.significant is True
         assert result.lift > 0
+
+
+# ---------------------------------------------------------------------------
+# Scenario 16: Always-On Monitoring with mSPRT
+# ---------------------------------------------------------------------------
+
+
+class TestAlwaysOnMonitoringWithMSPRT:
+    """A team runs an experiment with daily data checks using mSPRT.
+
+    They want to peek at results every day without inflating false positives.
+    mSPRT provides always-valid p-values that remain valid regardless of
+    when or how often the experimenter checks.
+    """
+
+    @pytest.fixture()
+    def daily_msprt(self):
+        """Initialize mSPRT and generate 7 days of daily batches."""
+        import warnings
+
+        from splita.sequential.msprt import mSPRT
+
+        rng = np.random.default_rng(1600)
+        test = mSPRT(metric="conversion", alpha=0.05)
+
+        daily_n = 500  # users per group per day
+        states = []
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            for _ in range(7):
+                ctrl = rng.binomial(1, 0.10, size=daily_n).astype(float)
+                trt = rng.binomial(1, 0.13, size=daily_n).astype(float)
+                state = test.update(ctrl, trt)
+                states.append(state)
+
+        return test, states
+
+    def test_pvalues_decrease_as_evidence_accumulates(self, daily_msprt):
+        """With a true 3pp lift, always-valid p-values should generally decrease."""
+        _, states = daily_msprt
+
+        # The overall trend should be downward: last p-value < first p-value
+        assert states[-1].always_valid_pvalue < states[0].always_valid_pvalue
+
+    def test_should_stop_eventually_becomes_true(self, daily_msprt):
+        """With 7 days of data and a real effect, mSPRT should eventually stop."""
+        _, states = daily_msprt
+        stopped = any(s.should_stop for s in states)
+        assert stopped, (
+            "mSPRT should have detected the 3pp lift within 7 days "
+            f"(final p={states[-1].always_valid_pvalue:.4f})"
+        )
+
+    def test_always_valid_pvalue_in_unit_interval(self, daily_msprt):
+        """Always-valid p-values must always be in [0, 1]."""
+        _, states = daily_msprt
+        for i, s in enumerate(states):
+            assert 0.0 <= s.always_valid_pvalue <= 1.0, (
+                f"Day {i + 1}: p-value {s.always_valid_pvalue} is out of [0, 1]"
+            )
+
+
+# ---------------------------------------------------------------------------
+# Scenario 17: Weekly Reads with GroupSequential
+# ---------------------------------------------------------------------------
+
+
+class TestWeeklyReadsWithGroupSequential:
+    """4-week experiment with weekly interim analyses (5 looks total).
+
+    Uses O'Brien-Fleming spending function, which is very conservative early
+    on and becomes more liberal at the final analysis.
+    """
+
+    def test_first_boundary_is_very_conservative(self):
+        """OBF first boundary should be very high (z > 3)."""
+        from splita.sequential.group_sequential import GroupSequential
+
+        gs = GroupSequential(n_analyses=5, alpha=0.05, spending_function="obf")
+        b = gs.boundary()
+
+        assert b.efficacy_boundaries[0] > 3.0, (
+            f"First OBF boundary should be > 3.0, got {b.efficacy_boundaries[0]:.4f}"
+        )
+
+    def test_week3_z24_should_continue(self):
+        """At week 3, z=2.4 should not cross the OBF boundary (still conservative)."""
+        from splita.sequential.group_sequential import GroupSequential
+
+        gs = GroupSequential(n_analyses=5, alpha=0.05, spending_function="obf")
+
+        # 5 looks at info fractions 0.2, 0.4, 0.6, 0.8, 1.0
+        # At look 3 (info_frac=0.6), OBF boundary is ~2.53, so z=2.4 should not cross
+        result = gs.test(
+            [1.0, 1.5, 2.4, None, None],
+            [0.2, 0.4, 0.6, 0.8, 1.0],
+        )
+
+        look3 = result.analysis_results[2]
+        assert look3["action"] == "continue", (
+            f"At look 3 with z=2.4, OBF should say continue, "
+            f"got {look3['action']} (boundary={look3['efficacy_boundary']:.4f})"
+        )
+
+    def test_final_look_z24_decision(self):
+        """At the final look (5), z=2.4 should cross the boundary.
+
+        With conditional error spending, the OBF final boundary is ~2.29
+        (slightly above the fixed-sample z_alpha/2 ~ 1.96 due to the
+        conservative sequential correction).
+        """
+        from splita.sequential.group_sequential import GroupSequential
+
+        gs = GroupSequential(n_analyses=5, alpha=0.05, spending_function="obf")
+
+        result = gs.test(
+            [1.0, 1.5, 2.0, 2.0, 2.4],
+            [0.2, 0.4, 0.6, 0.8, 1.0],
+        )
+
+        # At the final look, z=2.4 should cross the OBF boundary (~2.29)
+        look5 = result.analysis_results[4]
+        assert look5["action"] == "stop_efficacy", (
+            f"At final look with z=2.4, OBF should stop for efficacy, "
+            f"got {look5['action']} (boundary={look5['efficacy_boundary']:.4f})"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Scenario 18: mSPRT Catches No Effect Early (Truncation)
+# ---------------------------------------------------------------------------
+
+
+class TestMSPRTCatchesNoEffectEarlyTruncation:
+    """Team sets a max sample of 2000. The experiment has no effect.
+
+    mSPRT should hit the truncation limit without declaring significance.
+    The stopping_reason should be 'truncation', not 'boundary_crossed'.
+    """
+
+    def test_truncation_stops_without_significance(self):
+        """mSPRT with null data should stop due to truncation, not significance."""
+        import warnings
+
+        from splita.sequential.msprt import mSPRT
+
+        rng = np.random.default_rng(1800)
+        test = mSPRT(metric="continuous", alpha=0.05, truncation=2000)
+
+        batch_size = 200
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            for _ in range(10):  # 10 batches * 200 * 2 groups = 4000 total
+                ctrl = rng.normal(10.0, 5.0, size=batch_size)
+                trt = rng.normal(10.0, 5.0, size=batch_size)
+                state = test.update(ctrl, trt)
+
+        # Should have stopped
+        assert state.should_stop is True
+
+        # Get final result to check stopping reason
+        result = test.result()
+        assert result.stopping_reason == "truncation", (
+            f"Expected stopping_reason='truncation', got '{result.stopping_reason}'"
+        )
+
+    def test_truncation_pvalue_not_significant(self):
+        """Under the null, the always-valid p-value should remain above alpha."""
+        import warnings
+
+        from splita.sequential.msprt import mSPRT
+
+        rng = np.random.default_rng(1801)
+        test = mSPRT(metric="continuous", alpha=0.05, truncation=2000)
+
+        batch_size = 250
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            for _ in range(8):
+                ctrl = rng.normal(10.0, 5.0, size=batch_size)
+                trt = rng.normal(10.0, 5.0, size=batch_size)
+                state = test.update(ctrl, trt)
+
+        # p-value should be above alpha (no real effect)
+        result = test.result()
+        assert result.always_valid_pvalue >= 0.05, (
+            f"Under the null, p-value should be >= 0.05, got {result.always_valid_pvalue:.4f}"
+        )
+        assert result.stopping_reason == "truncation"

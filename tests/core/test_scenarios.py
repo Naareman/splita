@@ -1430,3 +1430,187 @@ class TestMSPRTCatchesNoEffectEarlyTruncation:
             f"Under the null, p-value should be >= 0.05, got {result.always_valid_pvalue:.4f}"
         )
         assert result.stopping_reason == "truncation"
+
+
+# ---------------------------------------------------------------------------
+# Scenario 19: Email Subject Line Optimization with Thompson Sampling
+# ---------------------------------------------------------------------------
+
+
+class TestEmailSubjectLineOptimizationThompson:
+    """Testing 3 email subject lines for open rate using Thompson Sampling.
+
+    Arm 0 has a 20% open rate, arm 1 has 15%, arm 2 has 10%.
+    Thompson Sampling adaptively allocates traffic, eventually
+    concentrating on the best arm.
+    """
+
+    def test_best_arm_gets_most_pulls(self):
+        """Arm 0 (20% open rate) should receive the most traffic."""
+        from splita.bandits.thompson import ThompsonSampler
+
+        rng = np.random.default_rng(1900)
+        ts = ThompsonSampler(
+            n_arms=3,
+            likelihood="bernoulli",
+            stopping_rule="expected_loss",
+            stopping_threshold=0.005,
+            min_samples=100,
+            random_state=42,
+        )
+
+        rates = [0.20, 0.15, 0.10]
+        for _ in range(1000):
+            arm = ts.recommend()
+            reward = int(rng.random() < rates[arm])
+            ts.update(arm, reward)
+
+        result = ts.result()
+        assert result.n_pulls_per_arm[0] > result.n_pulls_per_arm[1]
+        assert result.n_pulls_per_arm[0] > result.n_pulls_per_arm[2]
+
+    def test_should_stop_eventually(self):
+        """With 1000 users the stopping rule should trigger."""
+        from splita.bandits.thompson import ThompsonSampler
+
+        rng = np.random.default_rng(1901)
+        ts = ThompsonSampler(
+            n_arms=3,
+            likelihood="bernoulli",
+            stopping_rule="expected_loss",
+            stopping_threshold=0.005,
+            min_samples=100,
+            random_state=42,
+        )
+
+        rates = [0.20, 0.15, 0.10]
+        for _ in range(1000):
+            arm = ts.recommend()
+            reward = int(rng.random() < rates[arm])
+            ts.update(arm, reward)
+
+        assert ts.result().should_stop is True
+
+    def test_current_best_arm_is_zero(self):
+        """The identified best arm should be arm 0."""
+        from splita.bandits.thompson import ThompsonSampler
+
+        rng = np.random.default_rng(1902)
+        ts = ThompsonSampler(
+            n_arms=3,
+            likelihood="bernoulli",
+            stopping_rule="expected_loss",
+            stopping_threshold=0.005,
+            min_samples=100,
+            random_state=42,
+        )
+
+        rates = [0.20, 0.15, 0.10]
+        for _ in range(1000):
+            arm = ts.recommend()
+            reward = int(rng.random() < rates[arm])
+            ts.update(arm, reward)
+
+        assert ts.result().current_best_arm == 0
+
+
+# ---------------------------------------------------------------------------
+# Scenario 20: Personalized Pricing with LinTS
+# ---------------------------------------------------------------------------
+
+
+class TestPersonalizedPricingLinTS:
+    """3 price points, user features predict which price converts best.
+
+    LinTS should learn to recommend different arms depending on the
+    context features provided.
+    """
+
+    def test_recommendations_change_based_on_context(self):
+        """Different user feature vectors should yield different arms."""
+        from splita.bandits.lints import LinTS
+
+        rng = np.random.default_rng(2000)
+        lints = LinTS(n_arms=3, n_features=3, lambda_=0.5, random_state=42)
+
+        # Context A prefers arm 0, context B prefers arm 2
+        ctx_a = np.array([1.0, 0.0, 0.0])
+        ctx_b = np.array([0.0, 0.0, 1.0])
+
+        for _ in range(500):
+            # Arm 0 best for ctx_a
+            lints.update(0, ctx_a, reward=1.0 + rng.normal(0, 0.1))
+            lints.update(1, ctx_a, reward=0.3 + rng.normal(0, 0.1))
+            lints.update(2, ctx_a, reward=0.1 + rng.normal(0, 0.1))
+            # Arm 2 best for ctx_b
+            lints.update(0, ctx_b, reward=0.1 + rng.normal(0, 0.1))
+            lints.update(1, ctx_b, reward=0.3 + rng.normal(0, 0.1))
+            lints.update(2, ctx_b, reward=1.0 + rng.normal(0, 0.1))
+
+        recs_a = [lints.recommend(ctx_a) for _ in range(30)]
+        recs_b = [lints.recommend(ctx_b) for _ in range(30)]
+
+        # Arm 0 should dominate for ctx_a, arm 2 for ctx_b
+        assert recs_a.count(0) > 20, (
+            f"Expected arm 0 for ctx_a, got distribution {recs_a}"
+        )
+        assert recs_b.count(2) > 20, (
+            f"Expected arm 2 for ctx_b, got distribution {recs_b}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Scenario 21: Thompson vs Fixed A/B Test
+# ---------------------------------------------------------------------------
+
+
+class TestThompsonVsFixedABTest:
+    """Compare Thompson Sampling efficiency against a fixed-horizon test.
+
+    Same data: arm 0 at 10%, arm 1 at 13%.
+    Fixed allocation: split 50/50 for 2000 users.
+    Thompson: adaptive allocation for 2000 users.
+    Thompson should direct fewer samples to the losing arm.
+    """
+
+    def test_thompson_fewer_samples_on_loser(self):
+        """Thompson should allocate fewer samples to the inferior arm."""
+        from splita.bandits.thompson import ThompsonSampler
+
+        n_users = 2000
+        rates = [0.10, 0.13]
+
+        # --- Fixed 50/50 allocation ---
+        rng_fixed = np.random.default_rng(2100)
+        fixed_pulls = [0, 0]
+        for i in range(n_users):
+            arm = i % 2
+            fixed_pulls[arm] += 1
+            # reward consumed but not used for allocation
+            _ = int(rng_fixed.random() < rates[arm])
+
+        # --- Thompson adaptive allocation ---
+        rng_ts = np.random.default_rng(2100)
+        ts = ThompsonSampler(
+            n_arms=2,
+            likelihood="bernoulli",
+            stopping_rule="expected_loss",
+            stopping_threshold=0.001,
+            min_samples=200,
+            random_state=42,
+        )
+        for _ in range(n_users):
+            arm = ts.recommend()
+            reward = int(rng_ts.random() < rates[arm])
+            ts.update(arm, reward)
+
+        result = ts.result()
+        thompson_pulls = result.n_pulls_per_arm
+
+        # Fixed gives exactly 1000 to the loser (arm 0).
+        # Thompson should give fewer to the loser.
+        loser_arm = 0  # 10% < 13%
+        assert thompson_pulls[loser_arm] < fixed_pulls[loser_arm], (
+            f"Thompson gave {thompson_pulls[loser_arm]} pulls to the loser "
+            f"vs fixed {fixed_pulls[loser_arm]}"
+        )

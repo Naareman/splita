@@ -13,6 +13,7 @@ from splita._types import (
     mSPRTResult,
     mSPRTState,
 )
+from splita.bandits import LinTS, ThompsonSampler
 from splita.core import Experiment, MultipleCorrection, SampleSize, SRMCheck
 from splita.sequential import GroupSequential, mSPRT
 
@@ -26,11 +27,13 @@ __all__ = [
     "ExperimentResult",
     "GSResult",
     "GroupSequential",
+    "LinTS",
     "MultipleCorrection",
     "SRMCheck",
     "SRMResult",
     "SampleSize",
     "SampleSizeResult",
+    "ThompsonSampler",
     "mSPRT",
     "mSPRTResult",
     "mSPRTState",

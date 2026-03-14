@@ -107,7 +107,11 @@ class ExperimentResult(_DictMixin):
             f"  {'alpha':<16}{_fmt(self.alpha)}",
             _line(w),
             f"  {'effect_size':<16}{_fmt(self.effect_size)}{self._effect_size_label}",
-            f"  {'power':<16}{_fmt(self.power)}",
+            f"  {'power':<16}{_fmt(self.power)} (post-hoc*)",
+            "",
+            "  * Post-hoc power is a function of the p-value",
+            "    and does not provide additional information.",
+            "    Use SampleSize for prospective power analysis.",
         ]
         return "\n".join(lines)
 
@@ -135,15 +139,15 @@ class SampleSizeResult(_DictMixin):
     ) -> SampleSizeResult:
         if daily_users <= 0:
             raise ValueError(
-                "`daily_users` must be > 0, got {0}.\n"
-                "  Detail: value must be strictly positive.\n"
-                "  Hint: pass the expected number of users per day.".format(daily_users)
+                f"`daily_users` must be > 0, got {daily_users}.\n"
+                f"  Detail: value must be strictly positive.\n"
+                f"  Hint: pass the expected number of users per day."
             )
         if not 0 < traffic_fraction <= 1.0:
             raise ValueError(
-                "`traffic_fraction` must be in (0, 1], got {0}.\n"
-                "  Detail: fraction of daily traffic allocated to the experiment.\n"
-                "  Hint: typical values are 0.1, 0.5, or 1.0.".format(traffic_fraction)
+                f"`traffic_fraction` must be in (0, 1], got {traffic_fraction}.\n"
+                f"  Detail: fraction of daily traffic allocated to the experiment.\n"
+                f"  Hint: typical values are 0.1, 0.5, or 1.0."
             )
         days = math.ceil(self.n_total / (daily_users * traffic_fraction)) + ramp_days
         return replace(self, days_needed=days)

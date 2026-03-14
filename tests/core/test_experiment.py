@@ -383,6 +383,12 @@ class TestRealWorldScenarios:
         # $1 diff with std=$40 and n=1000 is a very small effect
         # p-value should be > 0.05 most of the time, but allow some leeway
         assert result.lift == pytest.approx(trt.mean() - ctrl.mean(), rel=1e-10)
+        # With only $1 diff at std=$40, n=1000, we can't assert significance
+        # but we can assert the result is structurally valid
+        assert 0 <= result.pvalue <= 1
+        assert isinstance(result.significant, bool)
+        assert result.method == "ttest"
+        assert result.metric == "continuous"
 
     def test_ctr_ratio_test(self):
         """Clicks/pageviews with delta method."""
@@ -712,3 +718,12 @@ class TestReviewFixes:
                 control_denominator=ctrl_den,
                 treatment_denominator=trt_den,
             ).run()
+
+    def test_random_state_generator(self):
+        """Experiment accepts np.random.Generator for random_state."""
+        rng = np.random.default_rng(42)
+        ctrl = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
+        trt = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+        result = Experiment(ctrl, trt, method="bootstrap", random_state=rng).run()
+        assert isinstance(result, ExperimentResult)
+        assert 0 <= result.pvalue <= 1

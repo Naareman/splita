@@ -232,6 +232,27 @@ class Experiment:
             ))
         return max(0.0, min(1.0, power_estimate))
 
+    def _build_ci(
+        self,
+        diff: float,
+        se: float,
+        crit_value: float,
+    ) -> tuple[float, float]:
+        """Build confidence interval based on alternative hypothesis."""
+        if self._alternative == "two-sided":
+            return (diff - crit_value * se, diff + crit_value * se)
+        elif self._alternative == "greater":
+            return (diff - crit_value * se, float("inf"))
+        else:  # less
+            return (float("-inf"), diff + crit_value * se)
+
+    @staticmethod
+    def _welch_df(s1: float, s2: float, n1: int, n2: int) -> float:
+        """Welch-Satterthwaite degrees of freedom."""
+        num = (s1**2 / n1 + s2**2 / n2) ** 2
+        denom = (s1**2 / n1) ** 2 / (n1 - 1) + (s2**2 / n2) ** 2 / (n2 - 1)
+        return num / denom if denom > 0 else float(n1 + n2 - 2)
+
     # ── test implementations ─────────────────────────────────────────
 
     def _run_ztest(self) -> ExperimentResult:
@@ -263,15 +284,7 @@ class Experiment:
             z_crit = float(norm.ppf(1 - self._alpha))
 
         diff = p2 - p1
-        if self._alternative == "two-sided":
-            ci_lower = diff - z_crit * se_unpooled
-            ci_upper = diff + z_crit * se_unpooled
-        elif self._alternative == "greater":
-            ci_lower = diff - z_crit * se_unpooled
-            ci_upper = float("inf")
-        else:
-            ci_lower = float("-inf")
-            ci_upper = diff + z_crit * se_unpooled
+        ci_lower, ci_upper = self._build_ci(diff, se_unpooled, z_crit)
 
         effect = cohens_h(p1, p2)
 
@@ -311,29 +324,16 @@ class Experiment:
         s2 = float(np.std(trt, ddof=1))
         se = math.sqrt(s1**2 / n1 + s2**2 / n2)
 
-        # Welch-Satterthwaite degrees of freedom
-        if se > 0:
-            num = (s1**2 / n1 + s2**2 / n2) ** 2
-            denom = (s1**2 / n1) ** 2 / (n1 - 1) + (s2**2 / n2) ** 2 / (n2 - 1)
-            df = num / denom if denom > 0 else n1 + n2 - 2
-        else:
-            df = n1 + n2 - 2
+        df = self._welch_df(s1, s2, n1, n2) if se > 0 else float(n1 + n2 - 2)
 
         from scipy.stats import t as t_dist
 
         diff = mean_trt - mean_ctrl
         if self._alternative == "two-sided":
             t_crit = float(t_dist.ppf(1 - self._alpha / 2, df))
-            ci_lower = diff - t_crit * se
-            ci_upper = diff + t_crit * se
-        elif self._alternative == "greater":
-            t_crit = float(t_dist.ppf(1 - self._alpha, df))
-            ci_lower = diff - t_crit * se
-            ci_upper = float("inf")
         else:
             t_crit = float(t_dist.ppf(1 - self._alpha, df))
-            ci_lower = float("-inf")
-            ci_upper = diff + t_crit * se
+        ci_lower, ci_upper = self._build_ci(diff, se, t_crit)
 
         effect = cohens_d(ctrl, trt)
 
@@ -516,26 +516,13 @@ class Experiment:
 
         from scipy.stats import t as t_dist
 
-        # Welch df
-        if se > 0:
-            num = (s1**2 / n1 + s2**2 / n2) ** 2
-            denom = (s1**2 / n1) ** 2 / (n1 - 1) + (s2**2 / n2) ** 2 / (n2 - 1)
-            df = num / denom if denom > 0 else n1 + n2 - 2
-        else:
-            df = n1 + n2 - 2
+        df = self._welch_df(s1, s2, n1, n2) if se > 0 else float(n1 + n2 - 2)
 
         if self._alternative == "two-sided":
             t_crit = float(t_dist.ppf(1 - self._alpha / 2, df))
-            ci_lower = diff - t_crit * se
-            ci_upper = diff + t_crit * se
-        elif self._alternative == "greater":
-            t_crit = float(t_dist.ppf(1 - self._alpha, df))
-            ci_lower = diff - t_crit * se
-            ci_upper = float("inf")
         else:
             t_crit = float(t_dist.ppf(1 - self._alpha, df))
-            ci_lower = float("-inf")
-            ci_upper = diff + t_crit * se
+        ci_lower, ci_upper = self._build_ci(diff, se, t_crit)
 
         # effect size: Cohen's d on linearized values (for power calculation)
         effect = cohens_d(y_ctrl, y_trt)
@@ -585,7 +572,8 @@ class Experiment:
         # Clamp to avoid p=0 (minimum is 1/n_bootstrap)
         pval = max(pval, 1.0 / len(diffs))
 
-        # CI: percentile method
+        # CI: percentile method — uses empirical quantiles of the bootstrap
+        # distribution rather than diff +/- crit*se, so _build_ci does not apply.
         if self._alternative == "two-sided":
             ci_lower = float(np.percentile(diffs, 100 * self._alpha / 2))
             ci_upper = float(np.percentile(diffs, 100 * (1 - self._alpha / 2)))

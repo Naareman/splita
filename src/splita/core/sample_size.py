@@ -93,6 +93,8 @@ class SampleSize:
             Minimum detectable effect (absolute change in proportion).
             Required unless *relative_mde* is provided.  Mutually
             exclusive with *relative_mde*.
+            Positive values detect improvement, negative values detect degradation.
+            For example, ``mde=-0.01`` detects a 1pp drop in conversion.
         alpha : float, default 0.05
             Significance level (false-positive rate).
         power : float, default 0.80

@@ -10,12 +10,11 @@ from splita._types import (
     CorrectionResult,
     ExperimentResult,
     GSResult,
-    SRMResult,
     SampleSizeResult,
+    SRMResult,
     mSPRTResult,
     mSPRTState,
 )
-
 
 # ─── Fixtures ────────────────────────────────────────────────────────
 
@@ -201,11 +200,15 @@ class TestCreation:
 
 
 class TestFrozen:
-    def test_experiment_result_frozen(self, experiment_result: ExperimentResult) -> None:
+    def test_experiment_result_frozen(
+        self, experiment_result: ExperimentResult
+    ) -> None:
         with pytest.raises(AttributeError):
             experiment_result.pvalue = 0.99  # type: ignore[misc]
 
-    def test_sample_size_result_frozen(self, sample_size_result: SampleSizeResult) -> None:
+    def test_sample_size_result_frozen(
+        self, sample_size_result: SampleSizeResult
+    ) -> None:
         with pytest.raises(AttributeError):
             sample_size_result.n_total = 999  # type: ignore[misc]
 
@@ -213,7 +216,9 @@ class TestFrozen:
         with pytest.raises(AttributeError):
             srm_result.passed = True  # type: ignore[misc]
 
-    def test_correction_result_frozen(self, correction_result: CorrectionResult) -> None:
+    def test_correction_result_frozen(
+        self, correction_result: CorrectionResult
+    ) -> None:
         with pytest.raises(AttributeError):
             correction_result.alpha = 0.01  # type: ignore[misc]
 
@@ -242,14 +247,18 @@ class TestFrozen:
 
 
 class TestToDict:
-    def test_experiment_result_to_dict(self, experiment_result: ExperimentResult) -> None:
+    def test_experiment_result_to_dict(
+        self, experiment_result: ExperimentResult
+    ) -> None:
         d = experiment_result.to_dict()
         assert isinstance(d, dict)
         assert d["control_mean"] == 0.10
         assert d["significant"] is True
         assert isinstance(d["control_n"], int)
 
-    def test_sample_size_result_to_dict(self, sample_size_result: SampleSizeResult) -> None:
+    def test_sample_size_result_to_dict(
+        self, sample_size_result: SampleSizeResult
+    ) -> None:
         d = sample_size_result.to_dict()
         assert d["n_per_variant"] == 5000
         assert d["days_needed"] is None
@@ -330,7 +339,9 @@ class TestRepr:
         assert "conversion" in r
         assert "ztest" in r
 
-    def test_sample_size_result_repr(self, sample_size_result: SampleSizeResult) -> None:
+    def test_sample_size_result_repr(
+        self, sample_size_result: SampleSizeResult
+    ) -> None:
         r = repr(sample_size_result)
         assert isinstance(r, str)
         assert "SampleSizeResult" in r
@@ -386,7 +397,9 @@ class TestRepr:
         assert isinstance(r, str)
         assert "BanditResult" in r
 
-    def test_experiment_result_repr_conversion(self, experiment_result: ExperimentResult) -> None:
+    def test_experiment_result_repr_conversion(
+        self, experiment_result: ExperimentResult
+    ) -> None:
         r = repr(experiment_result)
         assert "Cohen's h" in r
 
@@ -478,17 +491,23 @@ class TestDuration:
         # original unchanged
         assert sample_size_result.days_needed is None
 
-    def test_duration_with_traffic_fraction(self, sample_size_result: SampleSizeResult) -> None:
+    def test_duration_with_traffic_fraction(
+        self, sample_size_result: SampleSizeResult
+    ) -> None:
         result = sample_size_result.duration(daily_users=1000, traffic_fraction=0.5)
         assert result.days_needed == math.ceil(10000 / (1000 * 0.5))
         assert result.days_needed == 20
 
-    def test_duration_with_ramp_days(self, sample_size_result: SampleSizeResult) -> None:
+    def test_duration_with_ramp_days(
+        self, sample_size_result: SampleSizeResult
+    ) -> None:
         result = sample_size_result.duration(daily_users=1000, ramp_days=3)
         assert result.days_needed == math.ceil(10000 / 1000) + 3
         assert result.days_needed == 13
 
-    def test_duration_with_all_params(self, sample_size_result: SampleSizeResult) -> None:
+    def test_duration_with_all_params(
+        self, sample_size_result: SampleSizeResult
+    ) -> None:
         result = sample_size_result.duration(
             daily_users=2000, traffic_fraction=0.25, ramp_days=5
         )
@@ -496,7 +515,9 @@ class TestDuration:
         assert result.days_needed == expected
         assert result.days_needed == 25
 
-    def test_duration_returns_new_instance(self, sample_size_result: SampleSizeResult) -> None:
+    def test_duration_returns_new_instance(
+        self, sample_size_result: SampleSizeResult
+    ) -> None:
         result = sample_size_result.duration(daily_users=1000)
         assert result is not sample_size_result
         # all other fields preserved
@@ -505,17 +526,23 @@ class TestDuration:
         assert result.alpha == sample_size_result.alpha
         assert result.metric == sample_size_result.metric
 
-    def test_duration_repr_includes_days(self, sample_size_result: SampleSizeResult) -> None:
+    def test_duration_repr_includes_days(
+        self, sample_size_result: SampleSizeResult
+    ) -> None:
         result = sample_size_result.duration(daily_users=1000)
         r = repr(result)
         assert "days_needed" in r
 
-    def test_duration_zero_daily_users_raises(self, sample_size_result: SampleSizeResult) -> None:
-        with pytest.raises(ValueError, match="daily_users.*must be > 0"):
+    def test_duration_zero_daily_users_raises(
+        self, sample_size_result: SampleSizeResult
+    ) -> None:
+        with pytest.raises(ValueError, match=r"daily_users.*must be > 0"):
             sample_size_result.duration(daily_users=0)
 
-    def test_duration_negative_traffic_fraction_raises(self, sample_size_result: SampleSizeResult) -> None:
-        with pytest.raises(ValueError, match="traffic_fraction.*must be in"):
+    def test_duration_negative_traffic_fraction_raises(
+        self, sample_size_result: SampleSizeResult
+    ) -> None:
+        with pytest.raises(ValueError, match=r"traffic_fraction.*must be in"):
             sample_size_result.duration(daily_users=1000, traffic_fraction=-0.5)
 
 

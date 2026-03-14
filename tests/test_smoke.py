@@ -22,7 +22,6 @@ from splita._validation import (
     check_same_length,
 )
 
-
 # ─── Scenario 1: Validate array pipeline ──────────────────────────────
 
 
@@ -55,7 +54,9 @@ class TestArrayPipeline:
 
         # auto_detect_metric on binary data
         metric = auto_detect_metric(ctrl_clean)
-        assert metric == "conversion", f"binary data should be 'conversion', got {metric!r}"
+        assert metric == "conversion", (
+            f"binary data should be 'conversion', got {metric!r}"
+        )
 
     def test_continuous_data_pipeline(self):
         rng = np.random.default_rng(202)
@@ -65,7 +66,9 @@ class TestArrayPipeline:
         arr = to_array(revenue.tolist(), "revenue")
         cleaned = check_array_like(arr.tolist(), "revenue")
         metric = auto_detect_metric(cleaned)
-        assert metric == "continuous", f"revenue data should be 'continuous', got {metric!r}"
+        assert metric == "continuous", (
+            f"revenue data should be 'continuous', got {metric!r}"
+        )
         assert len(cleaned) == 1000, "no NaN injected, length should stay 1000"
 
 
@@ -161,7 +164,8 @@ class TestDataclassSerialization:
         # Every value should be a plain Python type, not numpy
         for key, val in d.items():
             assert not isinstance(val, (np.integer, np.floating, np.bool_)), (
-                f"to_dict()[{key!r}] is {type(val).__name__}, expected plain Python type"
+                f"to_dict()[{key!r}] is {type(val).__name__}, "
+                "expected plain Python type"
             )
 
         # Spot-check key values
@@ -209,7 +213,9 @@ class TestDataclassSerialization:
         assert ssr.days_needed is None, "days_needed should be None before .duration()"
 
         with_days = ssr.duration(daily_users=1000)
-        assert with_days.days_needed is not None, "days_needed should be populated after .duration()"
+        assert with_days.days_needed is not None, (
+            "days_needed should be populated after .duration()"
+        )
         assert with_days.days_needed == 10, (
             f"10000 total / 1000 daily = 10 days, got {with_days.days_needed}"
         )

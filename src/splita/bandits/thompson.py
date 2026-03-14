@@ -220,9 +220,7 @@ class ThompsonSampler:
         elif self._likelihood == "gaussian":
             for i in range(self._n_arms):
                 # NIG posterior: sample variance from Inv-Gamma, then mean
-                precision = self._rng.gamma(
-                    self._alpha[i], 1.0 / self._beta[i], size=n
-                )
+                precision = self._rng.gamma(self._alpha[i], 1.0 / self._beta[i], size=n)
                 # precision = 1/sigma^2; avoid zero
                 precision = np.maximum(precision, 1e-12)
                 sigma = 1.0 / np.sqrt(precision)
@@ -248,18 +246,17 @@ class ThompsonSampler:
         elif self._likelihood == "gaussian":
             return [float(self._mu[i]) for i in range(self._n_arms)]
         else:  # poisson
-            return [
-                float(self._alpha[i] / self._beta[i])
-                for i in range(self._n_arms)
-            ]
+            return [float(self._alpha[i] / self._beta[i]) for i in range(self._n_arms)]
 
     def _posterior_credible_intervals(
         self, samples: np.ndarray
     ) -> list[tuple[float, float]]:
         """95% credible intervals from MC samples."""
         return [
-            (float(np.percentile(samples[:, i], 2.5)),
-             float(np.percentile(samples[:, i], 97.5)))
+            (
+                float(np.percentile(samples[:, i], 2.5)),
+                float(np.percentile(samples[:, i], 97.5)),
+            )
             for i in range(self._n_arms)
         ]
 

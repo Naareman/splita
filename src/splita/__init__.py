@@ -16,19 +16,21 @@ from splita._types import (
 from splita.bandits import LinTS, ThompsonSampler
 from splita.core import Experiment, MultipleCorrection, SampleSize, SRMCheck
 from splita.sequential import GroupSequential, mSPRT
+from splita.variance import CUPAC, CUPED, OutlierHandler
 
 __all__ = [
-    # Result types
+    "CUPAC",
+    "CUPED",
     "BanditResult",
     "BoundaryResult",
     "CorrectionResult",
-    # Core classes
     "Experiment",
     "ExperimentResult",
     "GSResult",
     "GroupSequential",
     "LinTS",
     "MultipleCorrection",
+    "OutlierHandler",
     "SRMCheck",
     "SRMResult",
     "SampleSize",

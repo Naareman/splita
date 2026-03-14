@@ -82,9 +82,7 @@ class LinTS:
             self._lambda * np.eye(d) for _ in range(self._n_arms)
         ]
         self._f: list[np.ndarray] = [np.zeros(d) for _ in range(self._n_arms)]
-        self._mu_hat: list[np.ndarray] = [
-            np.zeros(d) for _ in range(self._n_arms)
-        ]
+        self._mu_hat: list[np.ndarray] = [np.zeros(d) for _ in range(self._n_arms)]
 
         # Tracking state for result()
         self._n_pulls = np.zeros(self._n_arms, dtype=int)
@@ -212,9 +210,7 @@ class LinTS:
         for i in range(self._n_arms):
             if self._n_pulls[i] > 0:
                 cf = cho_factor(self._B[i])
-                cov = self._noise_var * cho_solve(
-                    cf, np.eye(self._n_features)
-                )
+                cov = self._noise_var * cho_solve(cf, np.eye(self._n_features))
                 # Use norm of diagonal as a scalar uncertainty measure
                 std = float(np.sqrt(np.mean(np.diag(cov))))
                 mean = arm_means[i]

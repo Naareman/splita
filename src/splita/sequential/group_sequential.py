@@ -130,7 +130,7 @@ class GroupSequential:
             # approximation used in practice (see Lan & DeMets, 1983).
             return alpha * math.log(1.0 + (math.e - 1.0) * t)
         elif kind == "kim_demets":
-            return alpha * (t ** self._rho)
+            return alpha * (t**self._rho)
         elif kind == "linear":
             return alpha * t
         else:  # pragma: no cover
@@ -190,9 +190,7 @@ class GroupSequential:
                 # given that we survived all prior looks
                 conditional_alpha = delta_k / remaining
                 conditional_alpha = min(conditional_alpha, 1.0)
-                boundaries[k] = float(
-                    norm.ppf(1.0 - conditional_alpha / 2.0)
-                )
+                boundaries[k] = float(norm.ppf(1.0 - conditional_alpha / 2.0))
 
         return [float(b) for b in boundaries]
 
@@ -235,10 +233,7 @@ class GroupSequential:
         beta_total = beta_spent_cum[-1] if beta_spent_cum else 1.0
         if beta_total <= 0:  # pragma: no cover
             return [0.0] * len(beta_spent_cum)
-        return [
-            float(z_alpha * (bs / beta_total))
-            for bs in beta_spent_cum
-        ]
+        return [float(z_alpha * (bs / beta_total)) for bs in beta_spent_cum]
 
     # ── public API ──────────────────────────────────────────────────
 
@@ -278,12 +273,9 @@ class GroupSequential:
         if self._beta_spending is not None:
             beta = 1.0 - self._power
             beta_spent_cum = [
-                self._alpha_spent(t, beta, self._beta_spending)
-                for t in info_fracs
+                self._alpha_spent(t, beta, self._beta_spending) for t in info_fracs
             ]
-            futility_z = self._compute_futility_boundaries(
-                beta_spent_cum, self._alpha
-            )
+            futility_z = self._compute_futility_boundaries(beta_spent_cum, self._alpha)
 
         adjusted_alpha = alpha_spent_cum[-1]
 
@@ -344,9 +336,7 @@ class GroupSequential:
                 self._alpha_spent(t, beta, self._beta_spending)
                 for t in information_fractions
             ]
-            futility_z = self._compute_futility_boundaries(
-                beta_spent_cum, self._alpha
-            )
+            futility_z = self._compute_futility_boundaries(beta_spent_cum, self._alpha)
 
         # ── evaluate each look ──
         crossed_efficacy = False

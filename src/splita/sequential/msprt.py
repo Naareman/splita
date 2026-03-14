@@ -234,18 +234,13 @@ class mSPRT:
         p_value = min(1.0, 1.0 / mlr) if mlr > 0.0 else 1.0
 
         # ── always-valid CI ──
-        ci_half = math.sqrt(
-            2.0 * V * (V + tau) / tau * math.log(1.0 / self._alpha)
-        )
+        ci_half = math.sqrt(2.0 * V * (V + tau) / tau * math.log(1.0 / self._alpha))
         ci_lower = delta_hat - ci_half
         ci_upper = delta_hat + ci_half
 
         # ── stopping decision ──
         should_stop = p_value < self._alpha
-        if (
-            self._truncation is not None
-            and n_c + n_t >= self._truncation
-        ):
+        if self._truncation is not None and n_c + n_t >= self._truncation:
             should_stop = True
 
         self._state = mSPRTState(

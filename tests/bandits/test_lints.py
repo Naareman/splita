@@ -7,7 +7,6 @@ import pytest
 
 from splita.bandits.lints import LinTS
 
-
 # ─── Basic tests ────────────────────────────────────────────────────
 
 

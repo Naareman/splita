@@ -16,7 +16,6 @@ from splita._utils import (
     to_array,
 )
 
-
 # ─── ensure_rng ───────────────────────────────────────────────────
 
 

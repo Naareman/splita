@@ -13,7 +13,6 @@ import pytest
 from splita.core.experiment import Experiment
 from splita.core.sample_size import SampleSize
 
-
 # ---------------------------------------------------------------------------
 # Scenario 1: E-commerce Conversion Test
 # ---------------------------------------------------------------------------
@@ -124,7 +123,9 @@ class TestRevenuePerUserWithOutliers:
     def test_sample_size_for_revenue(self):
         """Sample size for a mean metric with high variance."""
         result = SampleSize.for_mean(
-            baseline_mean=25.0, baseline_std=40.0, mde=2.0,
+            baseline_mean=25.0,
+            baseline_std=40.0,
+            mde=2.0,
         )
         assert result.n_per_variant > 1_000, (
             f"High-variance metric should need many samples, got {result.n_per_variant}"
@@ -134,7 +135,9 @@ class TestRevenuePerUserWithOutliers:
     def test_mannwhitney_on_skewed_data(self):
         """Mann-Whitney should handle heavy-tailed revenue data."""
         plan = SampleSize.for_mean(
-            baseline_mean=25.0, baseline_std=40.0, mde=2.0,
+            baseline_mean=25.0,
+            baseline_std=40.0,
+            mde=2.0,
         )
         n = plan.n_per_variant
 
@@ -157,7 +160,9 @@ class TestRevenuePerUserWithOutliers:
     def test_bootstrap_on_skewed_data(self):
         """Bootstrap should also handle heavy-tailed data."""
         plan = SampleSize.for_mean(
-            baseline_mean=25.0, baseline_std=40.0, mde=2.0,
+            baseline_mean=25.0,
+            baseline_std=40.0,
+            mde=2.0,
         )
         n = plan.n_per_variant
 
@@ -170,8 +175,11 @@ class TestRevenuePerUserWithOutliers:
         treatment = rng.lognormal(mean=mu_trt, sigma=sigma_ln, size=n)
 
         result = Experiment(
-            control, treatment,
-            method="bootstrap", n_bootstrap=2000, random_state=44,
+            control,
+            treatment,
+            method="bootstrap",
+            n_bootstrap=2000,
+            random_state=44,
         ).run()
 
         assert result.method == "bootstrap"
@@ -180,7 +188,9 @@ class TestRevenuePerUserWithOutliers:
     def test_mannwhitney_and_bootstrap_agree_on_direction(self):
         """Both methods should agree on the direction of the effect."""
         plan = SampleSize.for_mean(
-            baseline_mean=25.0, baseline_std=40.0, mde=2.0,
+            baseline_mean=25.0,
+            baseline_std=40.0,
+            mde=2.0,
         )
         n = plan.n_per_variant
 
@@ -194,8 +204,11 @@ class TestRevenuePerUserWithOutliers:
 
         mw_result = Experiment(control, treatment, method="mannwhitney").run()
         bs_result = Experiment(
-            control, treatment,
-            method="bootstrap", n_bootstrap=2000, random_state=44,
+            control,
+            treatment,
+            method="bootstrap",
+            n_bootstrap=2000,
+            random_state=44,
         ).run()
 
         # Both should see treatment_mean > control_mean
@@ -357,12 +370,12 @@ class TestCTRRatioMetric:
     def test_sample_size_for_ratio(self):
         """Plan sample size for a ratio metric using delta method variance."""
         result = SampleSize.for_ratio(
-            baseline_num_mean=5.0,     # avg clicks per user
-            baseline_den_mean=100.0,   # avg impressions per user
+            baseline_num_mean=5.0,  # avg clicks per user
+            baseline_den_mean=100.0,  # avg impressions per user
             baseline_num_std=3.0,
             baseline_den_std=30.0,
             baseline_covariance=50.0,  # clicks and impressions are correlated
-            mde=0.005,                 # detect 0.5pp CTR change
+            mde=0.005,  # detect 0.5pp CTR change
         )
         assert result.n_per_variant > 0
         assert result.metric == "ratio"
@@ -382,7 +395,8 @@ class TestCTRRatioMetric:
         clicks_trt = rng.binomial(impr_trt.astype(int), 0.055).astype(float)
 
         result = Experiment(
-            clicks_ctrl, clicks_trt,
+            clicks_ctrl,
+            clicks_trt,
             metric="ratio",
             control_denominator=impr_ctrl,
             treatment_denominator=impr_trt,
@@ -404,7 +418,8 @@ class TestCTRRatioMetric:
         clicks_trt = rng.binomial(impr_trt.astype(int), 0.055).astype(float)
 
         result = Experiment(
-            clicks_ctrl, clicks_trt,
+            clicks_ctrl,
+            clicks_trt,
             metric="ratio",
             control_denominator=impr_ctrl,
             treatment_denominator=impr_trt,
@@ -452,7 +467,8 @@ class TestUnderpoweredExperimentDetection:
         result = Experiment(control, treatment).run()
 
         assert result.pvalue > 0.05, (
-            f"With n=500 and 1pp lift, should be non-significant, got p={result.pvalue:.4f}"
+            "With n=500 and 1pp lift, should be non-significant, "
+            f"got p={result.pvalue:.4f}"
         )
         assert result.significant is False
 
@@ -488,10 +504,14 @@ class TestOneSidedDegradationGuard:
     def test_one_sided_requires_fewer_samples(self):
         """A one-sided test should require fewer samples than two-sided."""
         two_sided = SampleSize.for_proportion(
-            baseline=0.10, mde=0.01, alternative="two-sided",
+            baseline=0.10,
+            mde=0.01,
+            alternative="two-sided",
         )
         one_sided = SampleSize.for_proportion(
-            baseline=0.10, mde=0.01, alternative="one-sided",
+            baseline=0.10,
+            mde=0.01,
+            alternative="one-sided",
         )
         assert one_sided.n_per_variant < two_sided.n_per_variant, (
             f"One-sided ({one_sided.n_per_variant}) should need fewer samples "
@@ -501,7 +521,9 @@ class TestOneSidedDegradationGuard:
     def test_no_degradation_is_not_significant(self):
         """When treatment equals control, one-sided 'less' test should not fire."""
         plan = SampleSize.for_proportion(
-            baseline=0.10, mde=0.01, alternative="one-sided",
+            baseline=0.10,
+            mde=0.01,
+            alternative="one-sided",
         )
         n = plan.n_per_variant
 
@@ -555,8 +577,8 @@ class TestSRMGuardBeforeAnalysis:
 
         rng = np.random.default_rng(80)
         n = 5000
-        control = rng.binomial(1, 0.10, size=n).astype(float)
-        treatment = rng.binomial(1, 0.12, size=n).astype(float)
+        rng.binomial(1, 0.10, size=n).astype(float)
+        rng.binomial(1, 0.12, size=n).astype(float)
 
         srm = SRMCheck([n, n]).run()
         assert srm.passed is True
@@ -665,7 +687,9 @@ class TestMultipleMetricsWithBHCorrection:
         _, pvalues, labels = five_metric_results
 
         correction = MultipleCorrection(
-            pvalues, method="bh", labels=labels,
+            pvalues,
+            method="bh",
+            labels=labels,
         ).run()
 
         # First 2 metrics (conversion, revenue) should survive
@@ -683,7 +707,9 @@ class TestMultipleMetricsWithBHCorrection:
         _, pvalues, labels = five_metric_results
 
         correction = MultipleCorrection(
-            pvalues, method="bh", labels=labels,
+            pvalues,
+            method="bh",
+            labels=labels,
         ).run()
 
         # Last 3 metrics (aov, session, bounce) should not survive
@@ -691,7 +717,8 @@ class TestMultipleMetricsWithBHCorrection:
             f"AOV should not survive BH (adj_p={correction.adjusted_pvalues[2]:.4f})"
         )
         assert correction.rejected[3] is False, (
-            f"Session should not survive BH (adj_p={correction.adjusted_pvalues[3]:.4f})"
+            "Session should not survive BH "
+            f"(adj_p={correction.adjusted_pvalues[3]:.4f})"
         )
         assert correction.rejected[4] is False, (
             f"Bounce should not survive BH (adj_p={correction.adjusted_pvalues[4]:.4f})"
@@ -704,7 +731,9 @@ class TestMultipleMetricsWithBHCorrection:
         _, pvalues, labels = five_metric_results
 
         correction = MultipleCorrection(
-            pvalues, method="bh", labels=labels,
+            pvalues,
+            method="bh",
+            labels=labels,
         ).run()
 
         assert correction.n_tests == 5
@@ -729,7 +758,8 @@ class TestMultipleMetricsWithBHCorrection:
         # All Bonferroni adjusted p-values should be >= BH adjusted p-values
         for i in range(5):
             assert bonf.adjusted_pvalues[i] >= bh.adjusted_pvalues[i] - 1e-10, (
-                f"Metric {labels[i]}: Bonferroni adj_p ({bonf.adjusted_pvalues[i]:.4f}) "
+                f"Metric {labels[i]}: Bonf adj_p "
+                f"({bonf.adjusted_pvalues[i]:.4f}) "
                 f"should be >= BH adj_p ({bh.adjusted_pvalues[i]:.4f})"
             )
 
@@ -863,7 +893,8 @@ class TestABCTestWithMultipleComparisons:
         ).run()
 
         assert correction.rejected[0] is True, (
-            f"Treatment A should survive Holm (adj_p={correction.adjusted_pvalues[0]:.4f})"
+            "Treatment A should survive Holm "
+            f"(adj_p={correction.adjusted_pvalues[0]:.4f})"
         )
 
     def test_holm_correction_rejects_null_effect(self):
@@ -887,7 +918,8 @@ class TestABCTestWithMultipleComparisons:
         ).run()
 
         assert correction.rejected[1] is False, (
-            f"Treatment B should not survive Holm (adj_p={correction.adjusted_pvalues[1]:.4f})"
+            "Treatment B should not survive Holm "
+            f"(adj_p={correction.adjusted_pvalues[1]:.4f})"
         )
 
     def test_abc_full_workflow(self):
@@ -923,8 +955,8 @@ class TestABCTestWithMultipleComparisons:
         assert correction.n_tests == 2
         assert correction.method == "Holm"
         assert correction.n_rejected == 1
-        assert correction.rejected[0] is True   # treatment A
-        assert correction.rejected[1] is False   # treatment B
+        assert correction.rejected[0] is True  # treatment A
+        assert correction.rejected[1] is False  # treatment B
 
 
 # ---------------------------------------------------------------------------
@@ -1013,8 +1045,8 @@ class TestSRMDetectionSavesTheDay:
 
         if srm.passed:
             # This branch should NOT be taken
-            result = Experiment(control, treatment).run()
-            assert False, "SRM should have failed for 3000/7000 split"
+            Experiment(control, treatment).run()
+            raise AssertionError("SRM should have failed for 3000/7000 split")
         else:
             # Correct path: SRM failed, do not analyze
             assert "cannot be trusted" in srm.message
@@ -1066,7 +1098,10 @@ class TestVarianceReductionPipeline:
         # Step 2: CUPED with pre-experiment data
         cuped = CUPED()
         ctrl_adj, trt_adj = cuped.fit_transform(
-            ctrl_clean, trt_clean, pre_ctrl, pre_trt,
+            ctrl_clean,
+            trt_clean,
+            pre_ctrl,
+            pre_trt,
         )
 
         # Variance reduction should be substantial
@@ -1131,7 +1166,7 @@ class TestCUPACForNewUsers:
         trt = X_trt @ weights + 0.5 + rng.normal(0, 1.0, n)
 
         cupac = CUPAC(random_state=42)
-        ctrl_adj, trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
+        _ctrl_adj, _trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
 
         # CV R² should be positive (model learns something)
         assert cupac.cv_r2_ > 0
@@ -1422,12 +1457,13 @@ class TestMSPRTCatchesNoEffectEarlyTruncation:
             for _ in range(8):
                 ctrl = rng.normal(10.0, 5.0, size=batch_size)
                 trt = rng.normal(10.0, 5.0, size=batch_size)
-                state = test.update(ctrl, trt)
+                test.update(ctrl, trt)
 
         # p-value should be above alpha (no real effect)
         result = test.result()
         assert result.always_valid_pvalue >= 0.05, (
-            f"Under the null, p-value should be >= 0.05, got {result.always_valid_pvalue:.4f}"
+            "Under the null, p-value should be >= 0.05, "
+            f"got {result.always_valid_pvalue:.4f}"
         )
         assert result.stopping_reason == "truncation"
 

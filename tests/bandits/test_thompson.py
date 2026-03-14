@@ -7,7 +7,6 @@ import pytest
 
 from splita.bandits.thompson import ThompsonSampler
 
-
 # ─── Basic: correct arm identification ───────────────────────────
 
 
@@ -201,7 +200,7 @@ class TestStopping:
             min_samples=0,
             random_state=0,
         )
-        for i in range(5):
+        for _i in range(5):
             ts.update(0, 1)
             ts.update(1, 0)
         assert ts.result().should_stop is True

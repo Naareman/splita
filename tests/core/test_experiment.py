@@ -13,7 +13,6 @@ from scipy.stats import norm, ttest_ind
 from splita._types import ExperimentResult
 from splita.core.experiment import Experiment
 
-
 # ═══════════════════════════════════════════════════════════════════════
 # Basic functionality
 # ═══════════════════════════════════════════════════════════════════════
@@ -50,7 +49,8 @@ class TestBasicFunctionality:
         trt_num = rng.binomial(trt_den.astype(int), 0.12).astype(float)
 
         result = Experiment(
-            ctrl_num, trt_num,
+            ctrl_num,
+            trt_num,
             control_denominator=ctrl_den,
             treatment_denominator=trt_den,
         ).run()
@@ -246,7 +246,8 @@ class TestValidation:
         """Denominator length != array length raises ValueError."""
         with pytest.raises(ValueError, match="same length"):
             Experiment(
-                [1, 2, 3], [4, 5, 6],
+                [1, 2, 3],
+                [4, 5, 6],
                 metric="ratio",
                 control_denominator=[10, 20],  # wrong length
                 treatment_denominator=[10, 20, 30],
@@ -256,7 +257,8 @@ class TestValidation:
         """Chi-square + alternative='greater' raises ValueError."""
         with pytest.raises(ValueError, match="two-sided"):
             Experiment(
-                [0, 1, 0, 1], [1, 1, 0, 1],
+                [0, 1, 0, 1],
+                [1, 1, 0, 1],
                 method="chisquare",
                 alternative="greater",
             ).run()
@@ -292,7 +294,8 @@ class TestSkewnessWarning:
             warnings.simplefilter("always")
             Experiment(ctrl, trt)
             skew_warnings = [
-                x for x in w
+                x
+                for x in w
                 if issubclass(x.category, RuntimeWarning)
                 and "skewness" in str(x.message)
             ]
@@ -373,7 +376,7 @@ class TestRealWorldScenarios:
         assert result.pvalue < 0.05
 
     def test_revenue_test(self):
-        """Control $25 std=$40, treatment $26 std=$40, n=1000 → likely not significant."""
+        """Control $25 std=$40, trt $26 std=$40, n=1000."""
         rng = np.random.default_rng(101)
         ctrl = rng.normal(25, 40, size=1000)
         trt = rng.normal(26, 40, size=1000)
@@ -400,7 +403,8 @@ class TestRealWorldScenarios:
         trt_clicks = rng.binomial(trt_pvs.astype(int), 0.06).astype(float)
 
         result = Experiment(
-            ctrl_clicks, trt_clicks,
+            ctrl_clicks,
+            trt_clicks,
             control_denominator=ctrl_pvs,
             treatment_denominator=trt_pvs,
         ).run()
@@ -481,7 +485,9 @@ class TestOneSidedAlternatives:
         ctrl = rng.normal(10, 2, size=100)
         trt = rng.normal(12, 2, size=100)
 
-        result = Experiment(ctrl, trt, method="mannwhitney", alternative="greater").run()
+        result = Experiment(
+            ctrl, trt, method="mannwhitney", alternative="greater"
+        ).run()
 
         assert result.ci_upper == float("inf")
         assert math.isfinite(result.ci_lower)
@@ -511,7 +517,8 @@ class TestOneSidedAlternatives:
         trt_num = rng.binomial(trt_den.astype(int), 0.10).astype(float)
 
         result = Experiment(
-            ctrl_num, trt_num,
+            ctrl_num,
+            trt_num,
             control_denominator=ctrl_den,
             treatment_denominator=trt_den,
             alternative="greater",
@@ -531,7 +538,8 @@ class TestOneSidedAlternatives:
         trt_num = rng.binomial(trt_den.astype(int), 0.05).astype(float)
 
         result = Experiment(
-            ctrl_num, trt_num,
+            ctrl_num,
+            trt_num,
             control_denominator=ctrl_den,
             treatment_denominator=trt_den,
             alternative="less",
@@ -550,7 +558,11 @@ class TestOneSidedAlternatives:
         trt = rng.normal(12, 2, size=200)
 
         result = Experiment(
-            ctrl, trt, method="bootstrap", alternative="greater", random_state=58,
+            ctrl,
+            trt,
+            method="bootstrap",
+            alternative="greater",
+            random_state=58,
         ).run()
 
         assert result.ci_upper == float("inf")
@@ -563,7 +575,11 @@ class TestOneSidedAlternatives:
         trt = rng.normal(10, 2, size=200)
 
         result = Experiment(
-            ctrl, trt, method="bootstrap", alternative="less", random_state=59,
+            ctrl,
+            trt,
+            method="bootstrap",
+            alternative="less",
+            random_state=59,
         ).run()
 
         assert result.ci_lower == float("-inf")
@@ -596,7 +612,7 @@ class TestEdgeCases:
             Experiment([0, 1, 0], [1, 0, 1], n_bootstrap=50)
 
     def test_mannwhitney_large_n_subsampling(self):
-        """n1=n2=250 triggers the subsampling path for pairwise diffs (250*250=62500 > 50000)."""
+        """n1=n2=250 triggers subsampling (250*250=62500 > 50000)."""
         rng = np.random.default_rng(60)
         ctrl = rng.normal(10, 2, size=250)
         trt = rng.normal(11, 2, size=250)
@@ -609,7 +625,8 @@ class TestEdgeCases:
         """Chi-square with alternative='less' raises ValueError."""
         with pytest.raises(ValueError, match="two-sided"):
             Experiment(
-                [0, 1, 0, 1], [1, 1, 0, 1],
+                [0, 1, 0, 1],
+                [1, 1, 0, 1],
                 method="chisquare",
                 alternative="less",
             ).run()
@@ -646,7 +663,8 @@ class TestEdgeCases:
         trt_num = rng.binomial(trt_den.astype(int), 0.10).astype(float)
 
         result = Experiment(
-            ctrl_num, trt_num,
+            ctrl_num,
+            trt_num,
             control_denominator=ctrl_den,
             treatment_denominator=trt_den,
         ).run()
@@ -664,7 +682,7 @@ class TestOneSidedProperties:
     """Property: one-sided p-value <= two-sided p-value in correct direction."""
 
     def test_one_sided_pvalue_less_than_two_sided(self):
-        """For same data, one-sided p should be <= two-sided p when in correct direction."""
+        """One-sided p should be <= two-sided p in correct direction."""
         rng = np.random.default_rng(70)
         ctrl = rng.normal(10, 2, size=300)
         trt = rng.normal(11, 2, size=300)  # treatment > control
@@ -713,7 +731,8 @@ class TestReviewFixes:
         trt_den = [1.0, 2.0, 3.0]
         with pytest.raises(ValueError, match="sum to zero"):
             Experiment(
-                ctrl_num, trt_num,
+                ctrl_num,
+                trt_num,
                 metric="ratio",
                 control_denominator=ctrl_den,
                 treatment_denominator=trt_den,

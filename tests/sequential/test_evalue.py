@@ -12,10 +12,10 @@ class TestEValuePlaceholder:
 
     def test_raises_not_implemented(self):
         """Instantiating EValue should raise NotImplementedError."""
-        with pytest.raises(NotImplementedError, match="planned for splita v0.2.0"):
+        with pytest.raises(NotImplementedError, match=r"planned for splita v0.2.0"):
             EValue()
 
     def test_raises_with_args(self):
         """Instantiating EValue with arguments should also raise."""
-        with pytest.raises(NotImplementedError, match="planned for splita v0.2.0"):
+        with pytest.raises(NotImplementedError, match=r"planned for splita v0.2.0"):
             EValue(alpha=0.05, metric="conversion")

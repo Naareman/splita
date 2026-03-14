@@ -6,7 +6,6 @@ import pytest
 
 from splita.core.correction import MultipleCorrection
 
-
 # ─── Basic tests ────────────────────────────────────────────────────
 
 
@@ -31,16 +30,12 @@ class TestBonferroni:
     """Bonferroni: [0.01, 0.04, 0.20] → only first rejected."""
 
     def test_bonferroni_rejections(self):
-        result = MultipleCorrection(
-            [0.01, 0.04, 0.20], method="bonferroni"
-        ).run()
+        result = MultipleCorrection([0.01, 0.04, 0.20], method="bonferroni").run()
         assert result.rejected == [True, False, False]
         assert result.n_rejected == 1
 
     def test_bonferroni_adjusted_values(self):
-        result = MultipleCorrection(
-            [0.01, 0.04, 0.20], method="bonferroni"
-        ).run()
+        result = MultipleCorrection([0.01, 0.04, 0.20], method="bonferroni").run()
         assert result.adjusted_pvalues[0] == pytest.approx(0.03)
         assert result.adjusted_pvalues[1] == pytest.approx(0.12)
         assert result.adjusted_pvalues[2] == pytest.approx(0.60)
@@ -50,15 +45,11 @@ class TestHolm:
     """Holm: [0.01, 0.04, 0.20] → first rejected, second not (0.04*2=0.08)."""
 
     def test_holm_rejections(self):
-        result = MultipleCorrection(
-            [0.01, 0.04, 0.20], method="holm"
-        ).run()
+        result = MultipleCorrection([0.01, 0.04, 0.20], method="holm").run()
         assert result.rejected == [True, False, False]
 
     def test_holm_adjusted_values(self):
-        result = MultipleCorrection(
-            [0.01, 0.04, 0.20], method="holm"
-        ).run()
+        result = MultipleCorrection([0.01, 0.04, 0.20], method="holm").run()
         # 0.01*3=0.03, max(0.04*2, 0.03)=0.08, max(0.20*1, 0.08)=0.20
         assert result.adjusted_pvalues[0] == pytest.approx(0.03)
         assert result.adjusted_pvalues[1] == pytest.approx(0.08)
@@ -97,7 +88,7 @@ class TestHolmMonotonicity:
         pvals = [0.03, 0.001, 0.15, 0.04, 0.50]
         result = MultipleCorrection(pvals, method="holm").run()
         # Sort by original p-value to check monotonicity in sorted order
-        paired = sorted(zip(result.pvalues, result.adjusted_pvalues))
+        paired = sorted(zip(result.pvalues, result.adjusted_pvalues, strict=False))
         sorted_adj = [a for _, a in paired]
         for i in range(1, len(sorted_adj)):
             assert sorted_adj[i] >= sorted_adj[i - 1]
@@ -109,7 +100,7 @@ class TestBHMonotonicity:
     def test_monotonicity(self):
         pvals = [0.03, 0.001, 0.15, 0.04, 0.50]
         result = MultipleCorrection(pvals, method="bh").run()
-        paired = sorted(zip(result.pvalues, result.adjusted_pvalues))
+        paired = sorted(zip(result.pvalues, result.adjusted_pvalues, strict=False))
         sorted_adj = [a for _, a in paired]
         for i in range(1, len(sorted_adj)):
             assert sorted_adj[i] >= sorted_adj[i - 1]
@@ -135,7 +126,9 @@ class TestBYMoreConservativeThanBH:
         by = MultipleCorrection(pvals, method="by").run()
         assert by.n_rejected <= bh.n_rejected
         # BY adjusted should be >= BH adjusted
-        for bh_adj, by_adj in zip(bh.adjusted_pvalues, by.adjusted_pvalues):
+        for bh_adj, by_adj in zip(
+            bh.adjusted_pvalues, by.adjusted_pvalues, strict=False
+        ):
             assert by_adj >= bh_adj - 1e-10
 
 
@@ -147,7 +140,8 @@ class TestKnownBHAdjustments:
         # rank 1: 0.01 * 3/1 = 0.03
         # rank 2: 0.04 * 3/2 = 0.06
         # rank 3: 0.20 * 3/3 = 0.20
-        # Backward enforcement: min(0.20, 0.20)=0.20, min(0.06, 0.20)=0.06, min(0.03, 0.06)=0.03
+        # Backward enforcement: min(0.20, 0.20)=0.20,
+        # min(0.06, 0.20)=0.06, min(0.03, 0.06)=0.03
         result = MultipleCorrection([0.01, 0.04, 0.20], method="bh").run()
         assert result.adjusted_pvalues[0] == pytest.approx(0.03)
         assert result.adjusted_pvalues[1] == pytest.approx(0.06)
@@ -172,9 +166,7 @@ class TestAllSignificant:
 
     @pytest.mark.parametrize("method", ["bh", "bonferroni", "holm", "by"])
     def test_all_rejected(self, method):
-        result = MultipleCorrection(
-            [0.001, 0.002, 0.003], method=method
-        ).run()
+        result = MultipleCorrection([0.001, 0.002, 0.003], method=method).run()
         assert all(result.rejected)
         assert result.n_rejected == 3
 
@@ -184,9 +176,7 @@ class TestNoneSignificant:
 
     @pytest.mark.parametrize("method", ["bh", "bonferroni", "holm", "by"])
     def test_none_rejected(self, method):
-        result = MultipleCorrection(
-            [0.50, 0.60, 0.70], method=method
-        ).run()
+        result = MultipleCorrection([0.50, 0.60, 0.70], method=method).run()
         assert not any(result.rejected)
         assert result.n_rejected == 0
 
@@ -214,9 +204,7 @@ class TestIdenticalPValues:
 
     @pytest.mark.parametrize("method", ["bh", "bonferroni", "holm", "by"])
     def test_identical(self, method):
-        result = MultipleCorrection(
-            [0.03, 0.03, 0.03], method=method
-        ).run()
+        result = MultipleCorrection([0.03, 0.03, 0.03], method=method).run()
         adj = result.adjusted_pvalues
         assert adj[0] == pytest.approx(adj[1])
         assert adj[1] == pytest.approx(adj[2])
@@ -265,9 +253,7 @@ class TestProperties:
 
     def test_labels_in_result(self):
         labels = ["revenue", "cvr", "aov", "session", "bounce"]
-        result = MultipleCorrection(
-            [0.01, 0.04, 0.20, 0.35, 0.60], labels=labels
-        ).run()
+        result = MultipleCorrection([0.01, 0.04, 0.20, 0.35, 0.60], labels=labels).run()
         assert result.labels == labels
 
     def test_n_rejected_correct(self):
@@ -304,9 +290,7 @@ class TestLabelsPreserved:
 
     def test_labels_preserved(self):
         labels = ["revenue", "cvr", "aov", "session", "bounce"]
-        result = MultipleCorrection(
-            [0.01, 0.04, 0.20, 0.35, 0.60], labels=labels
-        ).run()
+        result = MultipleCorrection([0.01, 0.04, 0.20, 0.35, 0.60], labels=labels).run()
         assert result.labels == labels
 
     def test_no_labels(self):
@@ -328,7 +312,9 @@ class TestMilestone3ReviewFixes:
         pvals = [0.01, 0.04, 0.20]
         holm = MultipleCorrection(pvals, method="holm").run()
         bonf = MultipleCorrection(pvals, method="bonferroni").run()
-        for h_adj, b_adj in zip(holm.adjusted_pvalues, bonf.adjusted_pvalues):
+        for h_adj, b_adj in zip(
+            holm.adjusted_pvalues, bonf.adjusted_pvalues, strict=False
+        ):
             assert h_adj <= b_adj + 1e-10
 
     def test_unsorted_input_ordering_preserved(self):
@@ -356,7 +342,5 @@ class TestMilestone3ReviewFixes:
         pvals = [0.01, 0.04, 0.20]
         labels = ["metric_a", "metric_b", "metric_c"]
         for method in ["bonferroni", "holm", "bh", "by"]:
-            result = MultipleCorrection(
-                pvals, method=method, labels=labels
-            ).run()
+            result = MultipleCorrection(pvals, method=method, labels=labels).run()
             assert result.labels == labels

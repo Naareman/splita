@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-import math
 import warnings
 
 import pytest
-from scipy.stats import norm
 
 from splita.core.sample_size import SampleSize
-
 
 # ═══════════════════════════════════════════════════════════════════════
 # for_proportion
@@ -93,7 +90,7 @@ class TestForProportion:
             SampleSize.for_proportion(0.95, 0.10)
 
     def test_traffic_fraction_stored(self):
-        """traffic_fraction is accepted without error (stored in result for duration)."""
+        """traffic_fraction is accepted (stored for duration)."""
         res = SampleSize.for_proportion(0.10, 0.02, traffic_fraction=0.5)
         # traffic_fraction doesn't change n_per_variant
         ref = SampleSize.for_proportion(0.10, 0.02)
@@ -185,12 +182,12 @@ class TestForRatio:
     def test_ctr_example(self):
         """CTR-like example gives reasonable n."""
         res = SampleSize.for_ratio(
-            baseline_num_mean=5.0,     # clicks
-            baseline_den_mean=100.0,   # impressions
+            baseline_num_mean=5.0,  # clicks
+            baseline_den_mean=100.0,  # impressions
             baseline_num_std=3.0,
             baseline_den_std=20.0,
             baseline_covariance=1.0,
-            mde=0.005,                 # 0.5pp change in CTR
+            mde=0.005,  # 0.5pp change in CTR
         )
         assert res.n_per_variant > 0
         assert res.metric == "ratio"
@@ -218,7 +215,7 @@ class TestMdeForProportion:
     """Unit tests for SampleSize.mde_for_proportion."""
 
     def test_roundtrip(self):
-        """for_proportion gives n, mde_for_proportion with that n gives back ~same mde."""
+        """for_proportion n, mde_for_proportion with that n ~ same mde."""
         original_mde = 0.02
         res = SampleSize.for_proportion(0.10, original_mde)
         recovered_mde = SampleSize.mde_for_proportion(0.10, res.n_per_variant)
@@ -350,8 +347,12 @@ class TestAdditionalCoverage:
 
     def test_for_ratio_one_sided(self):
         """One-sided ratio test gives smaller n than two-sided."""
-        two = SampleSize.for_ratio(5.0, 100.0, 3.0, 20.0, 1.0, 0.005, alternative="two-sided")
-        one = SampleSize.for_ratio(5.0, 100.0, 3.0, 20.0, 1.0, 0.005, alternative="one-sided")
+        two = SampleSize.for_ratio(
+            5.0, 100.0, 3.0, 20.0, 1.0, 0.005, alternative="two-sided"
+        )
+        one = SampleSize.for_ratio(
+            5.0, 100.0, 3.0, 20.0, 1.0, 0.005, alternative="one-sided"
+        )
         assert one.n_per_variant < two.n_per_variant
 
     def test_mde_for_proportion_extreme_baseline(self):
@@ -375,6 +376,6 @@ class TestAdditionalCoverage:
             SampleSize.mde_for_proportion(0.10, n=3.5)
 
     def test_mde_for_proportion_extreme_baseline_near_zero(self):
-        """Baseline extremely close to 0 (< 1e-9) raises ValueError about max_mde <= 0."""
+        """Baseline near 0 (< 1e-9) raises ValueError about max_mde."""
         with pytest.raises(ValueError, match="Cannot compute MDE"):
             SampleSize.mde_for_proportion(baseline=1e-10, n=1000)

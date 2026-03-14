@@ -10,7 +10,6 @@ import pytest
 from splita._types import mSPRTResult, mSPRTState
 from splita.sequential.msprt import mSPRT
 
-
 # ─── Basic ─────────────────────────────────────────────────────────────
 
 
@@ -53,9 +52,11 @@ class TestBasic:
         assert state_inc.n_treatment == state_batch.n_treatment
         # The MLR depends on running variance estimates, which differ slightly
         # between single-pass and incremental. Allow some tolerance.
-        assert abs(state_inc.mixture_lr - state_batch.mixture_lr) / max(
-            state_batch.mixture_lr, 1e-10
-        ) < 0.15
+        assert (
+            abs(state_inc.mixture_lr - state_batch.mixture_lr)
+            / max(state_batch.mixture_lr, 1e-10)
+            < 0.15
+        )
 
     def test_significant_result(self):
         """Large effect -> should_stop=True, p < alpha."""
@@ -146,7 +147,7 @@ class TestStatisticalCorrectness:
         for _ in range(n_sims):
             test = mSPRT(metric="continuous", alpha=alpha, tau=0.25)
             ever_significant = False
-            for day in range(10):
+            for _day in range(10):
                 ctrl = rng.normal(0, 1, size=50)
                 trt = rng.normal(0, 1, size=50)  # null: same distribution
                 state = test.update(ctrl, trt)
@@ -159,7 +160,7 @@ class TestStatisticalCorrectness:
         rejection_rate = false_positives / n_sims
         # Allow some tolerance for simulation noise
         assert rejection_rate <= alpha + 0.03, (
-            f"False positive rate {rejection_rate:.3f} exceeds alpha={alpha} + tolerance"
+            f"FP rate {rejection_rate:.3f} exceeds alpha={alpha} + tolerance"
         )
 
     def test_ci_contains_zero_under_null(self):
@@ -268,9 +269,7 @@ class TestAutoTuning:
             test.update(ctrl, trt)
 
         runtime_warnings = [x for x in w if issubclass(x.category, RuntimeWarning)]
-        tau_warnings = [
-            x for x in runtime_warnings if "tau auto-set" in str(x.message)
-        ]
+        tau_warnings = [x for x in runtime_warnings if "tau auto-set" in str(x.message)]
         assert len(tau_warnings) >= 1, "Expected a RuntimeWarning about tau auto-set"
 
     def test_manual_tau_used_directly(self):

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import warnings
+from typing import ClassVar
 
 import numpy as np
 import pytest
@@ -16,7 +17,6 @@ from splita._validation import (
     check_same_length,
     format_error,
 )
-
 
 # ─── format_error ──────────────────────────────────────────────────
 
@@ -58,7 +58,7 @@ class TestCheckInRange:
             check_in_range(-0.1, "alpha", 0, 1)
 
     def test_too_high_raises(self):
-        with pytest.raises(ValueError, match="above the maximum"):
+        with pytest.raises(ValueError, match=r"above the maximum"):
             check_in_range(1.5, "alpha", 0, 1)
 
     def test_exclusive_boundary_low(self):
@@ -84,15 +84,15 @@ class TestCheckInRange:
             check_in_range(-1, "x", 0, 1, low_inclusive=True, high_inclusive=False)
 
     def test_custom_hint_appears(self):
-        with pytest.raises(ValueError, match="typical values"):
+        with pytest.raises(ValueError, match=r"typical values"):
             check_in_range(1.5, "alpha", 0, 1, hint="typical values are 0.05.")
 
     def test_check_in_range_nan_raises(self):
-        with pytest.raises(ValueError, match="must be a finite number"):
+        with pytest.raises(ValueError, match=r"must be a finite number"):
             check_in_range(float("nan"), "alpha", 0, 1)
 
     def test_check_in_range_inf_raises(self):
-        with pytest.raises(ValueError, match="must be a finite number"):
+        with pytest.raises(ValueError, match=r"must be a finite number"):
             check_in_range(float("inf"), "alpha", 0, 1)
 
 
@@ -104,26 +104,26 @@ class TestCheckPositive:
         check_positive(5.0, "n")
 
     def test_negative_raises(self):
-        with pytest.raises(ValueError, match="must be > 0"):
+        with pytest.raises(ValueError, match=r"must be > 0"):
             check_positive(-1, "n")
 
     def test_zero_without_allow_zero_raises(self):
-        with pytest.raises(ValueError, match="must be > 0"):
+        with pytest.raises(ValueError, match=r"must be > 0"):
             check_positive(0, "n")
 
     def test_zero_with_allow_zero_passes(self):
         check_positive(0, "n", allow_zero=True)
 
     def test_negative_with_allow_zero_raises(self):
-        with pytest.raises(ValueError, match="must be >= 0"):
+        with pytest.raises(ValueError, match=r"must be >= 0"):
             check_positive(-1, "n", allow_zero=True)
 
     def test_check_positive_nan_raises(self):
-        with pytest.raises(ValueError, match="must be a finite number"):
+        with pytest.raises(ValueError, match=r"must be a finite number"):
             check_positive(float("nan"), "n")
 
     def test_check_positive_inf_raises(self):
-        with pytest.raises(ValueError, match="must be a finite number"):
+        with pytest.raises(ValueError, match=r"must be a finite number"):
             check_positive(float("inf"), "n")
 
 
@@ -138,26 +138,26 @@ class TestCheckIsInteger:
         check_is_integer(5.0, "n")
 
     def test_non_integer_float_raises(self):
-        with pytest.raises(ValueError, match="must be an integer"):
+        with pytest.raises(ValueError, match=r"must be an integer"):
             check_is_integer(5.5, "n")
 
     def test_min_value_passes(self):
         check_is_integer(10, "n", min_value=5)
 
     def test_min_value_raises(self):
-        with pytest.raises(ValueError, match="must be >= 5"):
+        with pytest.raises(ValueError, match=r"must be >= 5"):
             check_is_integer(3, "n", min_value=5)
 
     def test_non_numeric_raises_type_error(self):
-        with pytest.raises(TypeError, match="must be an integer"):
+        with pytest.raises(TypeError, match=r"must be an integer"):
             check_is_integer("five", "n")  # type: ignore[arg-type]
 
     def test_nan_raises(self):
-        with pytest.raises(ValueError, match="finite integer"):
+        with pytest.raises(ValueError, match=r"finite integer"):
             check_is_integer(float("nan"), "n")
 
     def test_inf_raises(self):
-        with pytest.raises(ValueError, match="finite integer"):
+        with pytest.raises(ValueError, match=r"finite integer"):
             check_is_integer(float("inf"), "n")
 
 
@@ -204,28 +204,26 @@ class TestCheckArrayLike:
         assert np.isnan(arr[1])
 
     def test_min_length_enforcement(self):
-        with pytest.raises(ValueError, match="at least 5 elements"):
+        with pytest.raises(ValueError, match=r"at least 5 elements"):
             check_array_like([1, 2, 3], "data", min_length=5)
 
     def test_min_length_after_nan_removal(self):
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
-            with pytest.raises(ValueError, match="at least 3 elements"):
-                check_array_like(
-                    [1, float("nan"), float("nan")], "data", min_length=3
-                )
+            with pytest.raises(ValueError, match=r"at least 3 elements"):
+                check_array_like([1, float("nan"), float("nan")], "data", min_length=3)
 
     def test_bad_input_raises_type_error(self):
-        with pytest.raises(TypeError, match="must be array-like"):
+        with pytest.raises(TypeError, match=r"must be array-like"):
             check_array_like(42, "data")  # type: ignore[arg-type]
 
     def test_string_input_raises_type_error(self):
-        with pytest.raises(TypeError, match="must be array-like"):
+        with pytest.raises(TypeError, match=r"must be array-like"):
             check_array_like("hello", "data")  # type: ignore[arg-type]
 
     def test_list_with_unconvertible_objects_raises_type_error(self):
         """A list containing objects that can't be cast to float raises TypeError."""
-        with pytest.raises(TypeError, match="can't be converted to a numeric array"):
+        with pytest.raises(TypeError, match=r"can't be converted to a numeric array"):
             check_array_like([object(), object()], "data")
 
     def test_pandas_series_converts(self):
@@ -240,23 +238,23 @@ class TestCheckArrayLike:
 
 
 class TestCheckOneOf:
-    OPTIONS = ["auto", "ttest", "ztest", "mannwhitney"]
+    OPTIONS: ClassVar[list[str]] = ["auto", "ttest", "ztest", "mannwhitney"]
 
     def test_valid_option_passes(self):
         check_one_of("ttest", "method", self.OPTIONS)
 
     def test_invalid_raises_with_options(self):
-        with pytest.raises(ValueError, match="must be one of"):
+        with pytest.raises(ValueError, match=r"must be one of"):
             check_one_of("bayesian", "method", self.OPTIONS)
 
     def test_auto_suggestion_substring(self):
         """'mann' is a substring of 'mannwhitney', should suggest it."""
-        with pytest.raises(ValueError, match="did you mean 'mannwhitney'"):
+        with pytest.raises(ValueError, match=r"did you mean 'mannwhitney'"):
             check_one_of("mann", "method", self.OPTIONS)
 
     def test_auto_suggestion_superstring(self):
         """'ttesting' contains 'ttest', should suggest it."""
-        with pytest.raises(ValueError, match="did you mean 'ttest'"):
+        with pytest.raises(ValueError, match=r"did you mean 'ttest'"):
             check_one_of("ttesting", "method", self.OPTIONS)
 
     def test_no_suggestion_for_unrelated(self):
@@ -265,8 +263,10 @@ class TestCheckOneOf:
         assert "did you mean" not in str(exc_info.value)
 
     def test_explicit_hint_overrides(self):
-        with pytest.raises(ValueError, match="use 'auto' for best results"):
-            check_one_of("bad", "method", self.OPTIONS, hint="use 'auto' for best results.")
+        with pytest.raises(ValueError, match=r"use 'auto' for best results"):
+            check_one_of(
+                "bad", "method", self.OPTIONS, hint="use 'auto' for best results."
+            )
 
 
 # ─── check_same_length ─────────────────────────────────────────────
@@ -277,7 +277,7 @@ class TestCheckSameLength:
         check_same_length(np.array([1, 2, 3]), np.array([4, 5, 6]), "a", "b")
 
     def test_different_length_raises(self):
-        with pytest.raises(ValueError, match="must have the same length") as exc_info:
+        with pytest.raises(ValueError, match=r"must have the same length") as exc_info:
             check_same_length(
                 np.array([1, 2, 3]), np.array([1, 2]), "control", "treatment"
             )
@@ -295,11 +295,11 @@ class TestCheckNotEmpty:
         check_not_empty(np.array([1]), "data")
 
     def test_empty_list_raises(self):
-        with pytest.raises(ValueError, match="can't be empty"):
+        with pytest.raises(ValueError, match=r"can't be empty"):
             check_not_empty([], "data")
 
     def test_empty_array_raises(self):
-        with pytest.raises(ValueError, match="can't be empty"):
+        with pytest.raises(ValueError, match=r"can't be empty"):
             check_not_empty(np.array([]), "data")
 
 
@@ -314,7 +314,7 @@ class TestCheckProbabilitiesSumToOne:
         check_probabilities_sum_to_one([1 / 3, 1 / 3, 1 / 3], "weights")
 
     def test_invalid_sum_raises(self):
-        with pytest.raises(ValueError, match="must sum to 1.0") as exc_info:
+        with pytest.raises(ValueError, match=r"must sum to 1.0") as exc_info:
             check_probabilities_sum_to_one([0.5, 0.6], "weights")
         assert "1.1" in str(exc_info.value)
 

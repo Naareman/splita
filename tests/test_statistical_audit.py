@@ -13,13 +13,12 @@ import numpy as np
 import pytest
 from scipy.stats import norm
 
+from splita.core.correction import MultipleCorrection
 from splita.core.experiment import Experiment
 from splita.core.sample_size import SampleSize
 from splita.core.srm import SRMCheck
-from splita.core.correction import MultipleCorrection
-from splita.variance.cuped import CUPED
 from splita.sequential.msprt import mSPRT
-
+from splita.variance.cuped import CUPED
 
 # ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -111,7 +110,7 @@ def test_ztest_ci_coverage():
 
     assert coverage >= 0.93, (
         f"Z-test CI coverage = {coverage:.4f}, expected >= 0.93 "
-        f"(nominal 1-alpha = {1-alpha})"
+        f"(nominal 1-alpha = {1 - alpha})"
     )
 
 
@@ -158,7 +157,7 @@ def test_ttest_ci_coverage():
 
     assert coverage >= 0.93, (
         f"T-test CI coverage = {coverage:.4f}, expected >= 0.93 "
-        f"(nominal 1-alpha = {1-alpha})"
+        f"(nominal 1-alpha = {1 - alpha})"
     )
 
 
@@ -182,7 +181,11 @@ def test_bootstrap_type1_error():
         ctrl = rng.normal(mu, std, size=n)
         trt = rng.normal(mu, std, size=n)
         result = Experiment(
-            ctrl, trt, method="bootstrap", alpha=alpha, n_bootstrap=1000,
+            ctrl,
+            trt,
+            method="bootstrap",
+            alpha=alpha,
+            n_bootstrap=1000,
             random_state=int(rng.integers(0, 2**31)),
         ).run()
         if result.significant:
@@ -317,8 +320,7 @@ def test_cuped_ate_preservation():
 
     mean_ate_adj = np.mean(ate_adj_values)
     assert abs(mean_ate_adj - true_ate) < 0.1, (
-        f"CUPED mean ATE = {mean_ate_adj:.4f}, expected ~{true_ate} "
-        f"(tolerance 0.1)"
+        f"CUPED mean ATE = {mean_ate_adj:.4f}, expected ~{true_ate} (tolerance 0.1)"
     )
 
 
@@ -334,7 +336,7 @@ def test_bh_fdr_control():
     n_sims = 1000
     n_null = 5
     n_alt = 5
-    n_tests = n_null + n_alt
+    n_null + n_alt
     alpha = 0.05
     n_per_group = 200
     effect_size = 0.5  # Cohen's d for alternative hypotheses
@@ -369,7 +371,9 @@ def test_bh_fdr_control():
         n_rejected = sum(cresult.rejected)
         if n_rejected > 0:
             false_discoveries = sum(
-                1 for r, null in zip(cresult.rejected, is_null) if r and null
+                1
+                for r, null in zip(cresult.rejected, is_null, strict=False)
+                if r and null
             )
             fdr = false_discoveries / n_rejected
         else:
@@ -405,6 +409,7 @@ def test_msprt_type1_error():
             ctrl = rng.normal(0, 1, size=n_per_batch)
             trt = rng.normal(0, 1, size=n_per_batch)
             import warnings
+
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
                 state = test.update(ctrl, trt)
@@ -463,7 +468,7 @@ class TestFormulaChecks:
         result = MultipleCorrection(pvalues, method="holm").run()
         # sorted pvalues: [0.01, 0.03, 0.04]
         # Holm: 0.01*3=0.03, max(0.03*2, 0.03)=0.06, max(0.04*1, 0.06)=0.06
-        adj = sorted(zip(pvalues, result.adjusted_pvalues))
+        sorted(zip(pvalues, result.adjusted_pvalues, strict=False))
         # p=0.01 -> adj=0.03, p=0.03 -> adj=0.06, p=0.04 -> adj=0.06
         assert abs(result.adjusted_pvalues[0] - 0.03) < 1e-10  # 0.01 * 3
         assert abs(result.adjusted_pvalues[2] - 0.06) < 1e-10  # max(0.03*2, 0.03)
@@ -506,8 +511,9 @@ class TestFormulaChecks:
 
     def test_cohens_h_formula(self):
         """Cohen's h = 2*(arcsin(sqrt(p2)) - arcsin(sqrt(p1)))."""
-        from splita._utils import cohens_h
         import math
+
+        from splita._utils import cohens_h
 
         p1, p2 = 0.5, 0.7
         expected = 2.0 * (math.asin(math.sqrt(p2)) - math.asin(math.sqrt(p1)))
@@ -538,6 +544,7 @@ class TestFormulaChecks:
         n1, n2 = len(ctrl), len(trt)
 
         import math
+
         se_pooled = math.sqrt(p_pool * (1 - p_pool) * (1 / n1 + 1 / n2))
         expected_z = (p2 - p1) / se_pooled
         assert abs(result.statistic - expected_z) < 1e-10
@@ -563,7 +570,6 @@ class TestFormulaChecks:
 
     def test_srm_uses_sf_not_1_minus_cdf(self):
         """SRM uses chi2.sf() for numerical stability (not 1-cdf)."""
-        from scipy.stats import chi2
 
         # With a large chi2 statistic, 1-cdf would lose precision
         result = SRMCheck([5500, 4500], alpha=0.01).run()
@@ -575,6 +581,7 @@ class TestFormulaChecks:
     def test_sample_size_proportion_formula(self):
         """Verify proportion sample size against manual Farrington-Manning calc."""
         import math as _math
+
         # baseline=0.10, mde=0.02, alpha=0.05, power=0.80
         p1, p2 = 0.10, 0.12
         p_bar = (p1 + p2) / 2.0
@@ -582,15 +589,16 @@ class TestFormulaChecks:
         se1 = _math.sqrt(p1 * (1.0 - p1) + p2 * (1.0 - p2))
         za = norm.ppf(0.975)
         zb = norm.ppf(0.80)
-        expected_n = _math.ceil((za * se0 + zb * se1) ** 2 / 0.02 ** 2)
+        expected_n = _math.ceil((za * se0 + zb * se1) ** 2 / 0.02**2)
 
         result = SampleSize.for_proportion(0.10, 0.02)
         assert result.n_per_variant == expected_n
 
     def test_sample_size_mean_formula(self):
         """Verify mean sample size: n = ceil(2 * ((z_a + z_b) / d)^2)."""
-        from scipy.stats import norm
         import math
+
+        from scipy.stats import norm
 
         mu, std, mde = 25.0, 40.0, 2.0
         d = mde / std
@@ -612,7 +620,8 @@ class TestFormulaChecks:
         trt_den = rng.normal(5, 1, size=n)
 
         result = Experiment(
-            ctrl_num, trt_num,
+            ctrl_num,
+            trt_num,
             metric="ratio",
             method="delta",
             control_denominator=ctrl_den,
@@ -635,9 +644,7 @@ class TestFormulaChecks:
         result_greater = Experiment(
             ctrl, trt, method="ztest", alternative="greater"
         ).run()
-        result_less = Experiment(
-            ctrl, trt, method="ztest", alternative="less"
-        ).run()
+        result_less = Experiment(ctrl, trt, method="ztest", alternative="less").run()
 
         # "greater" means H1: treatment > control -- should be significant
         assert result_greater.pvalue < 0.01
@@ -653,16 +660,13 @@ class TestFormulaChecks:
         result_greater = Experiment(
             ctrl, trt, method="ttest", alternative="greater"
         ).run()
-        result_less = Experiment(
-            ctrl, trt, method="ttest", alternative="less"
-        ).run()
+        result_less = Experiment(ctrl, trt, method="ttest", alternative="less").run()
 
         assert result_greater.pvalue < 0.01
         assert result_less.pvalue > 0.5
 
     def test_msprt_mlr_formula(self):
         """mSPRT MLR = sqrt(V/(V+tau)) * exp(tau*delta^2 / (2*V*(V+tau)))."""
-        import math
 
         # Manually compute MLR and compare
         test = mSPRT(metric="conversion", alpha=0.05, tau=0.01)
@@ -670,6 +674,7 @@ class TestFormulaChecks:
         trt = np.array([1, 1, 0, 1, 1] * 100, dtype=float)
 
         import warnings
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             state = test.update(ctrl, trt)
@@ -704,8 +709,12 @@ class TestFormulaChecks:
         trt = rng.normal(12, 2, size=500)
 
         result = Experiment(
-            ctrl, trt, method="bootstrap", alpha=0.05,
-            n_bootstrap=5000, random_state=42,
+            ctrl,
+            trt,
+            method="bootstrap",
+            alpha=0.05,
+            n_bootstrap=5000,
+            random_state=42,
         ).run()
 
         # CI should contain the observed lift
@@ -720,10 +729,10 @@ class TestFormulaChecks:
         by_result = MultipleCorrection(pvalues, method="by").run()
 
         # BY should be more conservative than BH
-        for bh_p, by_p in zip(bh_result.adjusted_pvalues, by_result.adjusted_pvalues):
-            assert by_p >= bh_p - 1e-10, (
-                f"BY ({by_p}) should be >= BH ({bh_p})"
-            )
+        for bh_p, by_p in zip(
+            bh_result.adjusted_pvalues, by_result.adjusted_pvalues, strict=False
+        ):
+            assert by_p >= bh_p - 1e-10, f"BY ({by_p}) should be >= BH ({bh_p})"
 
     def test_cuped_theta_formula(self):
         """CUPED theta = Cov(Y, X) / Var(X)."""
@@ -818,8 +827,9 @@ class TestFormulaChecks:
         assert abs(handler.upper_threshold_ - expected_upper) < 1e-10
 
     def test_sample_size_ratio_delta_var(self):
-        """Verify delta method variance: sigma_num^2/d^2 - 2*R*cov/d^2 + R^2*sigma_den^2/d^2."""
+        """Verify delta method variance formula for ratio metrics."""
         import math
+
         from scipy.stats import norm as norm_dist
 
         num_mean, den_mean = 10.0, 5.0
@@ -828,7 +838,7 @@ class TestFormulaChecks:
         mde = 0.1
 
         R = num_mean / den_mean
-        d2 = den_mean ** 2
+        d2 = den_mean**2
         expected_var = num_std**2 / d2 - 2 * R * cov / d2 + R**2 * den_std**2 / d2
 
         za = norm_dist.ppf(0.975)

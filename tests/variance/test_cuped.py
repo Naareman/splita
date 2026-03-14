@@ -9,7 +9,6 @@ import pytest
 
 from splita.variance import CUPED
 
-
 # ── helpers ──────────────────────────────────────────────────────────
 
 
@@ -71,7 +70,7 @@ class TestBasic:
 
     def test_known_theta(self):
         """Manually set theta=1.0 — verify adjustment formula."""
-        rng = np.random.default_rng(0)
+        np.random.default_rng(0)
         ctrl = np.array([10.0, 12.0, 11.0, 13.0, 14.0])
         trt = np.array([11.0, 13.0, 12.0, 14.0, 15.0])
         pre_ctrl = np.array([9.0, 11.0, 10.0, 12.0, 13.0])
@@ -131,7 +130,7 @@ class TestStatistical:
 
         np.testing.assert_allclose(
             cuped.variance_reduction_,
-            cuped.correlation_ ** 2,
+            cuped.correlation_**2,
             rtol=1e-10,
         )
 
@@ -180,7 +179,7 @@ class TestEdgeCases:
         custom_cov = np.concatenate([ctrl, trt]) + rng.normal(0, 0.1, 100)
 
         cuped = CUPED(covariate=custom_cov)
-        ctrl_adj, trt_adj = cuped.fit_transform(ctrl, trt)
+        _ctrl_adj, _trt_adj = cuped.fit_transform(ctrl, trt)
 
         assert cuped._is_fitted
         assert cuped.variance_reduction_ > 0.5
@@ -206,7 +205,7 @@ class TestValidation:
         trt = np.array([2.0, 3.0, 4.0])
         cuped = CUPED()
 
-        with pytest.raises(ValueError, match="control_pre.*treatment_pre.*required"):
+        with pytest.raises(ValueError, match=r"control_pre.*treatment_pre.*required"):
             cuped.fit(ctrl, trt)
 
     def test_length_mismatch(self):
@@ -217,7 +216,7 @@ class TestValidation:
         pre_trt = np.array([1.5, 2.5, 3.5])
         cuped = CUPED()
 
-        with pytest.raises(ValueError, match="same length"):
+        with pytest.raises(ValueError, match=r"same length"):
             cuped.fit(ctrl, trt, pre_ctrl, pre_trt)
 
     def test_transform_before_fit(self):
@@ -228,7 +227,7 @@ class TestValidation:
         pre_trt = np.array([1.5, 2.5, 3.5])
         cuped = CUPED()
 
-        with pytest.raises(RuntimeError, match="fitted before calling transform"):
+        with pytest.raises(RuntimeError, match=r"fitted before calling transform"):
             cuped.transform(ctrl, trt, pre_ctrl, pre_trt)
 
     def test_min_length_control(self):
@@ -237,12 +236,12 @@ class TestValidation:
         trt = np.array([2.0, 3.0])
         cuped = CUPED()
 
-        with pytest.raises(ValueError, match="at least 2"):
+        with pytest.raises(ValueError, match=r"at least 2"):
             cuped.fit(ctrl, trt, ctrl, trt)
 
     def test_invalid_covariate_string(self):
         """Invalid string for covariate raises ValueError."""
-        with pytest.raises(ValueError, match="covariate"):
+        with pytest.raises(ValueError, match=r"covariate"):
             CUPED(covariate="invalid")
 
 
@@ -257,7 +256,9 @@ class TestIntegration:
         from splita import Experiment
 
         ctrl, trt, pre_ctrl, pre_trt = _make_correlated_data(
-            n=500, effect=0.5, seed=123,
+            n=500,
+            effect=0.5,
+            seed=123,
         )
         cuped = CUPED()
         ctrl_adj, trt_adj = cuped.fit_transform(ctrl, trt, pre_ctrl, pre_trt)
@@ -275,7 +276,7 @@ class TestIntegration:
         pre_trt = rng.normal(0, 1, 200)
 
         cuped = CUPED()
-        with pytest.warns(RuntimeWarning, match="Low correlation"):
+        with pytest.warns(RuntimeWarning, match=r"Low correlation"):
             cuped.fit(ctrl, trt, pre_ctrl, pre_trt)
 
 
@@ -322,7 +323,7 @@ class TestZeroVarianceCovariate:
         pre_trt = np.array([5.0, 5.0, 5.0, 5.0, 5.0])
 
         cuped = CUPED()
-        with pytest.raises(ValueError, match="zero variance"):
+        with pytest.raises(ValueError, match=r"zero variance"):
             cuped.fit(ctrl, trt, pre_ctrl, pre_trt)
 
 
@@ -337,7 +338,7 @@ class TestCustomCovariateLengthMismatch:
         custom_cov = np.array([1.0, 2.0, 3.0, 4.0])
 
         cuped = CUPED(covariate=custom_cov)
-        with pytest.raises(ValueError, match="covariate.*length"):
+        with pytest.raises(ValueError, match=r"covariate.*length"):
             cuped.fit(ctrl, trt)
 
 
@@ -350,5 +351,5 @@ class TestCustomModeMissingPre:
         trt = np.array([11.0, 13.0, 12.0])
 
         cuped = CUPED(covariate="custom")
-        with pytest.raises(ValueError, match="control_pre.*treatment_pre.*required"):
+        with pytest.raises(ValueError, match=r"control_pre.*treatment_pre.*required"):
             cuped.fit(ctrl, trt)

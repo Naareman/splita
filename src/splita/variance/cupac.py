@@ -68,8 +68,7 @@ def _validate_features(
             format_error(
                 f"`X_control` must be a 2-D array, got {X_control.ndim}-D "
                 f"with shape {X_control.shape}.",
-                hint="pass a 2-D feature matrix with shape "
-                "(n_samples, n_features).",
+                hint="pass a 2-D feature matrix with shape (n_samples, n_features).",
             )
         )
 
@@ -78,16 +77,14 @@ def _validate_features(
             format_error(
                 f"`X_treatment` must be a 2-D array, got {X_treatment.ndim}-D "
                 f"with shape {X_treatment.shape}.",
-                hint="pass a 2-D feature matrix with shape "
-                "(n_samples, n_features).",
+                hint="pass a 2-D feature matrix with shape (n_samples, n_features).",
             )
         )
 
     if X_control.shape[1] != X_treatment.shape[1]:
         raise ValueError(
             format_error(
-                "`X_control` and `X_treatment` must have the same "
-                "number of columns.",
+                "`X_control` and `X_treatment` must have the same number of columns.",
                 detail=f"X_control has {X_control.shape[1]} columns, "
                 f"X_treatment has {X_treatment.shape[1]} columns.",
                 hint="ensure both feature matrices have the same features.",
@@ -327,7 +324,10 @@ class CUPAC:
         control_arr = check_array_like(control, "control", min_length=2)
         treatment_arr = check_array_like(treatment, "treatment", min_length=2)
         X_control, X_treatment = _validate_features(
-            X_control, X_treatment, control_arr, treatment_arr,
+            X_control,
+            X_treatment,
+            control_arr,
+            treatment_arr,
         )
 
         # Pool
@@ -429,7 +429,10 @@ class CUPAC:
         control_arr = check_array_like(control, "control", min_length=2)
         treatment_arr = check_array_like(treatment, "treatment", min_length=2)
         X_control, X_treatment = _validate_features(
-            X_control, X_treatment, control_arr, treatment_arr,
+            X_control,
+            X_treatment,
+            control_arr,
+            treatment_arr,
         )
 
         # Predict using the fitted estimator
@@ -497,7 +500,10 @@ class CUPAC:
 
         # Validate feature matrices
         X_control, X_treatment = _validate_features(
-            X_control, X_treatment, control_arr, treatment_arr,
+            X_control,
+            X_treatment,
+            control_arr,
+            treatment_arr,
         )
 
         # Pool all data

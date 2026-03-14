@@ -11,7 +11,6 @@ from scipy.stats import chisquare
 from splita._types import SRMResult
 from splita.core.srm import SRMCheck
 
-
 # ─── Basic tests ────────────────────────────────────────────────────
 
 
@@ -32,15 +31,11 @@ class TestBasic:
         assert result.passed is False
 
     def test_custom_fractions_pass(self):
-        result = SRMCheck(
-            [9000, 1000], expected_fractions=[0.90, 0.10]
-        ).run()
+        result = SRMCheck([9000, 1000], expected_fractions=[0.90, 0.10]).run()
         assert result.passed is True
 
     def test_custom_fractions_fail(self):
-        result = SRMCheck(
-            [8000, 2000], expected_fractions=[0.90, 0.10]
-        ).run()
+        result = SRMCheck([8000, 2000], expected_fractions=[0.90, 0.10]).run()
         assert result.passed is False
 
     def test_abc_equal_split_passes(self):
@@ -123,44 +118,44 @@ class TestValidation:
     """Input validation raises appropriate errors."""
 
     def test_fewer_than_2_variants(self):
-        with pytest.raises(ValueError, match="at least 2 variants"):
+        with pytest.raises(ValueError, match=r"at least 2 variants"):
             SRMCheck([5000])
 
     def test_fractions_dont_sum_to_one(self):
-        with pytest.raises(ValueError, match="sum to 1.0"):
+        with pytest.raises(ValueError, match=r"sum to 1.0"):
             SRMCheck([5000, 5000], expected_fractions=[0.6, 0.6])
 
     def test_fraction_length_mismatch(self):
-        with pytest.raises(ValueError, match="same length"):
+        with pytest.raises(ValueError, match=r"same length"):
             SRMCheck([5000, 5000], expected_fractions=[0.5, 0.3, 0.2])
 
     def test_negative_observed_count(self):
-        with pytest.raises(ValueError, match="must be >= 0"):
+        with pytest.raises(ValueError, match=r"must be >= 0"):
             SRMCheck([-100, 5000])
 
     def test_alpha_zero(self):
-        with pytest.raises(ValueError, match="alpha"):
+        with pytest.raises(ValueError, match=r"alpha"):
             SRMCheck([5000, 5000], alpha=0)
 
     def test_alpha_one(self):
-        with pytest.raises(ValueError, match="alpha"):
+        with pytest.raises(ValueError, match=r"alpha"):
             SRMCheck([5000, 5000], alpha=1)
 
     def test_invalid_min_expected_count(self):
-        with pytest.raises(ValueError, match="min_expected_count"):
+        with pytest.raises(ValueError, match=r"min_expected_count"):
             SRMCheck([5000, 5000], min_expected_count=0)
 
     def test_zero_total_observations_raises(self):
-        with pytest.raises(ValueError, match="all zeros"):
+        with pytest.raises(ValueError, match=r"all zeros"):
             SRMCheck([0, 0]).run()
 
     def test_nan_in_observed_raises(self):
-        with pytest.raises(ValueError, match="non-finite"):
-            SRMCheck([float('nan'), 5000])
+        with pytest.raises(ValueError, match=r"non-finite"):
+            SRMCheck([float("nan"), 5000])
 
     def test_inf_in_observed_raises(self):
-        with pytest.raises(ValueError, match="non-finite"):
-            SRMCheck([float('inf'), 5000])
+        with pytest.raises(ValueError, match=r"non-finite"):
+            SRMCheck([float("inf"), 5000])
 
 
 # ─── Properties ────────────────────────────────────────────────────
@@ -227,9 +222,7 @@ class TestDeviationsAndExpected:
         assert result.expected_counts == [5000.0, 5000.0]
 
     def test_custom_fractions_three_variants(self):
-        result = SRMCheck(
-            [5000, 3000, 2000], expected_fractions=[0.5, 0.3, 0.2]
-        ).run()
+        result = SRMCheck([5000, 3000, 2000], expected_fractions=[0.5, 0.3, 0.2]).run()
         assert result.expected_counts == [5000.0, 3000.0, 2000.0]
         assert result.passed is True
 
@@ -261,8 +254,10 @@ class TestDeviationsAndExpected:
         assert result.deviations_pct[1] == pytest.approx(-100.0)
         # For a true zero-expected test, verify the formula inline:
         # e=0, o=5 -> inf
-        deviation = ((5 - 0) / 0 * 100) if 0 > 0 else (float('inf') if 5 > 0 else 0.0)
+        deviation = ((5 - 0) / 0 * 100) if 0 > 0 else (float("inf") if 5 > 0 else 0.0)
         assert math.isinf(deviation)
         # e=0, o=0 -> 0.0
-        deviation_zero = ((0 - 0) / 0 * 100) if 0 > 0 else (float('inf') if 0 > 0 else 0.0)
+        deviation_zero = (
+            ((0 - 0) / 0 * 100) if 0 > 0 else (float("inf") if 0 > 0 else 0.0)
+        )
         assert deviation_zero == 0.0

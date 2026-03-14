@@ -2,15 +2,11 @@
 
 from __future__ import annotations
 
-import math
-
-import numpy as np
 import pytest
 from scipy.stats import norm
 
 from splita._types import BoundaryResult, GSResult
 from splita.sequential.group_sequential import GroupSequential
-
 
 # ─── Basic boundary tests ────────────────────────────────────────────
 
@@ -60,10 +56,10 @@ class TestOBFBoundaries:
         b = gs.boundary()
         expected = [4.38, 3.10, 2.59, 2.38, 2.29]
         for i, (actual, exp) in enumerate(
-            zip(b.efficacy_boundaries, expected)
+            zip(b.efficacy_boundaries, expected, strict=False)
         ):
             assert abs(actual - exp) < 0.10, (
-                f"Look {i+1}: expected ~{exp}, got {actual:.4f}"
+                f"Look {i + 1}: expected ~{exp}, got {actual:.4f}"
             )
 
 
@@ -230,39 +226,39 @@ class TestGroupSequentialValidation:
 
     def test_n_analyses_less_than_2(self):
         """n_analyses < 2 should raise ValueError."""
-        with pytest.raises(ValueError, match="n_analyses"):
+        with pytest.raises(ValueError, match=r"n_analyses"):
             GroupSequential(n_analyses=1)
 
     def test_invalid_spending_function(self):
         """Invalid spending function should raise ValueError."""
-        with pytest.raises(ValueError, match="spending_function"):
+        with pytest.raises(ValueError, match=r"spending_function"):
             GroupSequential(n_analyses=3, spending_function="invalid")
 
     def test_invalid_alpha(self):
         """Alpha outside (0, 1) should raise ValueError."""
-        with pytest.raises(ValueError, match="alpha"):
+        with pytest.raises(ValueError, match=r"alpha"):
             GroupSequential(n_analyses=3, alpha=1.5)
 
     def test_statistics_info_fractions_length_mismatch(self):
         """Mismatched lengths should raise ValueError."""
         gs = GroupSequential(n_analyses=3)
-        with pytest.raises(ValueError, match="same length"):
+        with pytest.raises(ValueError, match=r"same length"):
             gs.test([1.0, 2.0], [0.33, 0.67, 1.0])
 
     def test_info_fractions_not_non_decreasing(self):
         """Non-decreasing info fractions should raise ValueError."""
         gs = GroupSequential(n_analyses=3)
-        with pytest.raises(ValueError, match="non-decreasing"):
+        with pytest.raises(ValueError, match=r"non-decreasing"):
             gs.test([1.0, 2.0, 3.0], [0.5, 0.3, 1.0])
 
     def test_rho_not_positive(self):
         """rho <= 0 should raise ValueError."""
-        with pytest.raises(ValueError, match="rho"):
+        with pytest.raises(ValueError, match=r"rho"):
             GroupSequential(n_analyses=3, spending_function="kim_demets", rho=0.0)
 
     def test_invalid_beta_spending(self):
         """Invalid beta_spending should raise ValueError."""
-        with pytest.raises(ValueError, match="beta_spending"):
+        with pytest.raises(ValueError, match=r"beta_spending"):
             GroupSequential(n_analyses=3, beta_spending="invalid")
 
 
@@ -342,17 +338,17 @@ class TestCoverageGaps:
     def test_empty_information_fractions(self):
         """Empty information_fractions should raise ValueError."""
         gs = GroupSequential(n_analyses=3)
-        with pytest.raises(ValueError, match="can't be empty"):
+        with pytest.raises(ValueError, match=r"can't be empty"):
             gs.test([], [])
 
     def test_invalid_information_fraction_value(self):
         """info fraction <= 0 should raise ValueError."""
         gs = GroupSequential(n_analyses=3)
-        with pytest.raises(ValueError, match="must be in"):
+        with pytest.raises(ValueError, match=r"must be in"):
             gs.test([1.0, 2.0, 3.0], [0.0, 0.5, 1.0])
 
     def test_last_info_fraction_not_one(self):
         """Last info fraction != 1.0 should raise ValueError."""
         gs = GroupSequential(n_analyses=3)
-        with pytest.raises(ValueError, match="must be 1.0"):
+        with pytest.raises(ValueError, match=r"must be 1.0"):
             gs.test([1.0, 2.0, 3.0], [0.2, 0.5, 0.9])

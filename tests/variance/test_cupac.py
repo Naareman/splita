@@ -9,7 +9,6 @@ import pytest
 
 from splita.variance import CUPAC
 
-
 # ── helpers ──────────────────────────────────────────────────────────
 
 
@@ -60,7 +59,7 @@ class TestBasic:
         """Works without specifying an estimator (defaults to Ridge)."""
         ctrl, trt, X_ctrl, X_trt = _make_cupac_data()
         cupac = CUPAC(random_state=42)
-        ctrl_adj, trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
+        _ctrl_adj, _trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
 
         assert hasattr(cupac, "theta_")
         assert hasattr(cupac, "cv_r2_")
@@ -102,7 +101,7 @@ class TestStatistical:
         """Theta matches manual Cov(Y, Y_hat) / Var(Y_hat)."""
         ctrl, trt, X_ctrl, X_trt = _make_cupac_data(n=300, seed=7)
         cupac = CUPAC(random_state=7)
-        ctrl_adj, trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
+        _ctrl_adj, _trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
 
         # Reconstruct Y_hat from the adjustment formula:
         # Y_adj = Y - theta * (Y_hat - mean(Y_hat))
@@ -118,7 +117,7 @@ class TestStatistical:
 
         np.testing.assert_allclose(
             cupac.variance_reduction_,
-            cupac.correlation_ ** 2,
+            cupac.correlation_**2,
             rtol=1e-10,
         )
 
@@ -135,7 +134,7 @@ class TestCustomEstimator:
 
         ctrl, trt, X_ctrl, X_trt = _make_cupac_data()
         cupac = CUPAC(estimator=Ridge(alpha=0.5), random_state=42)
-        ctrl_adj, trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
+        ctrl_adj, _trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
 
         assert cupac.cv_r2_ > 0.0
         assert len(ctrl_adj) == len(ctrl)
@@ -158,7 +157,7 @@ class TestCustomEstimator:
             ),
             random_state=42,
         )
-        ctrl_adj, trt_adj = cupac_gbr.fit_transform(ctrl, trt, X_ctrl, X_trt)
+        _ctrl_adj, _trt_adj = cupac_gbr.fit_transform(ctrl, trt, X_ctrl, X_trt)
         assert cupac_gbr.cv_r2_ > 0.1
 
 
@@ -209,14 +208,14 @@ class TestEdgeCases:
         cupac = CUPAC(random_state=42)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
-            ctrl_adj, trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
+            ctrl_adj, _trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
         assert len(ctrl_adj) == len(ctrl)
 
     def test_many_features(self):
         """X with 10 columns works."""
         ctrl, trt, X_ctrl, X_trt = _make_cupac_data(n_features=10)
         cupac = CUPAC(random_state=42)
-        ctrl_adj, trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
+        ctrl_adj, _trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
         assert len(ctrl_adj) == len(ctrl)
 
 
@@ -228,17 +227,17 @@ class TestValidation:
 
     def test_bad_estimator_no_fit(self):
         """Object without fit/predict raises ValueError."""
-        with pytest.raises(ValueError, match="fit.*predict"):
+        with pytest.raises(ValueError, match=r"fit.*predict"):
             CUPAC(estimator=object())
 
     def test_cv_less_than_2(self):
         """cv < 2 raises ValueError."""
-        with pytest.raises(ValueError, match="cv.*>= 2"):
+        with pytest.raises(ValueError, match=r"cv.*>= 2"):
             CUPAC(cv=1)
 
     def test_cv_zero(self):
         """cv=0 raises ValueError."""
-        with pytest.raises(ValueError, match="cv.*>= 2"):
+        with pytest.raises(ValueError, match=r"cv.*>= 2"):
             CUPAC(cv=0)
 
     def test_x_column_mismatch(self):
@@ -250,7 +249,7 @@ class TestValidation:
         X_trt = rng.normal(0, 1, size=(50, 5))
 
         cupac = CUPAC(random_state=42)
-        with pytest.raises(ValueError, match="same number of columns"):
+        with pytest.raises(ValueError, match=r"same number of columns"):
             cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
 
     def test_x_row_mismatch_control(self):
@@ -262,7 +261,7 @@ class TestValidation:
         X_trt = rng.normal(0, 1, size=(50, 3))
 
         cupac = CUPAC(random_state=42)
-        with pytest.raises(ValueError, match="same number of rows"):
+        with pytest.raises(ValueError, match=r"same number of rows"):
             cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
 
     def test_x_row_mismatch_treatment(self):
@@ -274,7 +273,7 @@ class TestValidation:
         X_trt = rng.normal(0, 1, size=(40, 3))  # Wrong: 40 != 50
 
         cupac = CUPAC(random_state=42)
-        with pytest.raises(ValueError, match="same number of rows"):
+        with pytest.raises(ValueError, match=r"same number of rows"):
             cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
 
     def test_theta_before_fit_transform(self):
@@ -292,7 +291,7 @@ class TestValidation:
         X_trt = rng.normal(0, 1, size=(50, 3))
 
         cupac = CUPAC(random_state=42)
-        with pytest.raises(ValueError, match="2-D"):
+        with pytest.raises(ValueError, match=r"2-D"):
             cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
 
     def test_x_treatment_not_2d(self):
@@ -304,7 +303,7 @@ class TestValidation:
         X_trt = rng.normal(0, 1, size=50)  # 1-D
 
         cupac = CUPAC(random_state=42)
-        with pytest.raises(ValueError, match="2-D"):
+        with pytest.raises(ValueError, match=r"2-D"):
             cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
 
 
@@ -335,8 +334,11 @@ class TestIntegration:
 
         # CUPAC on cleaned data
         cupac = CUPAC(random_state=42)
-        ctrl_adj, trt_adj = cupac.fit_transform(
-            ctrl_clean, trt_clean, X_ctrl, X_trt,
+        _ctrl_adj, _trt_adj = cupac.fit_transform(
+            ctrl_clean,
+            trt_clean,
+            X_ctrl,
+            X_trt,
         )
         assert cupac.variance_reduction_ > 0.0
 
@@ -397,7 +399,7 @@ class TestFitTransform:
         """transform without fit raises RuntimeError."""
         ctrl, trt, X_ctrl, X_trt = _make_cupac_data()
         cupac = CUPAC(random_state=42)
-        with pytest.raises(RuntimeError, match="not been fitted"):
+        with pytest.raises(RuntimeError, match=r"not been fitted"):
             cupac.transform(ctrl, trt, X_ctrl, X_trt)
 
     def test_fit_transform_vs_fit_plus_transform(self):
@@ -455,7 +457,7 @@ class TestNanInfValidation:
         X_ctrl[0, 0] = np.nan
 
         cupac = CUPAC(random_state=42)
-        with pytest.raises(ValueError, match="NaN or infinite"):
+        with pytest.raises(ValueError, match=r"NaN or infinite"):
             cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
 
     def test_inf_in_features_raises(self):
@@ -464,7 +466,7 @@ class TestNanInfValidation:
         X_trt[0, 0] = np.inf
 
         cupac = CUPAC(random_state=42)
-        with pytest.raises(ValueError, match="NaN or infinite"):
+        with pytest.raises(ValueError, match=r"NaN or infinite"):
             cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
 
     def test_nan_in_x_control_fit_raises(self):
@@ -473,7 +475,7 @@ class TestNanInfValidation:
         X_ctrl[0, 0] = np.nan
 
         cupac = CUPAC(random_state=42)
-        with pytest.raises(ValueError, match="NaN or infinite"):
+        with pytest.raises(ValueError, match=r"NaN or infinite"):
             cupac.fit(ctrl, trt, X_ctrl, X_trt)
 
     def test_neg_inf_in_features_raises(self):
@@ -482,7 +484,7 @@ class TestNanInfValidation:
         X_ctrl[0, 0] = -np.inf
 
         cupac = CUPAC(random_state=42)
-        with pytest.raises(ValueError, match="NaN or infinite"):
+        with pytest.raises(ValueError, match=r"NaN or infinite"):
             cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
 
 
@@ -494,12 +496,12 @@ class TestCvCap:
 
     def test_cv_too_high_raises(self):
         """cv=100 raises ValueError."""
-        with pytest.raises(ValueError, match="cv.*<= 50"):
+        with pytest.raises(ValueError, match=r"cv.*<= 50"):
             CUPAC(cv=100)
 
     def test_cv_boundary_51_raises(self):
         """cv=51 raises ValueError."""
-        with pytest.raises(ValueError, match="cv.*<= 50"):
+        with pytest.raises(ValueError, match=r"cv.*<= 50"):
             CUPAC(cv=51)
 
     def test_cv_boundary_50_ok(self):
@@ -516,7 +518,7 @@ class TestGeneratorRandomState:
         ctrl, trt, X_ctrl, X_trt = _make_cupac_data()
         gen = np.random.default_rng(42)
         cupac = CUPAC(random_state=gen)
-        ctrl_adj, trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
+        ctrl_adj, _trt_adj = cupac.fit_transform(ctrl, trt, X_ctrl, X_trt)
 
         assert len(ctrl_adj) == len(ctrl)
         assert cupac.cv_r2_ > 0.0
@@ -527,7 +529,6 @@ class TestDegenerateConstantPredictions:
 
     def test_constant_prediction_returns_copy(self):
         """When the model predicts a constant, CUPAC returns copies of original."""
-        from unittest.mock import MagicMock
 
         from sklearn.base import BaseEstimator
 

@@ -7,7 +7,6 @@ import pytest
 
 from splita.variance import OutlierHandler
 
-
 # ─── Fixtures ────────────────────────────────────────────────────────
 
 
@@ -231,7 +230,7 @@ class TestEdgeCases:
         trt = np.array([96.0, 97.0, 98.0, 99.0, 100.0])
         # With aggressive percentiles, many values will be capped
         handler = OutlierHandler(method="winsorize", lower=0.25, upper=0.75)
-        ctrl_c, trt_c = handler.fit_transform(ctrl, trt)
+        _ctrl_c, _trt_c = handler.fit_transform(ctrl, trt)
 
         # At least some values should have been capped
         assert handler.n_capped_ > 0
@@ -281,22 +280,22 @@ class TestValidation:
 
     def test_invalid_method(self):
         """Test 18: Invalid method raises ValueError with suggestion."""
-        with pytest.raises(ValueError, match="must be one of"):
+        with pytest.raises(ValueError, match=r"must be one of"):
             OutlierHandler(method="bogus")
 
     def test_clustering_deferred(self):
         """Test 19: method='clustering' raises ValueError with v0.2.0 hint."""
-        with pytest.raises(ValueError, match="v0.2.0"):
+        with pytest.raises(ValueError, match=r"v0.2.0"):
             OutlierHandler(method="clustering")
 
     def test_lower_gte_upper(self):
         """Test 20: invalid lower/upper combos raise ValueError."""
         # upper=0.4 is out of range (must be > 0.5)
-        with pytest.raises(ValueError, match="must be in"):
+        with pytest.raises(ValueError, match=r"must be in"):
             OutlierHandler(lower=0.4, upper=0.4)
 
         # lower=0.6 is out of range (must be < 0.5)
-        with pytest.raises(ValueError, match="must be in"):
+        with pytest.raises(ValueError, match=r"must be in"):
             OutlierHandler(lower=0.6, upper=0.9)
 
         # Valid combo should not raise
@@ -305,15 +304,15 @@ class TestValidation:
     def test_transform_before_fit(self):
         """Test 21: transform before fit raises RuntimeError."""
         handler = OutlierHandler()
-        with pytest.raises(RuntimeError, match="must be fitted"):
+        with pytest.raises(RuntimeError, match=r"must be fitted"):
             handler.transform([1, 2, 3], [4, 5, 6])
 
     def test_iqr_multiplier_lte_zero(self):
         """Test 22: iqr_multiplier <= 0 raises ValueError."""
-        with pytest.raises(ValueError, match="must be > 0"):
+        with pytest.raises(ValueError, match=r"must be > 0"):
             OutlierHandler(iqr_multiplier=0)
 
-        with pytest.raises(ValueError, match="must be > 0"):
+        with pytest.raises(ValueError, match=r"must be > 0"):
             OutlierHandler(iqr_multiplier=-1.0)
 
     def test_lower_out_of_range(self):
@@ -351,7 +350,7 @@ class TestIntegration:
 
         # Step 2: CUPED
         cuped = CUPED()
-        ctrl_adj, trt_adj = cuped.fit_transform(ctrl_c, trt_c, pre[:100], pre[100:])
+        _ctrl_adj, _trt_adj = cuped.fit_transform(ctrl_c, trt_c, pre[:100], pre[100:])
 
         # Outliers should be capped
         assert ctrl_c[0] < 500.0
@@ -418,5 +417,5 @@ class TestInvalidSide:
     """Cover line 148: invalid side value."""
 
     def test_invalid_side_raises(self):
-        with pytest.raises(ValueError, match="side"):
+        with pytest.raises(ValueError, match=r"side"):
             OutlierHandler(side="left")

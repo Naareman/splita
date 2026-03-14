@@ -241,7 +241,7 @@ class TestClusterValidation:
                 alpha=1.5,
             )
 
-    def test_2d_clusters_rejected(self, rng):
+    def test_2d_control_clusters_rejected(self, rng):
         with pytest.raises(ValueError, match="1-D"):
             ClusterExperiment(
                 rng.normal(0, 1, 20),
@@ -249,6 +249,46 @@ class TestClusterValidation:
                 control_clusters=np.zeros((20, 2)),
                 treatment_clusters=np.repeat(np.arange(2), 10),
             )
+
+    def test_2d_treatment_clusters_rejected(self, rng):
+        """Line 93: treatment_clusters must be 1-D."""
+        with pytest.raises(ValueError, match="1-D"):
+            ClusterExperiment(
+                rng.normal(0, 1, 20),
+                rng.normal(0, 1, 20),
+                control_clusters=np.repeat(np.arange(2), 10),
+                treatment_clusters=np.zeros((20, 2)),
+            )
+
+    def test_icc_single_cluster_returns_zero(self, rng):
+        """Line 138: ICC with <2 clusters returns 0.0."""
+        values = rng.normal(0, 1, 20)
+        clusters = np.zeros(20, dtype=int)  # single cluster
+        icc = ClusterExperiment._compute_icc(values, clusters)
+        assert icc == 0.0
+
+    def test_icc_zero_variance_returns_zero(self):
+        """Line 169: ICC denom<=0 when all values identical across clusters."""
+        values = np.array([5.0, 5.0, 5.0, 5.0])
+        clusters = np.array([0, 0, 1, 1])
+        icc = ClusterExperiment._compute_icc(values, clusters)
+        assert icc == 0.0
+
+    def test_zero_se_branch(self):
+        """Lines 232-234: when all cluster means are identical, se==0."""
+        # All clusters have the exact same mean
+        ctrl = np.array([5.0, 5.0, 5.0, 5.0, 5.0, 5.0])
+        trt = np.array([5.0, 5.0, 5.0, 5.0, 5.0, 5.0])
+        ctrl_cl = np.array([0, 0, 0, 1, 1, 1])
+        trt_cl = np.array([0, 0, 0, 1, 1, 1])
+        result = ClusterExperiment(
+            ctrl, trt,
+            control_clusters=ctrl_cl,
+            treatment_clusters=trt_cl,
+        ).run()
+        # lift==0 and se==0 => pvalue should be 1.0
+        assert result.pvalue == 1.0
+        assert result.ci_lower == result.ci_upper == result.lift
 
 
 class TestClusterResult:

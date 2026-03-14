@@ -141,6 +141,19 @@ class TestTriggeredValidation:
                 treatment_triggered=triggered,
             ).run()
 
+    def test_too_few_triggered_control(self):
+        """Line 125: fewer than 2 triggered control observations."""
+        ctrl = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        trt = np.array([6.0, 7.0, 8.0, 9.0, 10.0])
+        ctrl_triggered = np.array([True, False, False, False, False])
+        trt_triggered = np.array([True, True, True, True, True])
+        with pytest.raises(ValueError, match="at least 2"):
+            TriggeredExperiment(
+                ctrl, trt,
+                control_triggered=ctrl_triggered,
+                treatment_triggered=trt_triggered,
+            ).run()
+
     def test_control_too_short(self):
         with pytest.raises(ValueError, match="at least"):
             TriggeredExperiment(
@@ -255,6 +268,24 @@ class TestInteractionValidation:
                 np.array([4.0, 5.0, 6.0]),
                 segments=np.array(["A", "A", "A", "A", "A", "A"]),
             ).run()
+
+    def test_segment_too_few_control(self):
+        """Line 257: segment with <2 control observations."""
+        ctrl = np.array([1.0, 2.0, 3.0])
+        trt = np.array([4.0, 5.0, 6.0])
+        # Segment A: 1 control, 2 treatment; Segment B: 2 control, 1 treatment
+        segs = np.array(["A", "B", "B", "A", "A", "B"])
+        with pytest.raises(ValueError, match="fewer than 2 control"):
+            InteractionTest(ctrl, trt, segments=segs).run()
+
+    def test_segment_too_few_treatment(self):
+        """Line 265: segment with <2 treatment observations."""
+        ctrl = np.array([1.0, 2.0, 3.0])
+        trt = np.array([4.0, 5.0, 6.0])
+        # Segment A: 2 control, 1 treatment; Segment B: 1 control, 2 treatment
+        segs = np.array(["A", "A", "B", "A", "B", "B"])
+        with pytest.raises(ValueError, match="fewer than 2 treatment"):
+            InteractionTest(ctrl, trt, segments=segs).run()
 
     def test_invalid_alpha(self):
         with pytest.raises(ValueError, match="must be in"):

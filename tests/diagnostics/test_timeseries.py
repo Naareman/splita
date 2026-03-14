@@ -262,6 +262,41 @@ class TestEffectTimeSeriesEdgeCases:
         with pytest.raises(AttributeError):
             result.is_stable = False  # type: ignore[misc]
 
+    def test_few_data_points_skip_early_timestamps(self) -> None:
+        """Line 113: skip timepoints where cumulative data < 2 in either group."""
+        rng = np.random.default_rng(42)
+        # 1 obs at ts=0, many at ts=1..5
+        ctrl = rng.normal(10, 1, 6)
+        trt = rng.normal(11, 1, 6)
+        # ts=0: only 1 ctrl and 1 trt => skip; ts>=1: enough data
+        ts = np.array([0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5])
+        result = EffectTimeSeries().fit(ctrl, trt, ts).result()
+        # First time_point should be at ts >= 1 (not ts=0)
+        assert result.time_points[0]["timestamp"] >= 1.0
+
+    def test_stability_few_timepoints(self) -> None:
+        """Line 186: <3 time points returns stable=True."""
+        rng = np.random.default_rng(42)
+        ctrl = rng.normal(10, 1, 40)
+        trt = rng.normal(11, 1, 40)
+        # Only 2 unique timestamps
+        ts = np.concatenate([
+            np.repeat([0, 1], 20),
+            np.repeat([0, 1], 20),
+        ])
+        result = EffectTimeSeries().fit(ctrl, trt, ts).result()
+        assert result.is_stable is True
+
+    def test_stability_near_zero_lift(self) -> None:
+        """Line 205: near-zero mean lift triggers absolute variation check."""
+        # Directly test _check_stability with near-zero lifts
+        time_points = [
+            {"cumulative_lift": 0.0, "pvalue": 1.0, "ci_lower": -0.1, "ci_upper": 0.1, "n_control": 100, "n_treatment": 100, "timestamp": float(i)}
+            for i in range(6)
+        ]
+        result = EffectTimeSeries._check_stability(time_points)
+        assert result is True  # std_lift=0 < 0.01
+
     def test_timestamps_as_floats(self) -> None:
         rng = np.random.default_rng(42)
         ctrl = rng.binomial(1, 0.10, size=200)

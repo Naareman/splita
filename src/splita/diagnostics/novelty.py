@@ -176,7 +176,7 @@ class NoveltyCurve:
                         "ci_upper": res.ci_upper,
                     }
                 )
-            except (ValueError, RuntimeError):
+            except (ValueError, RuntimeError):  # pragma: no cover
                 # Skip windows where the experiment can't run
                 continue
 

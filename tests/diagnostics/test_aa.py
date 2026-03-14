@@ -118,6 +118,30 @@ class TestAATestPValues:
 # ─── Reproducibility ────────────────────────────────────────────────
 
 
+class TestAATestEdgeCases:
+    """Edge cases for uncovered lines."""
+
+    def test_all_simulations_fail(self) -> None:
+        """Lines 108-113: when all simulations fail, returns failed result."""
+        # Using conversion metric with non-binary data causes Experiment to fail
+        # every time (negative values fail the conversion z-test).
+        data = np.array([-5.0, -3.0, -1.0, -2.0, -4.0, -6.0])
+        result = AATest(n_simulations=10, random_state=42).run(data, metric="conversion")
+        assert result.passed is False
+        assert result.p_values == []
+        assert result.false_positive_rate == 0.0
+        assert "failed" in result.message.lower()
+
+    def test_aa_test_fail_message(self) -> None:
+        """Line 136: message when AA test fails (FP rate outside bounds)."""
+        # Constant data produces 0% FP rate, which falls outside the
+        # expected bounds when enough sims make the bounds tight
+        data = np.zeros(40)
+        result = AATest(n_simulations=200, alpha=0.05, random_state=0).run(data)
+        assert result.passed is False
+        assert "failed" in result.message.lower()
+
+
 class TestAATestReproducibility:
     """Tests for reproducible results."""
 

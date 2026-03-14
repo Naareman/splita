@@ -223,6 +223,45 @@ class TestNoveltyCurveEdgeCases:
         result = NoveltyCurve(window_size=7).fit(ctrl, trt, ts).result()
         assert isinstance(result, NoveltyCurveResult)
 
+    def test_window_skips_insufficient_data(self) -> None:
+        """Line 160: windows with <2 data points in either group are skipped."""
+        # Control has data at ts 0..9, but treatment only at ts 5..9
+        # Early windows (ts 0..4) will have 0 treatment data => skipped
+        ctrl = np.array([10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0])
+        trt = np.array([15.0, 16.0, 17.0, 18.0, 19.0])
+        ts_ctrl = np.arange(10, dtype=float)  # timestamps 0..9
+        ts_trt = np.arange(5, 10, dtype=float)  # timestamps 5..9
+        ts = np.concatenate([ts_ctrl, ts_trt])
+        nc = NoveltyCurve(window_size=3)
+        nc.fit(ctrl, trt, ts)
+        result = nc.result()
+        assert isinstance(result, NoveltyCurveResult)
+        # Early windows should be skipped (no treatment data)
+        if result.windows:
+            assert result.windows[0]["window_start"] >= 3.0
+
+    def test_detect_trend_first_lift_zero_stable(self) -> None:
+        """Line 246: first_lift==0 with non-decreasing trend."""
+        windows = [
+            {"lift": 0.0, "pvalue": 0.5, "ci_lower": -0.1, "ci_upper": 0.1, "window_start": 0.0},
+            {"lift": 0.01, "pvalue": 0.4, "ci_lower": -0.1, "ci_upper": 0.1, "window_start": 1.0},
+            {"lift": 0.02, "pvalue": 0.3, "ci_lower": -0.1, "ci_upper": 0.1, "window_start": 2.0},
+        ]
+        direction, has_novelty = NoveltyCurve._detect_trend(windows)
+        # first_lift==0, not decreasing => has_novelty should be False
+        assert has_novelty is False
+
+    def test_detect_trend_first_lift_zero_decreasing(self) -> None:
+        """Lines 254-255: first_lift==0 with decreasing trend."""
+        windows = [
+            {"lift": 0.0, "pvalue": 0.5, "ci_lower": -0.1, "ci_upper": 0.1, "window_start": 0.0},
+            {"lift": -0.5, "pvalue": 0.01, "ci_lower": -0.7, "ci_upper": -0.3, "window_start": 1.0},
+            {"lift": -1.0, "pvalue": 0.001, "ci_lower": -1.2, "ci_upper": -0.8, "window_start": 2.0},
+        ]
+        direction, has_novelty = NoveltyCurve._detect_trend(windows)
+        assert direction == "decreasing"
+        assert has_novelty is True
+
     def test_different_window_sizes(self) -> None:
         rng = np.random.default_rng(42)
         ctrl, trt, ts = _make_stable_data(rng, n_days=21, n_per_day=100)

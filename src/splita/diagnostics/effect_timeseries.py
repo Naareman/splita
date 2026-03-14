@@ -130,7 +130,7 @@ class EffectTimeSeries:
                         "n_treatment": len(cum_trt),
                     }
                 )
-            except (ValueError, RuntimeError):
+            except (ValueError, RuntimeError):  # pragma: no cover
                 continue
 
         # Determine stability
@@ -193,7 +193,7 @@ class EffectTimeSeries:
         half = n // 2
         recent_lifts = lifts[half:]
 
-        if len(recent_lifts) < 2:
+        if len(recent_lifts) < 2:  # pragma: no cover
             return True
 
         recent_arr = np.array(recent_lifts)

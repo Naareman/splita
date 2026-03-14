@@ -82,7 +82,7 @@ class HTEEstimator:
                 from sklearn.base import clone
 
                 return clone(self._estimator)
-            except ImportError:
+            except ImportError:  # pragma: no cover
                 raise ImportError(
                     format_error(
                         "scikit-learn is required for HTEEstimator.",
@@ -93,7 +93,7 @@ class HTEEstimator:
             from sklearn.linear_model import Ridge
 
             return Ridge(alpha=1.0)
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError(
                 format_error(
                     "scikit-learn is required for HTEEstimator.",

@@ -359,7 +359,7 @@ class OutlierHandler:
         """
         try:
             from sklearn.cluster import DBSCAN
-        except ImportError as exc:
+        except ImportError as exc:  # pragma: no cover
             raise ImportError(
                 format_error(
                     "method='clustering' requires scikit-learn.",

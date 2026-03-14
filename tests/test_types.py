@@ -6,8 +6,12 @@ import pytest
 
 from splita._types import (
     BanditResult,
+    BayesianResult,
+    BayesianStoppingResult,
     BoundaryResult,
     CorrectionResult,
+    EValueResult,
+    EValueState,
     ExperimentResult,
     GSResult,
     SampleSizeResult,
@@ -455,6 +459,60 @@ class TestRepr:
 
         assert _fmt(42) == "42"
         assert _fmt("hello") == "hello"
+
+    def test_evalue_state_repr(self) -> None:
+        state = EValueState(
+            e_value=3.14, n_control=100, n_treatment=100, should_stop=False
+        )
+        r = repr(state)
+        assert "EValueState" in r
+        assert "e_value" in r
+
+    def test_evalue_result_repr(self) -> None:
+        result = EValueResult(
+            e_value=25.0,
+            n_control=500,
+            n_treatment=500,
+            should_stop=True,
+            stopping_reason="e_value_threshold_crossed",
+        )
+        r = repr(result)
+        assert "EValueResult" in r
+        assert "stopping_reason" in r
+
+    def test_bayesian_stopping_result_repr(self) -> None:
+        result = BayesianStoppingResult(
+            should_stop=True,
+            rule="expected_loss",
+            threshold=0.001,
+            current_value=0.0005,
+            message="Stop: expected loss below threshold.",
+        )
+        r = repr(result)
+        assert "BayesianStoppingResult" in r
+        assert "rule" in r
+
+    def test_bayesian_result_repr_control_wins(self) -> None:
+        """When prob_b_beats_a <= 0.5, decision should be 'Choose Control (A)'."""
+        result = BayesianResult(
+            metric="conversion",
+            control_n=1000,
+            treatment_n=1000,
+            prob_b_beats_a=0.3,
+            expected_loss_a=0.001,
+            expected_loss_b=0.01,
+            lift=-0.02,
+            relative_lift=-0.10,
+            ci_lower=-0.04,
+            ci_upper=0.00,
+            credible_level=0.95,
+            control_mean=0.10,
+            treatment_mean=0.08,
+            prob_in_rope=None,
+            rope=None,
+        )
+        r = repr(result)
+        assert "Choose Control (A)" in r
 
     def test_experiment_result_repr_continuous(self) -> None:
         result = ExperimentResult(

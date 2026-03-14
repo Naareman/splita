@@ -183,6 +183,57 @@ class TestHTESerialisation:
 # ─── Custom estimator test ───────────────────────────────────────
 
 
+class TestHTEEdgeCases:
+    """Edge case tests for uncovered lines."""
+
+    def test_1d_features_reshaped(self):
+        """Lines 142, 144: 1-D feature arrays get reshaped to 2-D."""
+        rng = np.random.default_rng(42)
+        y_ctrl = rng.normal(5, 1, 50)
+        y_trt = rng.normal(6, 1, 50)
+        X_ctrl = rng.normal(0, 1, 50)  # 1-D
+        X_trt = rng.normal(0, 1, 50)  # 1-D
+        hte = HTEEstimator(method="t_learner").fit(y_ctrl, y_trt, X_ctrl, X_trt)
+        result = hte.result()
+        assert len(result.cate_estimates) == 100
+
+    def test_no_feature_importances_model(self):
+        """Line 251: model with no feature_importances_ or coef_ => top_features=None."""
+        from sklearn.base import BaseEstimator, RegressorMixin
+
+        class BareModel(BaseEstimator, RegressorMixin):
+            def fit(self, X, y):
+                self._mean = float(np.mean(y))
+                return self
+
+            def predict(self, X):
+                return np.full(X.shape[0], self._mean)
+
+        rng = np.random.default_rng(42)
+        y_ctrl = rng.normal(5, 1, 50)
+        y_trt = rng.normal(6, 1, 50)
+        X_ctrl = rng.normal(size=(50, 3))
+        X_trt = rng.normal(size=(50, 3))
+
+        hte = HTEEstimator(estimator=BareModel()).fit(
+            y_ctrl, y_trt, X_ctrl, X_trt
+        )
+        assert hte.result().top_features is None
+
+    def test_s_learner_predict(self):
+        """Line 281: s_learner predict with 1-D X to trigger reshape."""
+        rng = np.random.default_rng(42)
+        y_ctrl = rng.normal(5, 1, 50)
+        y_trt = rng.normal(6, 1, 50)
+        X_ctrl = rng.normal(size=50)  # 1-D features
+        X_trt = rng.normal(size=50)
+
+        hte = HTEEstimator(method="s_learner").fit(y_ctrl, y_trt, X_ctrl, X_trt)
+        X_new = rng.normal(size=5)  # 1-D to trigger line 281
+        preds = hte.predict(X_new)
+        assert preds.shape == (5,)
+
+
 class TestCustomEstimator:
     def test_with_decision_tree(self, heterogeneous_data):
         from sklearn.tree import DecisionTreeRegressor

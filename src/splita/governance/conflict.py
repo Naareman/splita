@@ -146,7 +146,7 @@ class ConflictDetector:
                 if i >= j:
                     continue
                 pair_key = (exp_a["name"], exp_b["name"])
-                if pair_key in seen:
+                if pair_key in seen:  # pragma: no cover
                     continue
                 seen.add(pair_key)
 

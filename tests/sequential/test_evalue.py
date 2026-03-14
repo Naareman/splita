@@ -202,6 +202,25 @@ class TestEdgeCases:
         assert state.n_control == 1
         assert state.n_treatment == 1
 
+    def test_update_with_only_control_data(self):
+        """Lines 155-161: when only control obs are present, e_value=1.0."""
+        ev = EValue(alpha=0.05, metric="continuous", tau=1.0)
+        # Only control data, no treatment
+        state = ev.update([1.0, 2.0, 3.0], [])
+        assert state.e_value == 1.0
+        assert state.n_control == 3
+        assert state.n_treatment == 0
+        assert state.should_stop is False
+
+    def test_update_with_only_treatment_data(self):
+        """Lines 155-161: when only treatment obs are present, e_value=1.0."""
+        ev = EValue(alpha=0.05, metric="continuous", tau=1.0)
+        state = ev.update([], [1.0, 2.0, 3.0])
+        assert state.e_value == 1.0
+        assert state.n_control == 0
+        assert state.n_treatment == 3
+        assert state.should_stop is False
+
     def test_zero_variance_data(self):
         ev = EValue(alpha=0.05, metric="continuous", tau=1.0)
         ctrl = np.ones(100)

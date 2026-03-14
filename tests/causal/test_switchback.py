@@ -124,6 +124,21 @@ class TestSwitchbackBasic:
         assert result.n_periods == 10
 
 
+class TestSwitchbackEdgeCases:
+    """Edge case tests."""
+
+    def test_zero_se_branch(self):
+        """Lines 195-197: when all period means are identical, se==0."""
+        # 4 periods, alternating treatment, all outcomes identical
+        outcomes = np.ones(40) * 5.0
+        treatments = np.array([0.0] * 10 + [1.0] * 10 + [0.0] * 10 + [1.0] * 10)
+        periods = np.array([0] * 10 + [1] * 10 + [2] * 10 + [3] * 10)
+
+        result = SwitchbackExperiment(outcomes, treatments, periods).run()
+        assert result.pvalue == 1.0
+        assert result.ci_lower == result.ci_upper == result.lift
+
+
 class TestSwitchbackValidation:
     """Tests for input validation."""
 

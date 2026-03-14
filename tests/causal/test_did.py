@@ -163,6 +163,25 @@ class TestDiDBasic:
         assert abs(r_05.pvalue - r_001.pvalue) < 0.001
 
 
+class TestDiDEdgeCases:
+    """Edge case tests."""
+
+    def test_zero_se_branch(self):
+        """Lines 129-131: when se==0 (all groups constant), ATT=0 => pvalue=1."""
+        n = 10
+        pre_ctrl = np.ones(n) * 5.0
+        pre_trt = np.ones(n) * 5.0
+        post_ctrl = np.ones(n) * 5.0
+        post_trt = np.ones(n) * 5.0
+
+        r = DifferenceInDifferences().fit(
+            pre_ctrl, pre_trt, post_ctrl, post_trt
+        ).result()
+
+        assert r.pvalue == 1.0
+        assert r.ci_lower == r.ci_upper == r.att
+
+
 class TestDiDValidation:
     """Tests for input validation."""
 

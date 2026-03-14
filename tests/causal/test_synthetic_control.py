@@ -207,6 +207,67 @@ class TestSyntheticControlValidation:
         ).result()
         assert len(r.weights) == 2
 
+    def test_non_convertible_donors_pre_raises(self):
+        """Lines 104-105: donors_pre that can't be converted raises TypeError."""
+        with pytest.raises(TypeError, match="can't be converted"):
+            SyntheticControl().fit(
+                np.arange(5, dtype=float),
+                np.arange(3, dtype=float),
+                [["a", "b"], ["c", "d"], ["e", "f"], ["g", "h"], ["i", "j"]],
+                np.zeros((3, 2)),
+            )
+
+    def test_non_convertible_donors_post_raises(self):
+        """Lines 115-116: donors_post that can't be converted raises TypeError."""
+        with pytest.raises(TypeError, match="can't be converted"):
+            SyntheticControl().fit(
+                np.arange(5, dtype=float),
+                np.arange(3, dtype=float),
+                np.zeros((5, 2)),
+                [["a", "b"], ["c", "d"], ["e", "f"]],
+            )
+
+    def test_1d_donors_reshaped(self):
+        """Lines 124, 126: 1-D donor arrays get reshaped to 2-D."""
+        treated_pre = np.arange(1, 6, dtype=float)
+        treated_post = np.arange(6, 9, dtype=float) + 2.0
+        donors_pre = np.arange(1, 6, dtype=float)  # 1-D
+        donors_post = np.arange(6, 9, dtype=float)  # 1-D
+        r = SyntheticControl().fit(
+            treated_pre, treated_post, donors_pre, donors_post
+        ).result()
+        assert len(r.weights) == 1
+
+    def test_3d_donors_pre_rejected(self):
+        """Line 129: >2D donors_pre raises ValueError."""
+        with pytest.raises(ValueError, match="2-D array"):
+            SyntheticControl().fit(
+                np.arange(5, dtype=float),
+                np.arange(3, dtype=float),
+                np.zeros((5, 2, 1)),
+                np.zeros((3, 2)),
+            )
+
+    def test_3d_donors_post_rejected(self):
+        """Line 136: >2D donors_post raises ValueError."""
+        with pytest.raises(ValueError, match="2-D array"):
+            SyntheticControl().fit(
+                np.arange(5, dtype=float),
+                np.arange(3, dtype=float),
+                np.zeros((5, 2)),
+                np.zeros((3, 2, 1)),
+            )
+
+    def test_zero_donors_rejected(self):
+        """Line 176: n_donors < 1 raises ValueError."""
+        with pytest.raises(ValueError, match="at least 1 donor"):
+            SyntheticControl().fit(
+                np.arange(5, dtype=float),
+                np.arange(3, dtype=float),
+                np.zeros((5, 0)),
+                np.zeros((3, 0)),
+            )
+
 
 class TestSyntheticControlResult:
     """Tests for result properties."""

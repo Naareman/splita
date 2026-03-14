@@ -6,11 +6,12 @@ import numpy as np
 
 from splita._validation import format_error
 
-
 # ─── RNG handling ─────────────────────────────────────────────────
 
 
-def ensure_rng(random_state: int | np.random.Generator | None = None) -> np.random.Generator:
+def ensure_rng(
+    random_state: int | np.random.Generator | None = None,
+) -> np.random.Generator:
     """Convert a random_state argument to a NumPy Generator.
 
     Follows the NumPy / scikit-learn convention for seed handling.
@@ -46,9 +47,11 @@ def ensure_rng(random_state: int | np.random.Generator | None = None) -> np.rand
         return random_state
     raise TypeError(
         format_error(
-            f"`random_state` must be None, an int, or a np.random.Generator, "
-            f"got {type(random_state).__name__}.",
-            detail=f"received {type(random_state)}, which is not a supported seed type.",
+            "`random_state` must be None, an int, or a "
+            f"np.random.Generator, got {type(random_state).__name__}.",
+            detail=(
+                f"received {type(random_state)}, which is not a supported seed type."
+            ),
             hint="pass an integer seed, a Generator, or None for OS entropy.",
         )
     )
@@ -112,7 +115,8 @@ def to_array(data: object, name: str, dtype: str = "float64") -> np.ndarray:
     elif arr.ndim > 1:
         raise ValueError(
             format_error(
-                f"`{name}` must be a 1-D array, got {arr.ndim}-D array with shape {arr.shape}.",
+                f"`{name}` must be a 1-D array, got "
+                f"{arr.ndim}-D array with shape {arr.shape}.",
                 hint="pass a 1-D list, numpy array, or pandas Series.",
             )
         )

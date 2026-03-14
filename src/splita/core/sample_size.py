@@ -22,7 +22,6 @@ from splita._validation import (
     format_error,
 )
 
-
 # ─── Internal helpers ──────────────────────────────────────────────────
 
 
@@ -49,7 +48,7 @@ def _n_for_proportion(
     za = _z_alpha(alpha, alternative)
     zb = float(norm.ppf(power))
     numerator = (za * se0 + zb * se1) ** 2
-    return math.ceil(numerator / (mde ** 2))
+    return math.ceil(numerator / (mde**2))
 
 
 # ─── Public API ────────────────────────────────────────────────────────
@@ -142,15 +141,17 @@ class SampleSize:
                 format_error(
                     "either `mde` or `relative_mde` must be provided.",
                     "both are None.",
-                    "pass mde=0.02 for an absolute effect or relative_mde=0.10 for a 10% relative effect.",
+                    "pass mde=0.02 for an absolute effect or "
+                    "relative_mde=0.10 for a 10% relative effect.",
                 )
             )
         if relative_mde is not None:
             mde = baseline * relative_mde
 
         # --- validation ---
-        check_in_range(baseline, "baseline", 0.0, 1.0,
-                       hint="pass a proportion between 0 and 1.")
+        check_in_range(
+            baseline, "baseline", 0.0, 1.0, hint="pass a proportion between 0 and 1."
+        )
         p2 = baseline + mde
         if not (0.0 < p2 < 1.0):
             raise ValueError(
@@ -160,15 +161,26 @@ class SampleSize:
                     "reduce the MDE or adjust the baseline.",
                 )
             )
-        check_in_range(alpha, "alpha", 0.0, 1.0,
-                       hint="typical values are 0.05, 0.01, or 0.10.")
-        check_in_range(power, "power", 0.0, 1.0,
-                       hint="typical values are 0.80 or 0.90.")
-        check_is_integer(n_variants, "n_variants", min_value=2,
-                         hint="include at least a control and one treatment.")
-        check_in_range(traffic_fraction, "traffic_fraction", 0.0, 1.0,
-                       high_inclusive=True,
-                       hint="typical values are 0.1, 0.5, or 1.0.")
+        check_in_range(
+            alpha, "alpha", 0.0, 1.0, hint="typical values are 0.05, 0.01, or 0.10."
+        )
+        check_in_range(
+            power, "power", 0.0, 1.0, hint="typical values are 0.80 or 0.90."
+        )
+        check_is_integer(
+            n_variants,
+            "n_variants",
+            min_value=2,
+            hint="include at least a control and one treatment.",
+        )
+        check_in_range(
+            traffic_fraction,
+            "traffic_fraction",
+            0.0,
+            1.0,
+            high_inclusive=True,
+            hint="typical values are 0.1, 0.5, or 1.0.",
+        )
 
         if baseline < 0.01:
             warnings.warn(
@@ -266,15 +278,19 @@ class SampleSize:
                 format_error(
                     "either `mde` or `relative_mde` must be provided.",
                     "both are None.",
-                    "pass mde=2.0 for an absolute effect or relative_mde=0.10 for a 10% relative effect.",
+                    "pass mde=2.0 for an absolute effect or "
+                    "relative_mde=0.10 for a 10% relative effect.",
                 )
             )
         if relative_mde is not None:
             mde = baseline_mean * relative_mde
 
         # --- validation ---
-        check_positive(baseline_std, "baseline_std",
-                       hint="standard deviation must be strictly positive.")
+        check_positive(
+            baseline_std,
+            "baseline_std",
+            hint="standard deviation must be strictly positive.",
+        )
         if mde == 0.0:
             raise ValueError(
                 format_error(
@@ -360,8 +376,11 @@ class SampleSize:
             If ``baseline_den_mean <= 0`` or other parameters are invalid.
         """
         # --- validation ---
-        check_positive(baseline_den_mean, "baseline_den_mean",
-                       hint="the denominator mean must be strictly positive.")
+        check_positive(
+            baseline_den_mean,
+            "baseline_den_mean",
+            hint="the denominator mean must be strictly positive.",
+        )
         if mde == 0.0:
             raise ValueError(
                 format_error(
@@ -376,11 +395,11 @@ class SampleSize:
 
         # --- compute (delta method variance) ---
         r = baseline_num_mean / baseline_den_mean
-        d2 = baseline_den_mean ** 2
+        d2 = baseline_den_mean**2
         delta_var = (
-            baseline_num_std ** 2 / d2
+            baseline_num_std**2 / d2
             - 2.0 * r * baseline_covariance / d2
-            + r ** 2 * baseline_den_std ** 2 / d2
+            + r**2 * baseline_den_std**2 / d2
         )
 
         za = _z_alpha(alpha, alternative)
@@ -465,14 +484,21 @@ class SampleSize:
             )
 
         def objective(mde: float) -> float:
-            return float(_n_for_proportion(baseline, mde, alpha, power, alternative) - n)
+            n_req = _n_for_proportion(
+                baseline,
+                mde,
+                alpha,
+                power,
+                alternative,
+            )
+            return float(n_req - n)
 
         # Check whether even the largest possible MDE requires more samples
         # than n. If so, brentq would fail because both endpoints are positive.
         if objective(max_mde) > 0:
             raise ValueError(
                 format_error(
-                    f"`n` is too small to detect any effect at this baseline.",
+                    "`n` is too small to detect any effect at this baseline.",
                     f"with n={n} per variant and baseline={baseline}, even the "
                     f"largest possible MDE ({max_mde:.6g}) requires more samples.",
                     "increase n or use a less extreme baseline.",
@@ -524,13 +550,20 @@ class SampleSize:
         10
         """
         # --- validation ---
-        check_positive(n_required, "n_required",
-                       hint="pass the total required sample size.")
-        check_positive(daily_users, "daily_users",
-                       hint="pass the expected number of daily users.")
-        check_in_range(traffic_fraction, "traffic_fraction", 0.0, 1.0,
-                       high_inclusive=True,
-                       hint="typical values are 0.1, 0.5, or 1.0.")
+        check_positive(
+            n_required, "n_required", hint="pass the total required sample size."
+        )
+        check_positive(
+            daily_users, "daily_users", hint="pass the expected number of daily users."
+        )
+        check_in_range(
+            traffic_fraction,
+            "traffic_fraction",
+            0.0,
+            1.0,
+            high_inclusive=True,
+            hint="typical values are 0.1, 0.5, or 1.0.",
+        )
         if ramp_days < 0:
             raise ValueError(
                 format_error(

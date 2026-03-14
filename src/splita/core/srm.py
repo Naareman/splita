@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import math
 import warnings
-from typing import Sequence
+from collections.abc import Sequence
 
 from scipy.stats import chi2
 
@@ -60,8 +60,7 @@ class SRMCheck:
         if len(observed) < 2:
             raise ValueError(
                 format_error(
-                    "`observed` must have at least 2 variants, "
-                    f"got {len(observed)}.",
+                    f"`observed` must have at least 2 variants, got {len(observed)}.",
                     "a single variant cannot be checked for ratio mismatch.",
                     "pass counts for all variants, e.g. [5000, 5000].",
                 )
@@ -100,9 +99,7 @@ class SRMCheck:
                         "pass one fraction per variant.",
                     )
                 )
-            check_probabilities_sum_to_one(
-                expected_fractions, "expected_fractions"
-            )
+            check_probabilities_sum_to_one(expected_fractions, "expected_fractions")
             fractions = list(expected_fractions)
 
         # --- validate alpha ----------------------------------------------
@@ -118,8 +115,7 @@ class SRMCheck:
         if min_expected_count < 1:
             raise ValueError(
                 format_error(
-                    "`min_expected_count` must be >= 1, "
-                    f"got {min_expected_count}.",
+                    f"`min_expected_count` must be >= 1, got {min_expected_count}.",
                     "the chi-square approximation requires at least 1 "
                     "expected observation per cell.",
                     "use the default value of 5.",
@@ -151,9 +147,11 @@ class SRMCheck:
         if n == 0:
             raise ValueError(
                 format_error(
-                    "`observed` must contain at least some observations, got all zeros.",
+                    "`observed` must contain at least some "
+                    "observations, got all zeros.",
                     detail=f"total observations: {n}.",
-                    hint="an experiment with zero observations cannot be checked for SRM.",
+                    hint="an experiment with zero observations "
+                    "cannot be checked for SRM.",
                 )
             )
 
@@ -172,7 +170,7 @@ class SRMCheck:
 
         # 4. Chi-square statistic
         chi2_stat = sum(
-            (o - e) ** 2 / e for o, e in zip(observed, expected) if e > 0
+            (o - e) ** 2 / e for o, e in zip(observed, expected, strict=False) if e > 0
         )
 
         # 5. P-value  (k-1 degrees of freedom)
@@ -185,20 +183,16 @@ class SRMCheck:
 
         # 7. Deviations
         deviations_pct = [
-            ((o - e) / e * 100.0) if e > 0 else (float('inf') if o > 0 else 0.0)
-            for o, e in zip(observed, expected)
+            ((o - e) / e * 100.0) if e > 0 else (float("inf") if o > 0 else 0.0)
+            for o, e in zip(observed, expected, strict=False)
         ]
 
         # 8. Worst variant (largest absolute deviation)
-        worst_variant = max(
-            range(k), key=lambda i: abs(deviations_pct[i])
-        )
+        worst_variant = max(range(k), key=lambda i: abs(deviations_pct[i]))
 
         # 9. Human-readable message
         if passed:
-            message = (
-                f"No sample ratio mismatch detected (p={pvalue:.4f})."
-            )
+            message = f"No sample ratio mismatch detected (p={pvalue:.4f})."
         else:
             dev = deviations_pct[worst_variant]
             message = (

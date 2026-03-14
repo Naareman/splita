@@ -534,3 +534,487 @@ class TestOneSidedDegradationGuard:
         assert 0 <= result.pvalue <= 1
         assert result.control_n == n
         assert result.treatment_n == n
+
+
+# ---------------------------------------------------------------------------
+# Scenario 8: SRM Guard Before Analysis
+# ---------------------------------------------------------------------------
+
+
+class TestSRMGuardBeforeAnalysis:
+    """Team runs an A/B test. Before analyzing results, they check for SRM.
+
+    If the SRM check passes, they proceed with the experiment analysis.
+    If SRM fails, the experiment results cannot be trusted and analysis
+    should be halted.
+    """
+
+    def test_balanced_traffic_passes_srm(self):
+        """With balanced groups (5000/5000), SRM should pass."""
+        from splita.core.srm import SRMCheck
+
+        rng = np.random.default_rng(80)
+        n = 5000
+        control = rng.binomial(1, 0.10, size=n).astype(float)
+        treatment = rng.binomial(1, 0.12, size=n).astype(float)
+
+        srm = SRMCheck([n, n]).run()
+        assert srm.passed is True
+        assert "No sample ratio mismatch" in srm.message
+
+    def test_guard_then_analyze_pattern(self):
+        """Full guard-then-analyze: SRM passes, then Experiment runs."""
+        from splita.core.srm import SRMCheck
+
+        rng = np.random.default_rng(80)
+        n = 5000
+        control = rng.binomial(1, 0.10, size=n).astype(float)
+        treatment = rng.binomial(1, 0.12, size=n).astype(float)
+
+        # Step 1: SRM guard
+        srm = SRMCheck([len(control), len(treatment)]).run()
+        assert srm.passed is True
+
+        # Step 2: Proceed with analysis
+        result = Experiment(control, treatment).run()
+        assert result.metric == "conversion"
+        assert result.significant is True
+        assert result.lift > 0
+
+    def test_imbalanced_traffic_fails_srm(self):
+        """With imbalanced groups (4000/6000), SRM should fail."""
+        from splita.core.srm import SRMCheck
+
+        srm = SRMCheck([4000, 6000]).run()
+        assert srm.passed is False
+        assert "cannot be trusted" in srm.message
+
+    def test_imbalanced_srm_blocks_analysis(self):
+        """When SRM fails, analysis should be blocked (guard pattern)."""
+        from splita.core.srm import SRMCheck
+
+        rng = np.random.default_rng(81)
+        control = rng.binomial(1, 0.10, size=4000).astype(float)
+        treatment = rng.binomial(1, 0.12, size=6000).astype(float)
+
+        srm = SRMCheck([len(control), len(treatment)]).run()
+        assert srm.passed is False
+
+        # In practice you would stop here. We verify the message is clear.
+        assert srm.pvalue < 0.01  # SRM uses alpha=0.01 by default
+        assert "cannot be trusted" in srm.message
+
+
+# ---------------------------------------------------------------------------
+# Scenario 9: Multiple Metrics with BH Correction
+# ---------------------------------------------------------------------------
+
+
+class TestMultipleMetricsWithBHCorrection:
+    """E-commerce test measuring 5 metrics simultaneously.
+
+    Two metrics have true effects (conversion +2pp, revenue +$2), while
+    three have no effect (AOV, session duration, bounce rate). After
+    BH correction, the truly significant metrics should survive and the
+    null metrics should not. Bonferroni should be more conservative.
+    """
+
+    @pytest.fixture()
+    def five_metric_results(self):
+        """Generate 5 pairs of synthetic data and run experiments."""
+        rng = np.random.default_rng(90)
+        n = 10000  # large n to ensure clear separation
+
+        # Metric 1: Conversion — true 2pp lift (significant)
+        conv_ctrl = rng.binomial(1, 0.10, size=n).astype(float)
+        conv_trt = rng.binomial(1, 0.12, size=n).astype(float)
+
+        # Metric 2: Revenue — true $2 lift (significant)
+        rev_ctrl = rng.normal(25.0, 10.0, size=n)
+        rev_trt = rng.normal(27.0, 10.0, size=n)
+
+        # Metric 3: AOV — no true effect
+        aov_ctrl = rng.normal(50.0, 15.0, size=n)
+        aov_trt = rng.normal(50.0, 15.0, size=n)
+
+        # Metric 4: Session duration — no true effect
+        sess_ctrl = rng.normal(300.0, 60.0, size=n)
+        sess_trt = rng.normal(300.0, 60.0, size=n)
+
+        # Metric 5: Bounce rate — no true effect
+        bounce_ctrl = rng.binomial(1, 0.40, size=n).astype(float)
+        bounce_trt = rng.binomial(1, 0.40, size=n).astype(float)
+
+        experiments = [
+            Experiment(conv_ctrl, conv_trt),
+            Experiment(rev_ctrl, rev_trt),
+            Experiment(aov_ctrl, aov_trt),
+            Experiment(sess_ctrl, sess_trt),
+            Experiment(bounce_ctrl, bounce_trt),
+        ]
+        results = [exp.run() for exp in experiments]
+        pvalues = [r.pvalue for r in results]
+        labels = ["conversion", "revenue", "aov", "session", "bounce"]
+
+        return results, pvalues, labels
+
+    def test_bh_correction_keeps_true_effects(self, five_metric_results):
+        """BH correction should retain the two truly significant metrics."""
+        from splita.core.correction import MultipleCorrection
+
+        _, pvalues, labels = five_metric_results
+
+        correction = MultipleCorrection(
+            pvalues, method="bh", labels=labels,
+        ).run()
+
+        # First 2 metrics (conversion, revenue) should survive
+        assert correction.rejected[0] is True, (
+            f"Conversion should survive BH (adj_p={correction.adjusted_pvalues[0]:.4f})"
+        )
+        assert correction.rejected[1] is True, (
+            f"Revenue should survive BH (adj_p={correction.adjusted_pvalues[1]:.4f})"
+        )
+
+    def test_bh_correction_rejects_null_metrics(self, five_metric_results):
+        """BH correction should not reject the three null metrics."""
+        from splita.core.correction import MultipleCorrection
+
+        _, pvalues, labels = five_metric_results
+
+        correction = MultipleCorrection(
+            pvalues, method="bh", labels=labels,
+        ).run()
+
+        # Last 3 metrics (aov, session, bounce) should not survive
+        assert correction.rejected[2] is False, (
+            f"AOV should not survive BH (adj_p={correction.adjusted_pvalues[2]:.4f})"
+        )
+        assert correction.rejected[3] is False, (
+            f"Session should not survive BH (adj_p={correction.adjusted_pvalues[3]:.4f})"
+        )
+        assert correction.rejected[4] is False, (
+            f"Bounce should not survive BH (adj_p={correction.adjusted_pvalues[4]:.4f})"
+        )
+
+    def test_bh_correction_metadata(self, five_metric_results):
+        """BH correction result should have correct metadata."""
+        from splita.core.correction import MultipleCorrection
+
+        _, pvalues, labels = five_metric_results
+
+        correction = MultipleCorrection(
+            pvalues, method="bh", labels=labels,
+        ).run()
+
+        assert correction.n_tests == 5
+        assert correction.method == "Benjamini-Hochberg"
+        assert correction.labels == labels
+        assert correction.alpha == pytest.approx(0.05)
+        assert correction.n_rejected == 2
+
+    def test_bonferroni_more_conservative_than_bh(self, five_metric_results):
+        """Bonferroni should reject fewer or equal hypotheses compared to BH."""
+        from splita.core.correction import MultipleCorrection
+
+        _, pvalues, labels = five_metric_results
+
+        bh = MultipleCorrection(pvalues, method="bh", labels=labels).run()
+        bonf = MultipleCorrection(pvalues, method="bonferroni", labels=labels).run()
+
+        assert bonf.n_rejected <= bh.n_rejected, (
+            f"Bonferroni ({bonf.n_rejected}) should reject <= BH ({bh.n_rejected})"
+        )
+
+        # All Bonferroni adjusted p-values should be >= BH adjusted p-values
+        for i in range(5):
+            assert bonf.adjusted_pvalues[i] >= bh.adjusted_pvalues[i] - 1e-10, (
+                f"Metric {labels[i]}: Bonferroni adj_p ({bonf.adjusted_pvalues[i]:.4f}) "
+                f"should be >= BH adj_p ({bh.adjusted_pvalues[i]:.4f})"
+            )
+
+
+# ---------------------------------------------------------------------------
+# Scenario 10: Full Experiment Lifecycle
+# ---------------------------------------------------------------------------
+
+
+class TestFullExperimentLifecycle:
+    """Complete workflow from planning to analysis to reporting.
+
+    1. Plan the sample size using SampleSize.for_proportion.
+    2. Estimate the experiment duration.
+    3. Generate data at the planned n.
+    4. Check SRM to validate the traffic split.
+    5. Analyze the experiment.
+    6. Verify the result is significant and all pieces connect.
+    """
+
+    def test_plan_to_analysis_pipeline(self):
+        """Full lifecycle: plan -> duration -> generate -> SRM -> analyze."""
+        from splita.core.srm import SRMCheck
+
+        # 1. Plan
+        plan = SampleSize.for_proportion(baseline=0.10, mde=0.02)
+        n = plan.n_per_variant
+        assert n > 0
+        assert plan.metric == "proportion"
+        assert plan.mde == pytest.approx(0.02)
+
+        # 2. Estimate duration
+        with_days = plan.duration(daily_users=2000)
+        assert with_days.days_needed is not None
+        assert with_days.days_needed > 0
+
+        # 3. Generate data at planned n (oversample 2x for reliability)
+        rng = np.random.default_rng(100)
+        actual_n = n * 2
+        control = rng.binomial(1, 0.10, size=actual_n).astype(float)
+        treatment = rng.binomial(1, 0.12, size=actual_n).astype(float)
+
+        # 4. SRM check
+        srm = SRMCheck([len(control), len(treatment)]).run()
+        assert srm.passed is True
+        assert "No sample ratio mismatch" in srm.message
+
+        # 5. Analyze
+        result = Experiment(control, treatment).run()
+
+        # 6. Verify
+        assert result.significant is True
+        assert result.metric == "conversion"
+        assert result.method == "ztest"
+        assert result.lift > 0
+        assert result.pvalue < 0.05
+        assert result.control_n == actual_n
+        assert result.treatment_n == actual_n
+
+    def test_duration_is_reasonable(self):
+        """Duration should be a few days with 2000 daily users."""
+        plan = SampleSize.for_proportion(baseline=0.10, mde=0.02)
+        with_days = plan.duration(daily_users=2000)
+
+        # n_total ~7686, daily_users=2000 -> ~4 days
+        assert with_days.days_needed is not None
+        assert 1 <= with_days.days_needed <= 15
+
+    def test_all_pieces_connect(self):
+        """Plan n, generate at n, verify result reports correct n."""
+        from splita.core.srm import SRMCheck
+
+        plan = SampleSize.for_proportion(baseline=0.10, mde=0.02)
+        n = plan.n_per_variant
+
+        rng = np.random.default_rng(101)
+        control = rng.binomial(1, 0.10, size=n).astype(float)
+        treatment = rng.binomial(1, 0.12, size=n).astype(float)
+
+        srm = SRMCheck([n, n]).run()
+        assert srm.passed is True
+
+        result = Experiment(control, treatment).run()
+        assert result.control_n == n
+        assert result.treatment_n == n
+        assert result.alpha == pytest.approx(plan.alpha)
+
+
+# ---------------------------------------------------------------------------
+# Scenario 11: A/B/C Test with Multiple Comparisons
+# ---------------------------------------------------------------------------
+
+
+class TestABCTestWithMultipleComparisons:
+    """Testing 2 treatment variants against control with Holm correction.
+
+    Treatment A has a real 2pp lift. Treatment B has no lift. After
+    running 2 experiments and applying Holm correction, treatment A
+    should survive and treatment B should not.
+    """
+
+    def test_srm_check_three_groups(self):
+        """SRM check should pass for balanced 3-way split."""
+        from splita.core.srm import SRMCheck
+
+        n = 5000
+        srm = SRMCheck(
+            [n, n, n],
+            expected_fractions=[1 / 3, 1 / 3, 1 / 3],
+        ).run()
+        assert srm.passed is True
+
+    def test_holm_correction_keeps_real_effect(self):
+        """Treatment A (real lift) should survive Holm correction."""
+        from splita.core.correction import MultipleCorrection
+
+        rng = np.random.default_rng(110)
+        n = 10000
+
+        control = rng.binomial(1, 0.10, size=n).astype(float)
+        treatment_a = rng.binomial(1, 0.12, size=n).astype(float)  # 2pp lift
+        treatment_b = rng.binomial(1, 0.10, size=n).astype(float)  # no lift
+
+        result_a = Experiment(control, treatment_a).run()
+        result_b = Experiment(control, treatment_b).run()
+
+        correction = MultipleCorrection(
+            [result_a.pvalue, result_b.pvalue],
+            method="holm",
+            labels=["treatment_a", "treatment_b"],
+        ).run()
+
+        assert correction.rejected[0] is True, (
+            f"Treatment A should survive Holm (adj_p={correction.adjusted_pvalues[0]:.4f})"
+        )
+
+    def test_holm_correction_rejects_null_effect(self):
+        """Treatment B (no lift) should not survive Holm correction."""
+        from splita.core.correction import MultipleCorrection
+
+        rng = np.random.default_rng(110)
+        n = 10000
+
+        control = rng.binomial(1, 0.10, size=n).astype(float)
+        treatment_a = rng.binomial(1, 0.12, size=n).astype(float)
+        treatment_b = rng.binomial(1, 0.10, size=n).astype(float)
+
+        result_a = Experiment(control, treatment_a).run()
+        result_b = Experiment(control, treatment_b).run()
+
+        correction = MultipleCorrection(
+            [result_a.pvalue, result_b.pvalue],
+            method="holm",
+            labels=["treatment_a", "treatment_b"],
+        ).run()
+
+        assert correction.rejected[1] is False, (
+            f"Treatment B should not survive Holm (adj_p={correction.adjusted_pvalues[1]:.4f})"
+        )
+
+    def test_abc_full_workflow(self):
+        """Full A/B/C workflow: SRM -> experiments -> correction."""
+        from splita.core.correction import MultipleCorrection
+        from splita.core.srm import SRMCheck
+
+        rng = np.random.default_rng(110)
+        n = 10000
+
+        control = rng.binomial(1, 0.10, size=n).astype(float)
+        treatment_a = rng.binomial(1, 0.12, size=n).astype(float)
+        treatment_b = rng.binomial(1, 0.10, size=n).astype(float)
+
+        # SRM check
+        srm = SRMCheck(
+            [len(control), len(treatment_a), len(treatment_b)],
+            expected_fractions=[1 / 3, 1 / 3, 1 / 3],
+        ).run()
+        assert srm.passed is True
+
+        # Run experiments
+        result_a = Experiment(control, treatment_a).run()
+        result_b = Experiment(control, treatment_b).run()
+
+        # Apply Holm correction
+        correction = MultipleCorrection(
+            [result_a.pvalue, result_b.pvalue],
+            method="holm",
+            labels=["treatment_a", "treatment_b"],
+        ).run()
+
+        assert correction.n_tests == 2
+        assert correction.method == "Holm"
+        assert correction.n_rejected == 1
+        assert correction.rejected[0] is True   # treatment A
+        assert correction.rejected[1] is False   # treatment B
+
+
+# ---------------------------------------------------------------------------
+# Scenario 12: SRM Detection Saves the Day
+# ---------------------------------------------------------------------------
+
+
+class TestSRMDetectionSavesTheDay:
+    """A bug in the randomizer sends 70% of traffic to treatment.
+
+    SRM catches the imbalance before bad analysis can mislead the team.
+    The test also demonstrates that naive analysis on imbalanced data
+    can produce misleading "significant" results.
+    """
+
+    def test_heavily_imbalanced_srm_fails(self):
+        """SRM should clearly fail with 3000/7000 split."""
+        from splita.core.srm import SRMCheck
+
+        srm = SRMCheck([3000, 7000]).run()
+        assert srm.passed is False
+        assert srm.pvalue < 1e-10  # extremely low p-value
+        assert "cannot be trusted" in srm.message
+
+    def test_srm_message_is_clear(self):
+        """The SRM failure message should mention the experiment cannot be trusted."""
+        from splita.core.srm import SRMCheck
+
+        srm = SRMCheck([3000, 7000]).run()
+        assert "cannot be trusted" in srm.message
+        assert "mismatch detected" in srm.message
+
+    def test_srm_reports_worst_deviation(self):
+        """SRM should identify the most deviated variant."""
+        from splita.core.srm import SRMCheck
+
+        srm = SRMCheck([3000, 7000]).run()
+        # Expected 5000 each. Variant 1 (treatment) has +40% deviation,
+        # variant 0 (control) has -40% deviation. Both are equally bad.
+        assert srm.worst_variant in (0, 1)
+        # Deviations should be large
+        assert abs(srm.deviations_pct[0]) == pytest.approx(40.0)
+        assert abs(srm.deviations_pct[1]) == pytest.approx(40.0)
+
+    def test_naive_analysis_on_imbalanced_data_is_misleading(self):
+        """Naive analysis on buggy data can produce a 'significant' artifact.
+
+        When the randomizer is broken, the groups may differ in composition,
+        not just in size. Here we simulate a scenario where the imbalance
+        introduces a spurious signal that would mislead the team if SRM
+        were not checked first.
+        """
+        from splita.core.srm import SRMCheck
+
+        rng = np.random.default_rng(120)
+
+        # Broken randomizer: only high-intent users end up in treatment
+        # Control gets the typical 10% conversion
+        control = rng.binomial(1, 0.10, size=3000).astype(float)
+        # Treatment appears to convert better, but it is selection bias
+        treatment = rng.binomial(1, 0.12, size=7000).astype(float)
+
+        # SRM catches the problem
+        srm = SRMCheck([len(control), len(treatment)]).run()
+        assert srm.passed is False
+
+        # Naive analysis sees a "significant" result
+        result = Experiment(control, treatment).run()
+
+        # The key lesson: SRM should be checked first.
+        # The experiment result exists but cannot be trusted.
+        assert 0 <= result.pvalue <= 1
+        assert result.control_n == 3000
+        assert result.treatment_n == 7000
+
+    def test_srm_guard_prevents_bad_decision(self):
+        """Full guard pattern: SRM fails -> do not trust the result."""
+        from splita.core.srm import SRMCheck
+
+        rng = np.random.default_rng(121)
+        control = rng.binomial(1, 0.10, size=3000).astype(float)
+        treatment = rng.binomial(1, 0.13, size=7000).astype(float)
+
+        # Guard: check SRM first
+        srm = SRMCheck([len(control), len(treatment)]).run()
+
+        if srm.passed:
+            # This branch should NOT be taken
+            result = Experiment(control, treatment).run()
+            assert False, "SRM should have failed for 3000/7000 split"
+        else:
+            # Correct path: SRM failed, do not analyze
+            assert "cannot be trusted" in srm.message

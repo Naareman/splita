@@ -8,7 +8,8 @@ correction methods.
 
 from __future__ import annotations
 
-from typing import Literal, Sequence
+from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
 
@@ -112,8 +113,9 @@ class MultipleCorrection:
         if labels is not None and len(labels) != len(pv):
             raise ValueError(
                 format_error(
-                    f"`labels` must have the same length as `pvalues`.",
-                    f"pvalues has {len(pv)} elements, labels has {len(labels)} elements.",
+                    "`labels` must have the same length as `pvalues`.",
+                    f"pvalues has {len(pv)} elements, "
+                    f"labels has {len(labels)} elements.",
                     "provide one label per p-value.",
                 )
             )

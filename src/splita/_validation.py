@@ -5,11 +5,14 @@ import warnings
 
 import numpy as np
 
-
 # ─── Internal helper ────────────────────────────────────────────────
 
 
-def format_error(problem: str, detail: str | None = None, hint: str | None = None) -> str:
+def format_error(
+    problem: str,
+    detail: str | None = None,
+    hint: str | None = None,
+) -> str:
     """Assemble a 3-part error string (problem / detail / hint).
 
     Parameters
@@ -286,7 +289,8 @@ def check_array_like(
     if arr.ndim > 1:
         raise ValueError(
             format_error(
-                f"`{name}` must be a 1-D array, got {arr.ndim}-D array with shape {arr.shape}.",
+                f"`{name}` must be a 1-D array, got "
+                f"{arr.ndim}-D array with shape {arr.shape}.",
                 hint="pass a 1-D list, numpy array, or pandas Series.",
             )
         )

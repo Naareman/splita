@@ -32,7 +32,15 @@ from splita._validation import (
 )
 
 _VALID_METRICS = ["auto", "conversion", "continuous", "ratio"]
-_VALID_METHODS = ["auto", "ttest", "mannwhitney", "ztest", "chisquare", "delta", "bootstrap"]
+_VALID_METHODS = [
+    "auto",
+    "ttest",
+    "mannwhitney",
+    "ztest",
+    "chisquare",
+    "delta",
+    "bootstrap",
+]
 _VALID_ALTERNATIVES = ["two-sided", "greater", "less"]
 
 ArrayLike = list | tuple | np.ndarray
@@ -49,8 +57,10 @@ class Experiment:
         Observations from the treatment group.
     metric : {'auto', 'conversion', 'continuous', 'ratio'}, default 'auto'
         Type of metric.  ``'auto'`` infers from the data.
-    method : {'auto', 'ttest', 'mannwhitney', 'ztest', 'chisquare', 'delta', 'bootstrap'}, default 'auto'
-        Statistical test to use.  ``'auto'`` selects based on metric type.
+    method : str, default 'auto'
+        Statistical test to use.  One of ``'auto'``, ``'ttest'``,
+        ``'mannwhitney'``, ``'ztest'``, ``'chisquare'``, ``'delta'``,
+        or ``'bootstrap'``.  ``'auto'`` selects based on metric type.
     alpha : float, default 0.05
         Significance level.
     alternative : {'two-sided', 'greater', 'less'}, default 'two-sided'
@@ -80,7 +90,15 @@ class Experiment:
         treatment: ArrayLike,
         *,
         metric: Literal["auto", "conversion", "continuous", "ratio"] = "auto",
-        method: Literal["auto", "ttest", "mannwhitney", "ztest", "chisquare", "delta", "bootstrap"] = "auto",
+        method: Literal[
+            "auto",
+            "ttest",
+            "mannwhitney",
+            "ztest",
+            "chisquare",
+            "delta",
+            "bootstrap",
+        ] = "auto",
         alpha: float = 0.05,
         alternative: Literal["two-sided", "greater", "less"] = "two-sided",
         control_denominator: ArrayLike | None = None,
@@ -95,7 +113,10 @@ class Experiment:
 
         # ── validate alpha ──────────────────────────────────────────
         check_in_range(
-            alpha, "alpha", 0.0, 1.0,
+            alpha,
+            "alpha",
+            0.0,
+            1.0,
             hint="typical values are 0.05, 0.01, or 0.10",
         )
 
@@ -105,7 +126,7 @@ class Experiment:
                 format_error(
                     f"`n_bootstrap` must be >= 100, got {n_bootstrap}.",
                     "too few bootstrap iterations for reliable inference.",
-                    "typical values are 1000–10000.",
+                    "typical values are 1000-10000.",
                 )
             )
         if n_bootstrap > 1_000_000:
@@ -118,14 +139,24 @@ class Experiment:
             )
 
         # ── convert & clean arrays ──────────────────────────────────
-        self._control = check_array_like(control, "control", min_length=2)
-        self._treatment = check_array_like(treatment, "treatment", min_length=2)
+        self._control = check_array_like(
+            control,
+            "control",
+            min_length=2,
+        )
+        self._treatment = check_array_like(
+            treatment,
+            "treatment",
+            min_length=2,
+        )
 
         # ── denominators (ratio metric) ─────────────────────────────
         self._control_denom: np.ndarray | None = None
         self._treatment_denom: np.ndarray | None = None
 
-        if metric == "ratio" and (control_denominator is None or treatment_denominator is None):
+        if metric == "ratio" and (
+            control_denominator is None or treatment_denominator is None
+        ):
             raise ValueError(
                 format_error(
                     "`control_denominator` and `treatment_denominator` are required "
@@ -137,15 +168,29 @@ class Experiment:
 
         if control_denominator is not None:
             self._control_denom = check_array_like(
-                control_denominator, "control_denominator", min_length=2,
+                control_denominator,
+                "control_denominator",
+                min_length=2,
             )
-            check_same_length(self._control, self._control_denom, "control", "control_denominator")
+            check_same_length(
+                self._control,
+                self._control_denom,
+                "control",
+                "control_denominator",
+            )
 
         if treatment_denominator is not None:
             self._treatment_denom = check_array_like(
-                treatment_denominator, "treatment_denominator", min_length=2,
+                treatment_denominator,
+                "treatment_denominator",
+                min_length=2,
             )
-            check_same_length(self._treatment, self._treatment_denom, "treatment", "treatment_denominator")
+            check_same_length(
+                self._treatment,
+                self._treatment_denom,
+                "treatment",
+                "treatment_denominator",
+            )
 
         # ── store config ────────────────────────────────────────────
         self._alpha = alpha
@@ -222,14 +267,14 @@ class Experiment:
 
         if self._metric == "conversion":
             # Cohen's h: power = Phi(|h| * sqrt(n) - z_alpha)
-            power_estimate = float(norm.cdf(
-                abs(effect_size) * math.sqrt(n_harmonic) - z_alpha
-            ))
+            power_estimate = float(
+                norm.cdf(abs(effect_size) * math.sqrt(n_harmonic) - z_alpha)
+            )
         else:
             # Cohen's d: power = Phi(|d| * sqrt(n/2) - z_alpha)
-            power_estimate = float(norm.cdf(
-                abs(effect_size) * math.sqrt(n_harmonic / 2) - z_alpha
-            ))
+            power_estimate = float(
+                norm.cdf(abs(effect_size) * math.sqrt(n_harmonic / 2) - z_alpha)
+            )
         return max(0.0, min(1.0, power_estimate))
 
     def _build_ci(
@@ -263,10 +308,7 @@ class Experiment:
         p_pool = pooled_proportion(ctrl, trt)
 
         se = math.sqrt(p_pool * (1 - p_pool) * (1.0 / n1 + 1.0 / n2))
-        if se == 0:
-            z = 0.0
-        else:
-            z = (p2 - p1) / se
+        z = 0.0 if se == 0 else (p2 - p1) / se
 
         # p-value
         if self._alternative == "two-sided":
@@ -486,7 +528,8 @@ class Experiment:
             raise ValueError(
                 format_error(
                     "Denominator values must not sum to zero.",
-                    f"control denominator sum: {np.sum(ctrl_den)}, treatment denominator sum: {np.sum(trt_den)}.",
+                    f"control denominator sum: {np.sum(ctrl_den)}, "
+                    f"treatment denominator sum: {np.sum(trt_den)}.",
                     "check your denominator data for all-zero arrays.",
                 )
             )

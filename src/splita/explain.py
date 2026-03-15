@@ -765,25 +765,114 @@ def _explain_recommendation(result: Any, lang: str = "en") -> str:
 
 
 def _explain_generic(result: Any, lang: str = "en") -> str:
-    """Generate a generic explanation from dataclass fields.
+    """Generate a smart explanation from dataclass fields.
 
     This is the fallback for any result type without a dedicated handler.
+    It recognises common field patterns (pvalue, significant, ate, ci_lower,
+    etc.) and produces meaningful prose instead of a raw field dump.
+
+    Advanced result types always fall back to English regardless of the
+    ``lang`` parameter.
     """
     type_name = type(result).__name__
-    parts = [f"{type_name}:"]
+    lines: list[str] = []
+
     try:
-        for f in dc_fields(result):
-            val = getattr(result, f.name)
-            if isinstance(val, float):  # pragma: no cover
-                parts.append(f"{f.name}={_fmt_num(val)}")
-            elif isinstance(val, (bool, int, str)) or (isinstance(val, list) and len(val) <= 5):
-                parts.append(f"{f.name}={val}")
-            elif isinstance(val, list):  # pragma: no cover
-                parts.append(f"{f.name}=[{len(val)} items]")
-            # Skip complex nested objects
+        field_map: dict[str, Any] = {f.name: getattr(result, f.name) for f in dc_fields(result)}
     except TypeError:
-        parts.append("(could not introspect fields)")
-    return " ".join(parts)
+        return f"{type_name}: (could not introspect fields)"
+
+    # ── Pattern-based interpretation ──────────────────────────────────
+
+    # Sample sizes
+    n_ctrl = field_map.get("n_control") or field_map.get("n_clusters_control")
+    n_trt = field_map.get("n_treatment") or field_map.get("n_clusters_treatment")
+    if n_ctrl is not None and n_trt is not None:
+        lines.append(f"Based on {n_ctrl} control and {n_trt} treatment observations.")
+
+    # Significance + p-value
+    pvalue = field_map.get("pvalue") or field_map.get("p_value")
+    significant = field_map.get("significant")
+    if pvalue is not None and significant is not None:
+        sig_text = "significant" if significant else "not significant"
+        lines.append(f"The test was {sig_text} (p={_fmt_num(pvalue)}).")
+    elif pvalue is not None:
+        lines.append(f"p-value: {_fmt_num(pvalue)}.")
+
+    # Effect estimate (ATE / lift)
+    ate = field_map.get("ate") or field_map.get("att") or field_map.get("effect")
+    lift = field_map.get("lift")
+    if ate is not None:
+        lines.append(f"The estimated effect is {_fmt_num(ate)}.")
+    elif lift is not None:
+        lines.append(f"The estimated lift is {_fmt_num(lift)}.")
+
+    # Confidence interval
+    ci_lo = field_map.get("ci_lower")
+    ci_hi = field_map.get("ci_upper")
+    if ci_lo is not None and ci_hi is not None:
+        lines.append(f"95% CI: [{_fmt_num(ci_lo)}, {_fmt_num(ci_hi)}].")
+
+    # Variance reduction
+    vr = field_map.get("variance_reduction")
+    if vr is not None and isinstance(vr, (int, float)):
+        lines.append(f"Variance was reduced by {vr:.0%}.")
+
+    # Should stop (sequential / bandit)
+    should_stop = field_map.get("should_stop")
+    if should_stop is not None:
+        rec = "stop the experiment" if should_stop else "continue collecting data"
+        lines.append(f"Recommendation: {rec}.")
+
+    # Prob best / probability
+    prob_best = field_map.get("prob_best") or field_map.get("prob_b_beats_a")
+    if prob_best is not None:
+        if isinstance(prob_best, (int, float)):
+            lines.append(f"Probability of being best: {_fmt_pct(prob_best)}.")
+        elif isinstance(prob_best, list) and len(prob_best) <= 10:
+            probs_str = ", ".join(_fmt_pct(p) for p in prob_best)
+            lines.append(f"Probability of being best per arm: [{probs_str}].")
+
+    # ICC
+    icc = field_map.get("icc")
+    if icc is not None and isinstance(icc, float):
+        lines.append(f"Intra-cluster correlation (ICC): {_fmt_num(icc)}.")
+
+    # Method / status
+    method = field_map.get("method")
+    if method is not None and isinstance(method, str):
+        lines.append(f"Method: {method}.")
+
+    status = field_map.get("status")
+    if status is not None and isinstance(status, str):
+        lines.append(f"Status: {status}.")
+
+    # ── Fallback: if no patterns matched, list key scalar fields ──────
+    if not lines:
+        lines.append(f"{type_name}:")
+        for name, val in field_map.items():
+            if isinstance(val, float):
+                lines.append(f"  {name} = {_fmt_num(val)}")
+            elif isinstance(val, (bool, int, str)) or (isinstance(val, list) and len(val) <= 5):
+                lines.append(f"  {name} = {val}")
+            elif isinstance(val, list):
+                lines.append(f"  {name} = [{len(val)} items]")
+    else:
+        lines.insert(0, f"{type_name}:")
+
+    # ── Next step recommendation ──────────────────────────────────────
+    if significant is True:
+        lines.append("Next step: review the effect size and confidence interval before making a ship decision.")
+    elif significant is False:
+        lines.append("Next step: consider increasing sample size or running longer to detect smaller effects.")
+    elif should_stop is True:
+        lines.append("Next step: make your final decision based on the accumulated evidence.")
+    elif should_stop is False:
+        lines.append("Next step: wait for more data before drawing conclusions.")
+    else:
+        lines.append("Next step: review the result fields above and consider whether further analysis is needed.")
+
+    return " ".join(lines)
 
 
 # ─── Registry of explainable types ──────────────────────────────────

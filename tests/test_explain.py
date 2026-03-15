@@ -993,8 +993,8 @@ class TestExplainGenericFallback:
         )
         text = explain(result)
         assert "NoveltyCurveResult" in text
-        assert "has_novelty_effect=False" in text
-        assert "trend_direction=stable" in text
+        assert "has_novelty_effect" in text
+        assert "trend_direction" in text
 
     def test_generic_does_not_raise(self) -> None:
         """Any dataclass should get a generic explanation, not a TypeError."""

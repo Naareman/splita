@@ -860,7 +860,7 @@ def test_hte_known_heterogeneity():
     Design: CATE = 2 * X0, so subgroup X0 > 0 should have higher CATE
     than subgroup X0 < 0.
     """
-    from splita import HTEEstimator
+    from splita.core import HTEEstimator
 
     rng = np.random.default_rng(42)
     n = 500
@@ -1055,7 +1055,7 @@ def test_bayesian_ci_coverage():
 
     500 simulations with known true conversion difference = 0.02.
     """
-    from splita import BayesianExperiment
+    from splita.core import BayesianExperiment
 
     true_effect = 0.02
     n_sims = 500
@@ -1088,7 +1088,7 @@ def test_bayesian_prob_b_beats_a_under_null():
 
     Across 500 simulations, the mean P(B>A) should be in [0.45, 0.55].
     """
-    from splita import BayesianExperiment
+    from splita.core import BayesianExperiment
 
     n_sims = 500
     probs = []
@@ -1115,7 +1115,7 @@ def test_bayesian_prob_b_beats_a_under_null():
 
 def test_quantile_known_shift_matches():
     """With treatment = control + constant, all quantile diffs match the shift."""
-    from splita import QuantileExperiment
+    from splita.core import QuantileExperiment
 
     rng = np.random.default_rng(42)
     ctrl = rng.normal(10, 2, size=1000)

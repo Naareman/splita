@@ -42,6 +42,9 @@ def playground(port: int = 8501) -> None:
     ImportError
         If ``streamlit`` is not installed.
     """
+    if not 1024 <= port <= 65535:
+        raise ValueError(f"port must be between 1024 and 65535, got {port}")
+
     try:
         import streamlit  # noqa: F401
     except ImportError:

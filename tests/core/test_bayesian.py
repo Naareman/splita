@@ -5,7 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from splita import BayesianExperiment, BayesianResult
+from splita import BayesianExperiment
+from splita._types import BayesianResult
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────

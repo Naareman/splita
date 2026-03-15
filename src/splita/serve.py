@@ -159,6 +159,14 @@ def _create_app() -> Any:  # pragma: no cover
 def serve(host: str = "0.0.0.0", port: int = 8080) -> None:  # pragma: no cover
     """Start a FastAPI server exposing splita as a REST API.
 
+    .. warning::
+
+        This server is intended for **development and internal use only**.
+        It does not include authentication, rate limiting, or other
+        production-hardening measures.  For production deployments, place
+        this behind a reverse proxy (e.g. nginx, Caddy) with TLS and
+        appropriate access controls.
+
     Parameters
     ----------
     host : str, default "0.0.0.0"

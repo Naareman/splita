@@ -1675,7 +1675,7 @@ class TestTriggeredExperiment60Percent:
         triggered = rng.random(n) < 0.6
         trt_base[triggered] += 2.0  # only triggered users get effect
 
-        from splita import TriggeredExperiment
+        from splita.core import TriggeredExperiment
 
         result = TriggeredExperiment(
             ctrl, trt_base, treatment_triggered=triggered,
@@ -1694,7 +1694,7 @@ class TestTriggeredExperiment60Percent:
         triggered = rng.random(n) < 0.6
         trt[triggered] += 3.0
 
-        from splita import TriggeredExperiment
+        from splita.core import TriggeredExperiment
 
         result = TriggeredExperiment(
             ctrl, trt, treatment_triggered=triggered,
@@ -1714,7 +1714,7 @@ class TestTriggeredExperiment60Percent:
         triggered = rng.random(n) < 0.6
         trt[triggered] += 3.0
 
-        from splita import TriggeredExperiment
+        from splita.core import TriggeredExperiment
 
         result = TriggeredExperiment(
             ctrl, trt, treatment_triggered=triggered,
@@ -1734,7 +1734,7 @@ class TestTriggeredExperiment60Percent:
         triggered = rng.random(n) < 0.6
         trt[triggered] += 2.0
 
-        from splita import TriggeredExperiment
+        from splita.core import TriggeredExperiment
 
         result = TriggeredExperiment(
             ctrl, trt, treatment_triggered=triggered,
@@ -1761,7 +1761,7 @@ class TestHTEHighValueSegment:
 
     def test_cate_varies_across_segments(self):
         """CATE should be higher for premium users (X0 > 1)."""
-        from splita import HTEEstimator
+        from splita.core import HTEEstimator
 
         rng = np.random.default_rng(42)
         n = 500
@@ -1785,7 +1785,7 @@ class TestHTEHighValueSegment:
 
     def test_predict_premium_vs_standard(self):
         """Predict CATE for a premium user vs a standard user."""
-        from splita import HTEEstimator
+        from splita.core import HTEEstimator
 
         rng = np.random.default_rng(42)
         n = 500
@@ -1811,7 +1811,7 @@ class TestHTEHighValueSegment:
 
     def test_top_features_identifies_x0(self):
         """The most important feature should be X0 (index 0)."""
-        from splita import HTEEstimator
+        from splita.core import HTEEstimator
 
         rng = np.random.default_rng(42)
         n = 500
@@ -2036,7 +2036,7 @@ class TestBayesianROPEPracticalEquivalence:
 
     def test_no_real_effect_falls_in_rope(self):
         """No real effect -> posterior mass concentrated in ROPE."""
-        from splita import BayesianExperiment
+        from splita.core import BayesianExperiment
 
         rng = np.random.default_rng(42)
         n = 5000
@@ -2051,7 +2051,7 @@ class TestBayesianROPEPracticalEquivalence:
 
     def test_real_effect_escapes_rope(self):
         """Real +5pp effect -> negligible posterior mass in ROPE."""
-        from splita import BayesianExperiment
+        from splita.core import BayesianExperiment
 
         rng = np.random.default_rng(42)
         n = 5000
@@ -2066,7 +2066,7 @@ class TestBayesianROPEPracticalEquivalence:
 
     def test_borderline_effect_decision(self):
         """Effect near ROPE boundary -> result is valid, decision uncertain."""
-        from splita import BayesianExperiment
+        from splita.core import BayesianExperiment
 
         rng = np.random.default_rng(42)
         n = 5000

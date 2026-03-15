@@ -5,7 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from splita import QuantileExperiment, QuantileResult
+from splita._types import QuantileResult
+from splita.core import QuantileExperiment
 
 
 # ─── Fixtures ───────────────────────────────────────────────────────

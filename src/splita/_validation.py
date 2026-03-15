@@ -373,6 +373,14 @@ def check_array_like(
             )
             arr = arr[~inf_mask]
 
+    if len(arr) > 10_000_000:
+        warnings.warn(
+            f"`{name}` has {len(arr):,} elements. Very large arrays may cause "
+            f"slow computation. Consider sampling or aggregating.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+
     if min_length is not None and len(arr) < min_length:
         raise ValidationError(
             format_error(

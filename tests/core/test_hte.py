@@ -5,7 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from splita import HTEEstimator, HTEResult
+from splita._types import HTEResult
+from splita.core import HTEEstimator
 
 
 # ─── Fixtures ────────────────────────────────────────────────────

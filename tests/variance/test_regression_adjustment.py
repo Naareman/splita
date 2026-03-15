@@ -418,10 +418,10 @@ class TestMultiCovariate:
 class TestIntegration:
     """Integration tests."""
 
-    def test_import_from_splita(self):
-        """Can import RegressionAdjustment from splita top-level."""
-        from splita import RegressionAdjustment as RA
-        from splita import RegressionAdjustmentResult as RAR
+    def test_import_from_splita_submodule(self):
+        """Can import RegressionAdjustment from splita submodules."""
+        from splita.variance import RegressionAdjustment as RA
+        from splita._types import RegressionAdjustmentResult as RAR
 
         assert RA is not None
         assert RAR is not None

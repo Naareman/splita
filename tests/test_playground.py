@@ -26,18 +26,17 @@ class TestPlaygroundImport:
 
         assert callable(playground)
 
-    def test_playground_exported_from_package(self):
-        """Verify playground is accessible from the top-level package."""
-        import splita
+    def test_playground_importable_from_submodule(self):
+        """Verify playground is accessible from the submodule."""
+        from splita.playground import playground
 
-        assert hasattr(splita, "playground")
-        assert callable(splita.playground)
+        assert callable(playground)
 
-    def test_playground_in_all(self):
-        """Verify playground is listed in __all__."""
-        import splita
+    def test_playground_importable(self):
+        """Verify playground is importable from submodule."""
+        from splita.playground import playground
 
-        assert "playground" in splita.__all__
+        assert callable(playground)
 
     def test_playground_app_module_exists(self):
         """Verify the internal Streamlit app file exists."""

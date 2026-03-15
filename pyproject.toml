@@ -22,7 +22,6 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Mathematics",
     "Typing :: Typed",
 ]
@@ -48,6 +47,20 @@ api = [
 playground = [
     "streamlit>=1.30",
     "matplotlib>=3.5",
+]
+all = [
+    "scikit-learn>=1.2",
+    "matplotlib>=3.5",
+    "ipywidgets>=8.0",
+    "fastapi>=0.100",
+    "uvicorn>=0.20",
+    "streamlit>=1.30",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.4",
+    "mypy>=1.0",
 ]
 
 [project.urls]

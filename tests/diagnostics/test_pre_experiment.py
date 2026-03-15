@@ -5,7 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from splita import MetricSensitivity, MetricSensitivityResult, VarianceEstimateResult, VarianceEstimator
+from splita._types import MetricSensitivityResult, VarianceEstimateResult
+from splita.diagnostics import MetricSensitivity, VarianceEstimator
 
 
 # ─── VarianceEstimator tests ─────────────────────────────────────

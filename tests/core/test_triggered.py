@@ -5,12 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from splita import (
-    InteractionResult,
-    InteractionTest,
-    TriggeredExperiment,
-    TriggeredResult,
-)
+from splita._types import InteractionResult, TriggeredResult
+from splita.core import InteractionTest, TriggeredExperiment
 
 
 # ─── TriggeredExperiment tests ───────────────────────────────────

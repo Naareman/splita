@@ -5,7 +5,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from splita import PowerSimulation, PowerSimulationResult, SampleSize
+from splita import SampleSize
+from splita._types import PowerSimulationResult
+from splita.core import PowerSimulation
 
 
 # ═══════════════════════════════════════════════════════════════════════

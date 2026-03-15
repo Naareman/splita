@@ -17,13 +17,13 @@ from __future__ import annotations
 from typing import Literal
 
 import numpy as np
-from scipy.stats import ttest_ind, norm
+from scipy.stats import norm, ttest_ind
 
 from splita._types import OECResult
 from splita._validation import (
     check_array_like,
-    check_positive,
     check_one_of,
+    check_positive,
     format_error,
 )
 
@@ -170,14 +170,15 @@ class OECBuilder:
             contributions.append(float(w * (trt.mean() - ctrl.mean())))
 
         # Two-sample t-test
-        stat, pvalue = ttest_ind(oec_trt, oec_ctrl, equal_var=False)
+        _stat, pvalue = ttest_ind(oec_trt, oec_ctrl, equal_var=False)
         oec_lift = float(oec_trt.mean() - oec_ctrl.mean())
 
         # CI via normal approximation
-        se = float(np.sqrt(
-            np.var(oec_ctrl, ddof=1) / len(oec_ctrl)
-            + np.var(oec_trt, ddof=1) / len(oec_trt)
-        ))
+        se = float(
+            np.sqrt(
+                np.var(oec_ctrl, ddof=1) / len(oec_ctrl) + np.var(oec_trt, ddof=1) / len(oec_trt)
+            )
+        )
         z_crit = float(norm.ppf(0.975))
         ci_lower = oec_lift - z_crit * se
         ci_upper = oec_lift + z_crit * se

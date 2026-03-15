@@ -46,7 +46,7 @@ class PredictionPoweredInference:
         if not 0 < alpha < 1:
             raise ValueError(
                 format_error(
-                    "`alpha` must be in (0, 1), got {}.".format(alpha),
+                    f"`alpha` must be in (0, 1), got {alpha}.",
                     "alpha represents the significance level.",
                     "typical values are 0.05, 0.01, or 0.10.",
                 )
@@ -83,12 +83,8 @@ class PredictionPoweredInference:
             If labeled arrays differ in length or have too few elements.
         """
         y = check_array_like(labeled_outcome, "labeled_outcome", min_length=2)
-        f_labeled = check_array_like(
-            labeled_predictions, "labeled_predictions", min_length=2
-        )
-        f_unlabeled = check_array_like(
-            unlabeled_predictions, "unlabeled_predictions", min_length=2
-        )
+        f_labeled = check_array_like(labeled_predictions, "labeled_predictions", min_length=2)
+        f_unlabeled = check_array_like(unlabeled_predictions, "unlabeled_predictions", min_length=2)
         check_same_length(y, f_labeled, "labeled_outcome", "labeled_predictions")
 
         n = len(y)

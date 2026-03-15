@@ -3,12 +3,11 @@ from splita.core.causal_forest import CausalForest
 from splita.core.correction import MultipleCorrection
 from splita.core.dilution import DilutionAnalysis
 from splita.core.experiment import Experiment
-from splita.core.mixed_effects import MixedEffectsExperiment
-from splita.core.survival import SurvivalExperiment
 from splita.core.funnel import FunnelExperiment
 from splita.core.hte import HTEEstimator
 from splita.core.interleaving import InterleavingExperiment
 from splita.core.metric_decomposition import MetricDecomposition
+from splita.core.mixed_effects import MixedEffectsExperiment
 from splita.core.multi_objective import MultiObjectiveExperiment
 from splita.core.objective_bayesian import ObjectiveBayesianExperiment
 from splita.core.oec import OECBuilder
@@ -20,6 +19,7 @@ from splita.core.risk_aware import RiskAwareDecision
 from splita.core.sample_size import SampleSize
 from splita.core.srm import SRMCheck
 from splita.core.stratified import StratifiedExperiment
+from splita.core.survival import SurvivalExperiment
 from splita.core.triggered import InteractionTest, TriggeredExperiment
 
 __all__ = [
@@ -29,14 +29,14 @@ __all__ = [
     "Experiment",
     "FunnelExperiment",
     "HTEEstimator",
-    "InterleavingExperiment",
     "InteractionTest",
+    "InterleavingExperiment",
     "MetricDecomposition",
     "MixedEffectsExperiment",
     "MultiObjectiveExperiment",
     "MultipleCorrection",
-    "ObjectiveBayesianExperiment",
     "OECBuilder",
+    "ObjectiveBayesianExperiment",
     "OptimalProxyMetrics",
     "PermutationTest",
     "PowerSimulation",
@@ -44,7 +44,7 @@ __all__ = [
     "RiskAwareDecision",
     "SRMCheck",
     "SampleSize",
-    "SurvivalExperiment",
     "StratifiedExperiment",
+    "SurvivalExperiment",
     "TriggeredExperiment",
 ]

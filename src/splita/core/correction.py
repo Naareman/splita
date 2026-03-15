@@ -114,8 +114,7 @@ class MultipleCorrection:
             raise ValueError(
                 format_error(
                     "`labels` must have the same length as `pvalues`.",
-                    f"pvalues has {len(pv)} elements, "
-                    f"labels has {len(labels)} elements.",
+                    f"pvalues has {len(pv)} elements, labels has {len(labels)} elements.",
                     "provide one label per p-value.",
                 )
             )

@@ -223,9 +223,7 @@ class StratifiedExperiment:
 
             stratum_effects.append(
                 {
-                    "stratum": (
-                        label if not isinstance(label, np.generic) else label.item()
-                    ),
+                    "stratum": (label if not isinstance(label, np.generic) else label.item()),
                     "ate": ate_s,
                     "se": se_s,
                     "n_control": n_c,

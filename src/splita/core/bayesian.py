@@ -104,9 +104,7 @@ class BayesianExperiment:
 
         # ── infer metric ─────────────────────────────────────────────
         if metric == "auto":
-            self._metric = auto_detect_metric(
-                np.concatenate([self._control, self._treatment])
-            )
+            self._metric = auto_detect_metric(np.concatenate([self._control, self._treatment]))
         else:
             self._metric = metric
 
@@ -174,9 +172,7 @@ class BayesianExperiment:
             mu_n = (kappa_prior * mu_prior + n * x_bar) / kappa_n
             alpha_n = alpha_prior + n / 2.0
             beta_n = (
-                beta_prior
-                + s2 / 2.0
-                + kappa_prior * n * (x_bar - mu_prior) ** 2 / (2.0 * kappa_n)
+                beta_prior + s2 / 2.0 + kappa_prior * n * (x_bar - mu_prior) ** 2 / (2.0 * kappa_n)
             )
 
             # Sample precision from Gamma, then mean from Normal
@@ -227,9 +223,7 @@ class BayesianExperiment:
         # ROPE
         prob_in_rope: float | None = None
         if self._rope is not None:
-            prob_in_rope = float(
-                np.mean((diff > self._rope[0]) & (diff < self._rope[1]))
-            )
+            prob_in_rope = float(np.mean((diff > self._rope[0]) & (diff < self._rope[1])))
 
         return BayesianResult(
             prob_b_beats_a=prob_b_beats_a,

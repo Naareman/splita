@@ -73,9 +73,7 @@ class ThompsonSampler:
         *,
         likelihood: Literal["bernoulli", "gaussian", "poisson"] = "bernoulli",
         prior: dict | None = None,
-        stopping_rule: Literal[
-            "expected_loss", "prob_best", "n_samples"
-        ] = "expected_loss",
+        stopping_rule: Literal["expected_loss", "prob_best", "n_samples"] = "expected_loss",
         stopping_threshold: float = 0.01,
         min_samples: int = 100,
         random_state: int | np.random.Generator | None = None,
@@ -224,15 +222,11 @@ class ThompsonSampler:
                 # precision = 1/sigma^2; avoid zero
                 precision = np.maximum(precision, 1e-12)
                 sigma = 1.0 / np.sqrt(precision)
-                samples[:, i] = self._rng.normal(
-                    self._mu[i], sigma / np.sqrt(self._kappa[i])
-                )
+                samples[:, i] = self._rng.normal(self._mu[i], sigma / np.sqrt(self._kappa[i]))
 
         else:  # poisson
             for i in range(self._n_arms):
-                samples[:, i] = self._rng.gamma(
-                    self._alpha[i], 1.0 / self._beta[i], size=n
-                )
+                samples[:, i] = self._rng.gamma(self._alpha[i], 1.0 / self._beta[i], size=n)
 
         return samples
 
@@ -248,9 +242,7 @@ class ThompsonSampler:
         else:  # poisson
             return [float(self._alpha[i] / self._beta[i]) for i in range(self._n_arms)]
 
-    def _posterior_credible_intervals(
-        self, samples: np.ndarray
-    ) -> list[tuple[float, float]]:
+    def _posterior_credible_intervals(self, samples: np.ndarray) -> list[tuple[float, float]]:
         """95% credible intervals from MC samples."""
         return [
             (
@@ -305,8 +297,7 @@ class ThompsonSampler:
             if reward not in (0, 1, 0.0, 1.0):
                 raise ValueError(
                     format_error(
-                        "`reward` must be 0 or 1 for Bernoulli likelihood, "
-                        f"got {reward}.",
+                        f"`reward` must be 0 or 1 for Bernoulli likelihood, got {reward}.",
                         "Bernoulli rewards are binary (success/failure).",
                         "use 1 for success and 0 for failure.",
                     )
@@ -331,17 +322,14 @@ class ThompsonSampler:
             if reward != int(reward):
                 raise ValueError(
                     format_error(
-                        "`reward` must be integer-valued for Poisson "
-                        f"likelihood, got {reward}.",
+                        f"`reward` must be integer-valued for Poisson likelihood, got {reward}.",
                         "Poisson rewards represent counts.",
                         "round or truncate to the nearest integer.",
                     )
                 )
 
     @staticmethod
-    def _validate_stopping_threshold(
-        stopping_rule: str, stopping_threshold: float
-    ) -> None:
+    def _validate_stopping_threshold(stopping_rule: str, stopping_threshold: float) -> None:
         """Validate that *stopping_threshold* is sensible for the rule."""
         if stopping_rule == "expected_loss":
             if stopping_threshold <= 0:

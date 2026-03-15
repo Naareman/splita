@@ -148,8 +148,7 @@ class SyntheticControl:
         if n_pre_treated != n_pre_donors:
             raise ValueError(
                 format_error(
-                    "`treated_pre` and `donors_pre` must have the same "
-                    "number of time periods.",
+                    "`treated_pre` and `donors_pre` must have the same number of time periods.",
                     f"treated_pre has {n_pre_treated} periods, "
                     f"donors_pre has {n_pre_donors} periods.",
                 )
@@ -157,8 +156,7 @@ class SyntheticControl:
         if n_post_treated != n_post_donors:
             raise ValueError(
                 format_error(
-                    "`treated_post` and `donors_post` must have the same "
-                    "number of time periods.",
+                    "`treated_post` and `donors_post` must have the same number of time periods.",
                     f"treated_post has {n_post_treated} periods, "
                     f"donors_post has {n_post_donors} periods.",
                 )
@@ -166,10 +164,8 @@ class SyntheticControl:
         if n_donors != n_donors_post:
             raise ValueError(
                 format_error(
-                    "`donors_pre` and `donors_post` must have the same "
-                    "number of donors.",
-                    f"donors_pre has {n_donors} donors, "
-                    f"donors_post has {n_donors_post} donors.",
+                    "`donors_pre` and `donors_post` must have the same number of donors.",
+                    f"donors_pre has {n_donors} donors, donors_post has {n_donors_post} donors.",
                 )
             )
         if n_donors < 1:

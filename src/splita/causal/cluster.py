@@ -153,8 +153,7 @@ class ClusterExperiment:
 
         n_total = len(values)
         ssb = sum(
-            n * (m - grand_mean) ** 2
-            for n, m in zip(cluster_sizes, cluster_means, strict=True)
+            n * (m - grand_mean) ** 2 for n, m in zip(cluster_sizes, cluster_means, strict=True)
         )
 
         df_b = k - 1
@@ -220,9 +219,7 @@ class ClusterExperiment:
             t_stat = lift / se
             # Welch-Satterthwaite df
             num = (s_ctrl**2 / n_c + s_trt**2 / n_t) ** 2
-            denom = (s_ctrl**2 / n_c) ** 2 / (n_c - 1) + (s_trt**2 / n_t) ** 2 / (
-                n_t - 1
-            )
+            denom = (s_ctrl**2 / n_c) ** 2 / (n_c - 1) + (s_trt**2 / n_t) ** 2 / (n_t - 1)
             df = num / denom if denom > 0 else float(n_c + n_t - 2)
             pvalue = float(2 * t_dist.sf(abs(t_stat), df))
             t_crit = float(t_dist.ppf(1 - self._alpha / 2, df))

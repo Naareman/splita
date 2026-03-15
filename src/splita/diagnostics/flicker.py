@@ -11,9 +11,7 @@ import numpy as np
 
 from splita._types import FlickerResult
 from splita._validation import (
-    check_array_like,
     check_in_range,
-    check_same_length,
     format_error,
 )
 
@@ -172,17 +170,13 @@ class FlickerDetector:
             message = f"No flickers detected among {n_users} users."
         else:
             pct = flicker_rate * 100
-            message = (
-                f"{n_flickers} of {n_users} users ({pct:.1f}%) flickered "
-                f"between variants."
-            )
+            message = f"{n_flickers} of {n_users} users ({pct:.1f}%) flickered between variants."
             if is_problematic:
                 message += " Flicker rate exceeds threshold; results may be biased."
 
         # Convert numpy types in flicker_users_list for JSON serialisability
         flicker_users_out = [
-            int(u) if isinstance(u, (np.integer,)) else u
-            for u in flicker_users_list
+            int(u) if isinstance(u, (np.integer,)) else u for u in flicker_users_list
         ]
 
         return FlickerResult(

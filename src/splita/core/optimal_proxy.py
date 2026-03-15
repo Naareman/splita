@@ -95,8 +95,7 @@ class OptimalProxyMetrics:
         if X.shape[0] != len(y):
             raise ValueError(
                 format_error(
-                    "`candidate_metrics` and `north_star` must have the same "
-                    f"number of rows.",
+                    "`candidate_metrics` and `north_star` must have the same number of rows.",
                     detail=f"candidate_metrics has {X.shape[0]} rows, "
                     f"north_star has {len(y)} elements.",
                 )

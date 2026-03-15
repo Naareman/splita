@@ -8,7 +8,6 @@ from subgroup B and enrich enrollment from subgroup A.
 from __future__ import annotations
 
 import numpy as np
-from scipy.stats import norm
 
 from splita._types import EnrichmentResult
 from splita._validation import format_error
@@ -51,9 +50,7 @@ class AdaptiveEnrichment:
         if futility_threshold < 0:
             raise ValueError(
                 format_error(
-                    "`futility_threshold` must be >= 0, got {}.".format(
-                        futility_threshold
-                    ),
+                    f"`futility_threshold` must be >= 0, got {futility_threshold}.",
                     "threshold is the minimum z-score to keep a subgroup.",
                     "set to 0 to never drop subgroups.",
                 )
@@ -61,7 +58,7 @@ class AdaptiveEnrichment:
         if not 0.0 < alpha < 1.0:
             raise ValueError(
                 format_error(
-                    "`alpha` must be in (0, 1), got {}.".format(alpha),
+                    f"`alpha` must be in (0, 1), got {alpha}.",
                     "alpha controls the significance level.",
                     "typical values are 0.05, 0.01, or 0.10.",
                 )
@@ -146,9 +143,7 @@ class AdaptiveEnrichment:
 
         # Filter to only consider subgroups not already dropped
         active_subgroups = {
-            name: val
-            for name, val in subgroup_results.items()
-            if name not in self._dropped
+            name: val for name, val in subgroup_results.items() if name not in self._dropped
         }
 
         if len(active_subgroups) == 0:

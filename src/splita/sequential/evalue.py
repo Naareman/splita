@@ -193,9 +193,7 @@ class EValue:
         tau = self._tau
 
         # ── e-value = mixture likelihood ratio ──
-        e_value = math.sqrt(V / (V + tau)) * math.exp(
-            tau * delta_hat**2 / (2.0 * V * (V + tau))
-        )
+        e_value = math.sqrt(V / (V + tau)) * math.exp(tau * delta_hat**2 / (2.0 * V * (V + tau)))
 
         # ── stopping decision ──
         threshold = 1.0 / self._alpha
@@ -233,10 +231,7 @@ class EValue:
                 )
             )
 
-        if self._state.should_stop:
-            stopping_reason = "e_value_threshold_crossed"
-        else:
-            stopping_reason = "not_stopped"
+        stopping_reason = "e_value_threshold_crossed" if self._state.should_stop else "not_stopped"
 
         return EValueResult(
             e_value=self._state.e_value,
@@ -266,10 +261,7 @@ class EValue:
         n_t: int,
     ) -> float:
         """Compute the variance of the difference for continuous metric."""
-        if n_c > 1:
-            var_c = (self._ss_control - self._sum_control**2 / n_c) / (n_c - 1)
-        else:
-            var_c = 0.0
+        var_c = (self._ss_control - self._sum_control**2 / n_c) / (n_c - 1) if n_c > 1 else 0.0
 
         if n_t > 1:
             var_t = (self._ss_treatment - self._sum_treatment**2 / n_t) / (n_t - 1)

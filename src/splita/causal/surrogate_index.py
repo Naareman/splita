@@ -153,10 +153,8 @@ class SurrogateIndex:
         if len(t) != n:
             raise ValueError(
                 format_error(
-                    "`short_term_outcomes` and `treatment` must have the "
-                    "same number of rows.",
-                    f"short_term_outcomes has {n} rows, "
-                    f"treatment has {len(t)} elements.",
+                    "`short_term_outcomes` and `treatment` must have the same number of rows.",
+                    f"short_term_outcomes has {n} rows, treatment has {len(t)} elements.",
                 )
             )
 

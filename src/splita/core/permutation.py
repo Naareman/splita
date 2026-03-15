@@ -13,10 +13,8 @@ import numpy as np
 from splita._types import PermutationResult
 from splita._validation import (
     check_array_like,
-    check_in_range,
     check_is_integer,
     check_one_of,
-    format_error,
 )
 
 ArrayLike = list | tuple | np.ndarray
@@ -85,9 +83,7 @@ class PermutationTest:
         else:
             self._rng = np.random.default_rng(random_state)
 
-    def _compute_statistic(
-        self, group_a: np.ndarray, group_b: np.ndarray
-    ) -> float:
+    def _compute_statistic(self, group_a: np.ndarray, group_b: np.ndarray) -> float:
         """Compute test statistic: treatment - control."""
         if self._statistic == "mean_diff":
             return float(np.mean(group_b) - np.mean(group_a))

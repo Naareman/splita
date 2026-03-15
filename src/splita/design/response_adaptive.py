@@ -158,10 +158,7 @@ class ResponseAdaptiveRandomization:
     def _urn_allocation(self) -> list[float]:
         """Compute allocation proportional to urn counts."""
         total = float(np.sum(self._urn_counts))
-        if total == 0:
-            probs = np.ones(self._n_arms) / self._n_arms
-        else:
-            probs = self._urn_counts / total
+        probs = np.ones(self._n_arms) / self._n_arms if total == 0 else self._urn_counts / total
         return self._apply_min_allocation(probs)
 
     def _apply_min_allocation(self, probs: np.ndarray) -> list[float]:

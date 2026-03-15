@@ -125,7 +125,7 @@ class SampleSizeReestimation:
             # Solve: z_needed = z_current * sqrt(new_n / current_n)
             if z_current > 0:
                 ratio = (z_needed / z_current) ** 2
-                new_n = max(current_n, int(math.ceil(current_n * ratio)))
+                new_n = max(current_n, math.ceil(current_n * ratio))
             else:
                 new_n = current_n * 10
 

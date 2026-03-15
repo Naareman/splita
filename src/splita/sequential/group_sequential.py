@@ -166,10 +166,7 @@ class GroupSequential:
         boundaries = np.zeros(K)
 
         for k in range(K):
-            if k == 0:
-                delta_k = alpha_spent_cum[0]
-            else:
-                delta_k = alpha_spent_cum[k] - alpha_spent_cum[k - 1]
+            delta_k = alpha_spent_cum[0] if k == 0 else alpha_spent_cum[k] - alpha_spent_cum[k - 1]
 
             if delta_k <= 0:  # pragma: no cover
                 # No additional spending at this look
@@ -260,8 +257,7 @@ class GroupSequential:
 
         # ── efficacy boundaries ──
         alpha_spent_cum = [
-            self._alpha_spent(t, self._alpha, self._spending_function)
-            for t in info_fracs
+            self._alpha_spent(t, self._alpha, self._spending_function) for t in info_fracs
         ]
         efficacy_z = self._compute_boundaries(alpha_spent_cum)
 
@@ -272,9 +268,7 @@ class GroupSequential:
         futility_z: list[float] | None = None
         if self._beta_spending is not None:
             beta = 1.0 - self._power
-            beta_spent_cum = [
-                self._alpha_spent(t, beta, self._beta_spending) for t in info_fracs
-            ]
+            beta_spent_cum = [self._alpha_spent(t, beta, self._beta_spending) for t in info_fracs]
             futility_z = self._compute_futility_boundaries(beta_spent_cum, self._alpha)
 
         adjusted_alpha = alpha_spent_cum[-1]
@@ -333,8 +327,7 @@ class GroupSequential:
         if self._beta_spending is not None:
             beta = 1.0 - self._power
             beta_spent_cum = [
-                self._alpha_spent(t, beta, self._beta_spending)
-                for t in information_fractions
+                self._alpha_spent(t, beta, self._beta_spending) for t in information_fractions
             ]
             futility_z = self._compute_futility_boundaries(beta_spent_cum, self._alpha)
 
@@ -400,8 +393,7 @@ class GroupSequential:
         if len(statistics) != len(information_fractions):
             raise ValueError(
                 format_error(
-                    "`statistics` and `information_fractions` must have "
-                    "the same length.",
+                    "`statistics` and `information_fractions` must have the same length.",
                     f"statistics has {len(statistics)} elements, "
                     f"information_fractions has {len(information_fractions)} elements.",
                 )
@@ -421,8 +413,7 @@ class GroupSequential:
                 raise ValueError(
                     format_error(
                         f"`information_fractions[{i}]` must be in (0, 1], got {frac}.",
-                        "each information fraction must be strictly "
-                        "positive and at most 1.",
+                        "each information fraction must be strictly positive and at most 1.",
                     )
                 )
 
@@ -443,8 +434,7 @@ class GroupSequential:
         if not math.isclose(information_fractions[-1], 1.0, rel_tol=1e-9):
             raise ValueError(
                 format_error(
-                    "`information_fractions[-1]` must be 1.0, "
-                    f"got {information_fractions[-1]}.",
+                    f"`information_fractions[-1]` must be 1.0, got {information_fractions[-1]}.",
                     "the last information fraction represents the final analysis.",
                     "set the last element to 1.0.",
                 )

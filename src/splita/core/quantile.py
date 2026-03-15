@@ -108,8 +108,7 @@ class QuantileExperiment:
                 "quantiles",
                 0.0,
                 1.0,
-                hint="quantiles must be between 0 and 1 exclusive, "
-                "e.g. 0.5 for median.",
+                hint="quantiles must be between 0 and 1 exclusive, e.g. 0.5 for median.",
             )
 
         # ── convert & clean arrays ──────────────────────────────────

@@ -78,9 +78,7 @@ class LinTS:
 
         # Per-arm posterior state
         d = self._n_features
-        self._B: list[np.ndarray] = [
-            self._lambda * np.eye(d) for _ in range(self._n_arms)
-        ]
+        self._B: list[np.ndarray] = [self._lambda * np.eye(d) for _ in range(self._n_arms)]
         self._f: list[np.ndarray] = [np.zeros(d) for _ in range(self._n_arms)]
         self._mu_hat: list[np.ndarray] = [np.zeros(d) for _ in range(self._n_arms)]
 
@@ -103,9 +101,7 @@ class LinTS:
 
     # ── Public API ──────────────────────────────────────────────────
 
-    def update(
-        self, arm: int, context: np.ndarray | list | tuple, reward: float
-    ) -> None:
+    def update(self, arm: int, context: np.ndarray | list | tuple, reward: float) -> None:
         """Update the posterior for *arm* given a context-reward pair.
 
         Parameters
@@ -257,8 +253,7 @@ class LinTS:
             raise ValueError(
                 format_error(
                     f"`context` must have shape ({self._n_features},), got {x.shape}.",
-                    f"expected {self._n_features} features, received "
-                    f"array with shape {x.shape}.",
+                    f"expected {self._n_features} features, received array with shape {x.shape}.",
                     "ensure context is a 1-D array with n_features elements.",
                 )
             )

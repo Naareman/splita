@@ -78,10 +78,8 @@ class CUPED:
         if isinstance(covariate, str) and covariate not in ("auto", "custom"):
             raise ValueError(
                 format_error(
-                    f"`covariate` must be 'auto', 'custom', or a numpy array, "
-                    f"got {covariate!r}.",
-                    hint="use 'auto' for pre-experiment metric values, or pass "
-                    "a 1-D numpy array.",
+                    f"`covariate` must be 'auto', 'custom', or a numpy array, got {covariate!r}.",
+                    hint="use 'auto' for pre-experiment metric values, or pass a 1-D numpy array.",
                 )
             )
         self.covariate = covariate
@@ -308,22 +306,17 @@ class CUPED:
         if self.covariate == "auto" and (control_pre is None or treatment_pre is None):
             raise ValueError(
                 format_error(
-                    "`control_pre` and `treatment_pre` are required when "
-                    "covariate='auto'.",
+                    "`control_pre` and `treatment_pre` are required when covariate='auto'.",
                     detail="CUPED needs pre-experiment data to adjust for.",
-                    hint="pass pre-experiment metric values, or set "
-                    "covariate to a custom array.",
+                    hint="pass pre-experiment metric values, or set covariate to a custom array.",
                 )
             )
 
         # covariate="custom" also requires pre arrays
-        if self.covariate == "custom" and (
-            control_pre is None or treatment_pre is None
-        ):
+        if self.covariate == "custom" and (control_pre is None or treatment_pre is None):
             raise ValueError(
                 format_error(
-                    "`control_pre` and `treatment_pre` are required when "
-                    "covariate='custom'.",
+                    "`control_pre` and `treatment_pre` are required when covariate='custom'.",
                     detail="CUPED needs covariate data to adjust for.",
                     hint="pass the custom covariate values for each group.",
                 )

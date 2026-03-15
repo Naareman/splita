@@ -62,9 +62,7 @@ class BipartiteExperiment:
         if not 0.0 < exposure_threshold <= 1.0:
             raise ValueError(
                 format_error(
-                    "`exposure_threshold` must be in (0, 1], got {}.".format(
-                        exposure_threshold
-                    ),
+                    f"`exposure_threshold` must be in (0, 1], got {exposure_threshold}.",
                     "threshold determines when a seller is considered exposed.",
                     "typical values are 0.3, 0.5, or 0.7.",
                 )
@@ -72,7 +70,7 @@ class BipartiteExperiment:
         if not 0.0 < alpha < 1.0:
             raise ValueError(
                 format_error(
-                    "`alpha` must be in (0, 1), got {}.".format(alpha),
+                    f"`alpha` must be in (0, 1), got {alpha}.",
                     "alpha controls the significance level.",
                     "typical values are 0.05, 0.01, or 0.10.",
                 )
@@ -125,8 +123,7 @@ class BipartiteExperiment:
             raise ValueError(
                 format_error(
                     "`buyer_treatments` must have the same length as `buyer_outcomes`.",
-                    f"buyer_outcomes has {n_buyers} elements, "
-                    f"buyer_treatments has {len(t_b)}.",
+                    f"buyer_outcomes has {n_buyers} elements, buyer_treatments has {len(t_b)}.",
                 )
             )
 
@@ -163,8 +160,7 @@ class BipartiteExperiment:
             raise ValueError(
                 format_error(
                     "`transaction_graph` must be a 2-D array.",
-                    f"got {transaction_graph.ndim}-D array with shape "
-                    f"{transaction_graph.shape}.",
+                    f"got {transaction_graph.ndim}-D array with shape {transaction_graph.shape}.",
                 )
             )
 
@@ -172,8 +168,7 @@ class BipartiteExperiment:
             raise ValueError(
                 format_error(
                     "`transaction_graph` must have shape (n_buyers, n_sellers).",
-                    f"expected ({n_buyers}, {n_sellers}), "
-                    f"got {transaction_graph.shape}.",
+                    f"expected ({n_buyers}, {n_sellers}), got {transaction_graph.shape}.",
                     "rows = buyers, columns = sellers.",
                 )
             )
@@ -188,14 +183,12 @@ class BipartiteExperiment:
         # --- Seller-side effect via exposure mapping ---
         # For each seller, compute fraction of their buyers that are treated
         buyer_counts = G.sum(axis=0)  # total buyers per seller
-        treated_buyer_counts = (G.T @ t_b)  # treated buyers per seller
+        treated_buyer_counts = G.T @ t_b  # treated buyers per seller
 
         # Avoid division by zero for sellers with no buyers
         seller_exposure = np.zeros(n_sellers)
         has_buyers = buyer_counts > 0
-        seller_exposure[has_buyers] = (
-            treated_buyer_counts[has_buyers] / buyer_counts[has_buyers]
-        )
+        seller_exposure[has_buyers] = treated_buyer_counts[has_buyers] / buyer_counts[has_buyers]
 
         # Classify sellers as exposed or unexposed
         exposed_mask = seller_exposure >= self._exposure_threshold
@@ -220,9 +213,7 @@ class BipartiteExperiment:
 
         # SE for seller-side effect (Welch approximation)
         se_exposed = float(np.std(y_s[exposed_mask], ddof=1) / np.sqrt(n_exposed))
-        se_unexposed = float(
-            np.std(y_s[unexposed_mask], ddof=1) / np.sqrt(n_unexposed)
-        )
+        se_unexposed = float(np.std(y_s[unexposed_mask], ddof=1) / np.sqrt(n_unexposed))
         se_seller = float(np.sqrt(se_exposed**2 + se_unexposed**2))
 
         if se_seller > 0:

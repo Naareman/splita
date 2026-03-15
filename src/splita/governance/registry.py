@@ -168,8 +168,7 @@ class ExperimentRegistry:
             raise KeyError(
                 format_error(
                     f"experiment {name!r} is not registered.",
-                    hint="check the name or call list_active() "
-                    "to see current experiments.",
+                    hint="check the name or call list_active() to see current experiments.",
                 )
             )
         del self._experiments[name]
@@ -222,8 +221,7 @@ class ExperimentRegistry:
             raise KeyError(
                 format_error(
                     f"experiment {name!r} is not registered.",
-                    hint="check the name or call list_active() "
-                    "to see current experiments.",
+                    hint="check the name or call list_active() to see current experiments.",
                 )
             )
         return self._experiments[name]

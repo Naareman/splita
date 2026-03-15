@@ -182,9 +182,7 @@ class AdaptiveWinsorizer:
                 ctrl_w = np.clip(control_arr, lt, ut)
                 trt_w = np.clip(treatment_arr, lt, ut)
 
-                var_effect = float(
-                    np.var(ctrl_w, ddof=1) / n_c + np.var(trt_w, ddof=1) / n_t
-                )
+                var_effect = float(np.var(ctrl_w, ddof=1) / n_c + np.var(trt_w, ddof=1) / n_t)
 
                 if var_effect < best_var:
                     best_var = var_effect

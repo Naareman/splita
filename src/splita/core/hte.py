@@ -147,23 +147,20 @@ class HTEEstimator:
             raise ValueError(
                 format_error(
                     "`control` and `X_control` must have the same number of rows.",
-                    f"control has {len(y_ctrl)} elements, "
-                    f"X_control has {X_ctrl.shape[0]} rows.",
+                    f"control has {len(y_ctrl)} elements, X_control has {X_ctrl.shape[0]} rows.",
                 )
             )
         if len(y_trt) != X_trt.shape[0]:
             raise ValueError(
                 format_error(
                     "`treatment` and `X_treatment` must have the same number of rows.",
-                    f"treatment has {len(y_trt)} elements, "
-                    f"X_treatment has {X_trt.shape[0]} rows.",
+                    f"treatment has {len(y_trt)} elements, X_treatment has {X_trt.shape[0]} rows.",
                 )
             )
         if X_ctrl.shape[1] != X_trt.shape[1]:
             raise ValueError(
                 format_error(
-                    "`X_control` and `X_treatment` must have the "
-                    "same number of features.",
+                    "`X_control` and `X_treatment` must have the same number of features.",
                     f"X_control has {X_ctrl.shape[1]} features, "
                     f"X_treatment has {X_trt.shape[1]} features.",
                 )

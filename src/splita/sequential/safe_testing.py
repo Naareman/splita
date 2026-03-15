@@ -222,10 +222,7 @@ class EProcess:
 
     def _pooled_variance(self, n_c: int, n_t: int) -> float:
         """Compute pooled variance of the difference."""
-        if n_c > 1:
-            var_c = (self._ss_control - self._sum_control**2 / n_c) / (n_c - 1)
-        else:
-            var_c = 0.0
+        var_c = (self._ss_control - self._sum_control**2 / n_c) / (n_c - 1) if n_c > 1 else 0.0
 
         if n_t > 1:
             var_t = (self._ss_treatment - self._sum_treatment**2 / n_t) / (n_t - 1)
@@ -267,9 +264,7 @@ class EProcess:
         tau = V / 4.0
 
         # MLR: sqrt(V / (V + tau)) * exp(tau * delta^2 / (2 * V * (V + tau)))
-        log_e = 0.5 * math.log(V / (V + tau)) + (
-            tau * delta_hat**2 / (2.0 * V * (V + tau))
-        )
+        log_e = 0.5 * math.log(V / (V + tau)) + (tau * delta_hat**2 / (2.0 * V * (V + tau)))
         return log_e
 
     def _universal_log_e(

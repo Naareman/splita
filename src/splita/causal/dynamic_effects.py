@@ -7,7 +7,7 @@ confounding using a doubly robust estimator at each time period.
 from __future__ import annotations
 
 import numpy as np
-from scipy.stats import norm, linregress
+from scipy.stats import linregress, norm
 
 from splita._types import DynamicResult
 from splita._validation import (
@@ -49,7 +49,7 @@ class DynamicCausalEffect:
         if not 0.0 < alpha < 1.0:
             raise ValueError(
                 format_error(
-                    "`alpha` must be in (0, 1), got {}.".format(alpha),
+                    f"`alpha` must be in (0, 1), got {alpha}.",
                     "alpha controls the significance level.",
                     "typical values are 0.05, 0.01, or 0.10.",
                 )
@@ -129,12 +129,8 @@ class DynamicCausalEffect:
         effect_values: list[float] = []
 
         for t_idx in range(n_periods):
-            y = check_array_like(
-                outcomes[t_idx], f"outcomes[{t_idx}]", min_length=2
-            )
-            w = check_array_like(
-                treatments[t_idx], f"treatments[{t_idx}]", min_length=2
-            )
+            y = check_array_like(outcomes[t_idx], f"outcomes[{t_idx}]", min_length=2)
+            w = check_array_like(treatments[t_idx], f"treatments[{t_idx}]", min_length=2)
             check_same_length(y, w, f"outcomes[{t_idx}]", f"treatments[{t_idx}]")
 
             unique_w = np.unique(w)
@@ -181,12 +177,16 @@ class DynamicCausalEffect:
             else:
                 pval = 1.0 if effect == 0 else 0.0
 
-            effects_over_time.append({
-                "period": int(ts[t_idx]) if np.issubdtype(ts.dtype, np.integer) else float(ts[t_idx]),
-                "effect": effect,
-                "se": se,
-                "pvalue": pval,
-            })
+            effects_over_time.append(
+                {
+                    "period": int(ts[t_idx])
+                    if np.issubdtype(ts.dtype, np.integer)
+                    else float(ts[t_idx]),
+                    "effect": effect,
+                    "se": se,
+                    "pvalue": pval,
+                }
+            )
             effect_values.append(effect)
 
         # Cumulative effect: sum of per-period effects

@@ -184,9 +184,7 @@ class PairwiseDesign:
         for col in range(X.shape[1]):
             mean_diff = abs(float(np.mean(X_trt[:, col]) - np.mean(X_ctrl[:, col])))
             pooled_std = float(
-                np.sqrt(
-                    (np.var(X_ctrl[:, col], ddof=1) + np.var(X_trt[:, col], ddof=1)) / 2
-                )
+                np.sqrt((np.var(X_ctrl[:, col], ddof=1) + np.var(X_trt[:, col], ddof=1)) / 2)
             )
             smd = mean_diff / pooled_std if pooled_std > 1e-12 else 0.0
             max_smd = max(max_smd, smd)

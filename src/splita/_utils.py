@@ -49,9 +49,7 @@ def ensure_rng(
         format_error(
             "`random_state` must be None, an int, or a "
             f"np.random.Generator, got {type(random_state).__name__}.",
-            detail=(
-                f"received {type(random_state)}, which is not a supported seed type."
-            ),
+            detail=(f"received {type(random_state)}, which is not a supported seed type."),
             hint="pass an integer seed, a Generator, or None for OS entropy.",
         )
     )
@@ -115,8 +113,7 @@ def to_array(data: object, name: str, dtype: str = "float64") -> np.ndarray:
     elif arr.ndim > 1:
         raise ValueError(
             format_error(
-                f"`{name}` must be a 1-D array, got "
-                f"{arr.ndim}-D array with shape {arr.shape}.",
+                f"`{name}` must be a 1-D array, got {arr.ndim}-D array with shape {arr.shape}.",
                 hint="pass a 1-D list, numpy array, or pandas Series.",
             )
         )
@@ -164,8 +161,7 @@ def cohens_d(control: np.ndarray, treatment: np.ndarray) -> float:
         import warnings
 
         warnings.warn(
-            "Pooled standard deviation is zero — Cohen's d is undefined. "
-            "Returning inf.",
+            "Pooled standard deviation is zero — Cohen's d is undefined. Returning inf.",
             RuntimeWarning,
             stacklevel=2,
         )

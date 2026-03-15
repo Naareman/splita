@@ -46,7 +46,7 @@ class EffectTransport:
         if not 0 < alpha < 1:
             raise ValueError(
                 format_error(
-                    "`alpha` must be in (0, 1), got {}.".format(alpha),
+                    f"`alpha` must be in (0, 1), got {alpha}.",
                     "alpha represents the significance level.",
                     "typical values are 0.05, 0.01, or 0.10.",
                 )
@@ -86,9 +86,7 @@ class EffectTransport:
             If arrays are too short or have incompatible shapes.
         """
         y = check_array_like(experiment_outcome, "experiment_outcome", min_length=4)
-        a = check_array_like(
-            experiment_treatment, "experiment_treatment", min_length=4
-        )
+        a = check_array_like(experiment_treatment, "experiment_treatment", min_length=4)
         check_same_length(y, a, "experiment_outcome", "experiment_treatment")
 
         X_exp = np.asarray(experiment_covariates, dtype=float)
@@ -113,8 +111,7 @@ class EffectTransport:
         if X_exp.shape[1] != X_tgt.shape[1]:
             raise ValueError(
                 format_error(
-                    "Experiment and target covariates must have the same "
-                    "number of columns.",
+                    "Experiment and target covariates must have the same number of columns.",
                     f"experiment has {X_exp.shape[1]}, target has {X_tgt.shape[1]}.",
                 )
             )
@@ -188,9 +185,7 @@ class EffectTransport:
         )
 
     @staticmethod
-    def _logistic_fit_predict(
-        X: np.ndarray, y: np.ndarray, n_exp: int
-    ) -> np.ndarray:
+    def _logistic_fit_predict(X: np.ndarray, y: np.ndarray, n_exp: int) -> np.ndarray:
         """Simple logistic regression via gradient descent."""
         n, p = X.shape
         X_bias = np.column_stack([np.ones(n), X])

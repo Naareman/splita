@@ -78,9 +78,7 @@ class BayesianExperimentOptimizer:
         if exploration_weight < 0:
             raise ValueError(
                 format_error(
-                    "`exploration_weight` must be >= 0, got {}.".format(
-                        exploration_weight
-                    ),
+                    f"`exploration_weight` must be >= 0, got {exploration_weight}.",
                     "exploration_weight controls exploration vs exploitation.",
                     "set to 0 for pure exploitation, higher for more exploration.",
                 )
@@ -138,9 +136,7 @@ class BayesianExperimentOptimizer:
         vec = np.array([float(treatment_params[n]) for n in self._param_names])
         self._param_vectors.append(vec)
         self._short_term.append(float(short_term_outcome))
-        self._long_term.append(
-            float(long_term_outcome) if long_term_outcome is not None else None
-        )
+        self._long_term.append(float(long_term_outcome) if long_term_outcome is not None else None)
 
     def _build_surrogate(self) -> tuple[np.ndarray, np.ndarray, float]:
         """Build a linear surrogate model from short-term to long-term.
@@ -160,9 +156,7 @@ class BayesianExperimentOptimizer:
 
         for i, lt in enumerate(self._long_term):
             if lt is not None:
-                features = np.concatenate(
-                    [self._param_vectors[i], [self._short_term[i]]]
-                )
+                features = np.concatenate([self._param_vectors[i], [self._short_term[i]]])
                 X_list.append(features)
                 y_list.append(lt)
 
@@ -190,9 +184,7 @@ class BayesianExperimentOptimizer:
         # Predictions for all experiments
         all_preds = []
         for i in range(len(self._param_vectors)):
-            features = np.concatenate(
-                [self._param_vectors[i], [self._short_term[i], 1.0]]
-            )
+            features = np.concatenate([self._param_vectors[i], [self._short_term[i], 1.0]])
             all_preds.append(float(features @ coeffs))
 
         # R-squared on training data
@@ -220,7 +212,7 @@ class BayesianExperimentOptimizer:
         ValueError
             If fewer than 2 experiments with long-term outcomes have been added.
         """
-        coeffs, predictions, r2 = self._build_surrogate()
+        coeffs, _predictions, _r2 = self._build_surrogate()
 
         # Uncertainty estimate: distance from existing points
         param_matrix = np.array(self._param_vectors)
@@ -246,9 +238,7 @@ class BayesianExperimentOptimizer:
         rng = np.random.default_rng(42)
 
         for _ in range(10):
-            x0 = np.array([
-                rng.uniform(lo, hi) for lo, hi in bounds
-            ])
+            x0 = np.array([rng.uniform(lo, hi) for lo, hi in bounds])
             res = minimize(neg_acquisition, x0, bounds=bounds, method="L-BFGS-B")
             if res.fun < best_val:
                 best_val = res.fun
@@ -258,9 +248,7 @@ class BayesianExperimentOptimizer:
             # Fallback: center of bounds
             best_x = np.array([(lo + hi) / 2 for lo, hi in bounds])
 
-        return {
-            name: float(best_x[i]) for i, name in enumerate(self._param_names)
-        }
+        return {name: float(best_x[i]) for i, name in enumerate(self._param_names)}
 
     def result(self) -> BayesOptResult:
         """Return the current optimization result.
@@ -275,7 +263,7 @@ class BayesianExperimentOptimizer:
         ValueError
             If fewer than 2 experiments with long-term outcomes have been added.
         """
-        coeffs, predictions, r2 = self._build_surrogate()
+        _coeffs, predictions, r2 = self._build_surrogate()
 
         # Find best experiment by predicted long-term outcome
         best_idx = int(np.argmax(predictions))

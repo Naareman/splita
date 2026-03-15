@@ -8,12 +8,10 @@ local linear regression (Hirano & Imbens 2004).
 from __future__ import annotations
 
 import numpy as np
-from scipy.stats import norm
 
 from splita._types import DoseResponseResult
 from splita._validation import (
     check_array_like,
-    check_in_range,
     check_same_length,
     format_error,
 )
@@ -112,7 +110,7 @@ class ContinuousTreatmentEffect:
         if n_grid < 3:
             raise ValueError(
                 format_error(
-                    "`n_grid` must be >= 3, got {}.".format(n_grid),
+                    f"`n_grid` must be >= 3, got {n_grid}.",
                     "need at least 3 evaluation points for a dose-response curve.",
                 )
             )
@@ -205,7 +203,7 @@ class ContinuousTreatmentEffect:
         fitted_values = np.empty(self._n_grid)
 
         for i, x_eval in enumerate(grid):
-            intercept, slope = _local_linear_regression(d, y, x_eval, bw)
+            intercept, _slope = _local_linear_regression(d, y, x_eval, bw)
             curve.append((float(x_eval), intercept))
             fitted_values[i] = intercept
 

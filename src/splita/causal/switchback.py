@@ -183,9 +183,7 @@ class SwitchbackExperiment:
             t_stat = lift / se
             # Welch-Satterthwaite df
             num = (s_ctrl**2 / n_ctrl + s_trt**2 / n_trt) ** 2
-            denom = (s_ctrl**2 / n_ctrl) ** 2 / (n_ctrl - 1) + (
-                s_trt**2 / n_trt
-            ) ** 2 / (n_trt - 1)
+            denom = (s_ctrl**2 / n_ctrl) ** 2 / (n_ctrl - 1) + (s_trt**2 / n_trt) ** 2 / (n_trt - 1)
             df = num / denom if denom > 0 else float(n_ctrl + n_trt - 2)
             pvalue = float(2 * t_dist.sf(abs(t_stat), df))
             t_crit = float(t_dist.ppf(1 - self._alpha / 2, df))

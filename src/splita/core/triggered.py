@@ -206,8 +206,7 @@ class InteractionTest:
         if len(segments_arr) != expected_len:
             raise ValueError(
                 format_error(
-                    "`segments` must have length equal to "
-                    "len(control) + len(treatment).",
+                    "`segments` must have length equal to len(control) + len(treatment).",
                     f"expected {expected_len}, got {len(segments_arr)}.",
                     "concatenate segment labels in [control, treatment] order.",
                 )
@@ -230,9 +229,7 @@ class InteractionTest:
         ValueError
             If any segment has fewer than 2 observations in either group.
         """
-        unique_segments = np.unique(
-            np.concatenate([self._segments_ctrl, self._segments_trt])
-        )
+        unique_segments = np.unique(np.concatenate([self._segments_ctrl, self._segments_trt]))
 
         if len(unique_segments) < 2:
             raise ValueError(

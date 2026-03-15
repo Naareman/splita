@@ -147,11 +147,9 @@ class SRMCheck:
         if n == 0:
             raise ValueError(
                 format_error(
-                    "`observed` must contain at least some "
-                    "observations, got all zeros.",
+                    "`observed` must contain at least some observations, got all zeros.",
                     detail=f"total observations: {n}.",
-                    hint="an experiment with zero observations "
-                    "cannot be checked for SRM.",
+                    hint="an experiment with zero observations cannot be checked for SRM.",
                 )
             )
 
@@ -169,9 +167,7 @@ class SRMCheck:
             )
 
         # 4. Chi-square statistic
-        chi2_stat = sum(
-            (o - e) ** 2 / e for o, e in zip(observed, expected, strict=False) if e > 0
-        )
+        chi2_stat = sum((o - e) ** 2 / e for o, e in zip(observed, expected, strict=False) if e > 0)
 
         # 5. P-value  (k-1 degrees of freedom)
         k = len(observed)

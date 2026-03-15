@@ -175,16 +175,13 @@ class MultiObjectiveExperiment:
         elif len(sig_positive) > 0 and len(sig_negative) > 0:
             recommendation = "tradeoff"
         elif (len(sig_negative) > 0 and len(sig_positive) == 0) or (
-            all(r.lift <= 0 for r in results)
-            and any(p < self._alpha for p in corrected)
+            all(r.lift <= 0 for r in results) and any(p < self._alpha for p in corrected)
         ):
             recommendation = "reject"
         else:
             # No significant negatives, possibly some significant positives
             # but not all — still could be "adopt" if all point positive
-            if all(r.lift > 0 for r in results) and any(
-                p < self._alpha for p in corrected
-            ):
+            if all(r.lift > 0 for r in results) and any(p < self._alpha for p in corrected):
                 recommendation = "adopt"
             elif len(sig_negative) == 0 and len(sig_positive) == 0:
                 # Nothing significant

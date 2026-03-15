@@ -161,10 +161,7 @@ class RiskAwareDecision:
 
             # CI
             n_c, n_t = len(ctrl), len(trt)
-            se = math.sqrt(
-                float(np.var(ctrl, ddof=1)) / n_c
-                + float(np.var(trt, ddof=1)) / n_t
-            )
+            se = math.sqrt(float(np.var(ctrl, ddof=1)) / n_c + float(np.var(trt, ddof=1)) / n_t)
             z_crit = float(norm.ppf(1.0 - self._alpha / 2.0))
             ci_lower = lift - z_crit * se
             ci_upper = lift + z_crit * se

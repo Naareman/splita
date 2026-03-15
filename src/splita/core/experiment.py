@@ -154,9 +154,7 @@ class Experiment:
         self._control_denom: np.ndarray | None = None
         self._treatment_denom: np.ndarray | None = None
 
-        if metric == "ratio" and (
-            control_denominator is None or treatment_denominator is None
-        ):
+        if metric == "ratio" and (control_denominator is None or treatment_denominator is None):
             raise ValueError(
                 format_error(
                     "`control_denominator` and `treatment_denominator` are required "
@@ -204,9 +202,7 @@ class Experiment:
             if self._control_denom is not None:
                 self._metric = "ratio"
             else:
-                self._metric = auto_detect_metric(
-                    np.concatenate([self._control, self._treatment])
-                )
+                self._metric = auto_detect_metric(np.concatenate([self._control, self._treatment]))
         else:
             self._metric = metric
 
@@ -267,14 +263,10 @@ class Experiment:
 
         if self._metric == "conversion":
             # Cohen's h: power = Phi(|h| * sqrt(n) - z_alpha)
-            power_estimate = float(
-                norm.cdf(abs(effect_size) * math.sqrt(n_harmonic) - z_alpha)
-            )
+            power_estimate = float(norm.cdf(abs(effect_size) * math.sqrt(n_harmonic) - z_alpha))
         else:
             # Cohen's d: power = Phi(|d| * sqrt(n/2) - z_alpha)
-            power_estimate = float(
-                norm.cdf(abs(effect_size) * math.sqrt(n_harmonic / 2) - z_alpha)
-            )
+            power_estimate = float(norm.cdf(abs(effect_size) * math.sqrt(n_harmonic / 2) - z_alpha))
         return max(0.0, min(1.0, power_estimate))
 
     def _build_ci(

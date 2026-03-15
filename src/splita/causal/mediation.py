@@ -193,10 +193,7 @@ class MediationAnalysis:
         )
 
         # Proportion mediated
-        if abs(total_effect) > 1e-10:
-            proportion_mediated = indirect_effect / total_effect
-        else:
-            proportion_mediated = 0.0
+        proportion_mediated = indirect_effect / total_effect if abs(total_effect) > 1e-10 else 0.0
 
         self._result = MediationResult(
             total_effect=total_effect,

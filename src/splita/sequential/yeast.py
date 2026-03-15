@@ -155,7 +155,7 @@ class YEASTSequentialTest:
 
         # Sequential p-value using Levy's inequality
         # P(max|Z_n| > |z|) <= 2 * exp(-z^2 / 2)
-        pvalue = min(1.0, 2.0 * math.exp(-z**2 / 2.0)) if z != 0 else 1.0
+        pvalue = min(1.0, 2.0 * math.exp(-(z**2) / 2.0)) if z != 0 else 1.0
 
         should_stop = abs(z) >= self._boundary
 
@@ -192,10 +192,7 @@ class YEASTSequentialTest:
                 )
             )
 
-        if self._state.should_stop:
-            stopping_reason = "boundary_crossed"
-        else:
-            stopping_reason = "not_stopped"
+        stopping_reason = "boundary_crossed" if self._state.should_stop else "not_stopped"
 
         n_total = self._state.n_control + self._state.n_treatment
 

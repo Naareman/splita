@@ -238,10 +238,7 @@ class ConfidenceSequence:
                 )
             )
 
-        if self._state.should_stop:
-            stopping_reason = "ci_excludes_zero"
-        else:
-            stopping_reason = "not_stopped"
+        stopping_reason = "ci_excludes_zero" if self._state.should_stop else "not_stopped"
 
         return CSResult(
             n_control=self._state.n_control,
@@ -259,10 +256,7 @@ class ConfidenceSequence:
 
     def _estimate_pooled_sigma(self, n_c: int, n_t: int) -> float:
         """Estimate sigma from pooled sample standard deviation."""
-        if n_c > 1:
-            var_c = (self._ss_control - self._sum_control**2 / n_c) / (n_c - 1)
-        else:
-            var_c = 0.0
+        var_c = (self._ss_control - self._sum_control**2 / n_c) / (n_c - 1) if n_c > 1 else 0.0
 
         if n_t > 1:
             var_t = (self._ss_treatment - self._sum_treatment**2 / n_t) / (n_t - 1)

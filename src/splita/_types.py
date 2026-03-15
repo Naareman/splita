@@ -1018,9 +1018,7 @@ class NoveltyCurveResult(_DictMixin):
         ]
         for win in self.windows:
             lines.append(
-                f"  start={win['window_start']}  "
-                f"lift={_fmt(win['lift'])}  "
-                f"p={_fmt(win['pvalue'])}"
+                f"  start={win['window_start']}  lift={_fmt(win['lift'])}  p={_fmt(win['pvalue'])}"
             )
         return "\n".join(lines)
 
@@ -1206,8 +1204,7 @@ class PowerSimulationResult(_DictMixin):
             _line(w),
             f"  {'mean_effect':<20}{_fmt(self.mean_effect)}",
             f"  {'mean_pvalue':<20}{_fmt(self.mean_pvalue)}",
-            f"  {'95% CI on power':<20}"
-            f"[{_fmt(self.ci_power_lower)}, {_fmt(self.ci_power_upper)}]",
+            f"  {'95% CI on power':<20}[{_fmt(self.ci_power_lower)}, {_fmt(self.ci_power_upper)}]",
         ]
         return "\n".join(lines)
 
@@ -1588,9 +1585,7 @@ class InteractionResult(_DictMixin):
         ]
         for seg in self.segment_results:
             lines.append(
-                f"  {seg['segment']!s:<12} "
-                f"lift={_fmt(seg['lift'])}  "
-                f"p={_fmt(seg['pvalue'])}"
+                f"  {seg['segment']!s:<12} lift={_fmt(seg['lift'])}  p={_fmt(seg['pvalue'])}"
             )
         return "\n".join(lines)
 
@@ -2089,8 +2084,7 @@ class EProcessResult(_DictMixin):
             f"  {'n_treatment':<20}{self.n_treatment}",
             f"  {'should_stop':<20}{_fmt(self.should_stop)}",
             f"  {'stopping_reason':<20}{self.stopping_reason}",
-            f"  {'safe_ci':<20}"
-            f"[{_fmt(self.safe_ci_lower)}, {_fmt(self.safe_ci_upper)}]",
+            f"  {'safe_ci':<20}[{_fmt(self.safe_ci_lower)}, {_fmt(self.safe_ci_upper)}]",
         ]
         return "\n".join(lines)
 
@@ -3204,10 +3198,7 @@ class MetricDecompResult(_DictMixin):
             _line(w),
         ]
         for name, info in self.component_results.items():
-            lines.append(
-                f"  {name:<16} lift={_fmt(info['lift'])}  "
-                f"p={_fmt(info['pvalue'])}"
-            )
+            lines.append(f"  {name:<16} lift={_fmt(info['lift'])}  p={_fmt(info['pvalue'])}")
         return "\n".join(lines)
 
 

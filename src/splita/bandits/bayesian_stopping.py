@@ -163,19 +163,14 @@ class BayesianStopping:
     def _validate_threshold(rule: str, threshold: float) -> None:
         """Validate that *threshold* is sensible for the rule."""
         if rule == "expected_loss":
-            check_positive(
-                threshold, "threshold", hint="typical values are 0.001 to 0.05."
-            )
+            check_positive(threshold, "threshold", hint="typical values are 0.001 to 0.05.")
         elif rule == "prob_best":
             if not (0 < threshold < 1):
                 raise ValueError(
                     format_error(
-                        "`threshold` must be in (0, 1) for 'prob_best' "
-                        f"rule, got {threshold}.",
+                        f"`threshold` must be in (0, 1) for 'prob_best' rule, got {threshold}.",
                         hint="typical values are 0.90 to 0.99.",
                     )
                 )
         elif rule == "precision":
-            check_positive(
-                threshold, "threshold", hint="typical values are 0.01 to 0.1."
-            )
+            check_positive(threshold, "threshold", hint="typical values are 0.01 to 0.1.")

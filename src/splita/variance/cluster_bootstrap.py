@@ -20,7 +20,6 @@ from splita._validation import (
     check_array_like,
     check_in_range,
     check_is_integer,
-    check_same_length,
     format_error,
 )
 
@@ -65,7 +64,10 @@ class ClusterBootstrap:
     ) -> None:
         check_is_integer(n_bootstrap, "n_bootstrap", min_value=100)
         check_in_range(
-            alpha, "alpha", 0.0, 1.0,
+            alpha,
+            "alpha",
+            0.0,
+            1.0,
             hint="typical values are 0.05, 0.01, or 0.10",
         )
         self._n_bootstrap = int(n_bootstrap)

@@ -46,7 +46,7 @@ class NonstationaryAdjustment:
         if not 0 < alpha < 1:
             raise ValueError(
                 format_error(
-                    "`alpha` must be in (0, 1), got {}.".format(alpha),
+                    f"`alpha` must be in (0, 1), got {alpha}.",
                     "alpha represents the significance level.",
                     "typical values are 0.05, 0.01, or 0.10.",
                 )
@@ -96,10 +96,7 @@ class NonstationaryAdjustment:
         # Fit linear trend on control to estimate non-stationarity
         # control_i = a + b * ts_i + eps_i
         ts_centered = ts - np.mean(ts)
-        slope = float(
-            np.sum(ts_centered * (c - np.mean(c)))
-            / (np.sum(ts_centered**2) + 1e-12)
-        )
+        slope = float(np.sum(ts_centered * (c - np.mean(c))) / (np.sum(ts_centered**2) + 1e-12))
 
         # Predicted control trend
         control_trend = np.mean(c) + slope * ts_centered

@@ -39,7 +39,7 @@ class DilutionAnalysis:
         if not 0 < alpha < 1:
             raise ValueError(
                 format_error(
-                    "`alpha` must be in (0, 1), got {}.".format(alpha),
+                    f"`alpha` must be in (0, 1), got {alpha}.",
                     "alpha represents the significance level.",
                     "typical values are 0.05, 0.01, or 0.10.",
                 )
@@ -76,7 +76,7 @@ class DilutionAnalysis:
         if not 0 < trigger_rate <= 1:
             raise ValueError(
                 format_error(
-                    "`trigger_rate` must be in (0, 1], got {}.".format(trigger_rate),
+                    f"`trigger_rate` must be in (0, 1], got {trigger_rate}.",
                     "trigger_rate is the fraction of users who were exposed.",
                     "use the ratio of triggered to total assigned users.",
                 )
@@ -85,7 +85,7 @@ class DilutionAnalysis:
         if triggered_se < 0:
             raise ValueError(
                 format_error(
-                    "`triggered_se` must be >= 0, got {}.".format(triggered_se),
+                    f"`triggered_se` must be >= 0, got {triggered_se}.",
                     "standard errors cannot be negative.",
                 )
             )

@@ -12,12 +12,18 @@ import numpy as np
 from scipy.stats import norm
 
 from splita._types import RobustMeanResult
-from splita._validation import check_array_like, check_in_range, check_one_of, format_error
+from splita._validation import (
+    check_array_like,
+    check_in_range,
+    check_one_of,
+)
 
 ArrayLike = list | tuple | np.ndarray
 
 
-def _huber_location(data: np.ndarray, c: float = 1.345, max_iter: int = 50, tol: float = 1e-6) -> float:
+def _huber_location(
+    data: np.ndarray, c: float = 1.345, max_iter: int = 50, tol: float = 1e-6
+) -> float:
     """Compute Huber M-estimate of location via IRLS.
 
     Parameters
@@ -72,7 +78,7 @@ def _median_of_means(data: np.ndarray, k: int | None = None) -> float:
     """
     n = len(data)
     if k is None:
-        k = max(2, int(math.ceil(math.log(n)))) if n > 1 else 1
+        k = max(2, math.ceil(math.log(n))) if n > 1 else 1
     k = min(k, n)
 
     # Split into k roughly equal subgroups
@@ -108,13 +114,13 @@ def _catoni_location(data: np.ndarray, alpha: float = 0.05) -> float:
         return mu
 
     # Bandwidth parameter
-    v = scale ** 2
-    s = math.sqrt(2.0 * math.log(1.0 / alpha) / n) if n > 0 else 1.0
+    scale**2
+    math.sqrt(2.0 * math.log(1.0 / alpha) / n) if n > 0 else 1.0
 
     for _ in range(50):
         centered = (data - mu) / (scale + 1e-10)
         # Catoni influence function
-        psi = np.sign(centered) * np.log(1.0 + np.abs(centered) + centered ** 2 / 2.0)
+        psi = np.sign(centered) * np.log(1.0 + np.abs(centered) + centered**2 / 2.0)
         gradient = float(np.mean(psi))
         mu_new = mu + scale * gradient * 0.5
         if abs(mu_new - mu) < 1e-8:
@@ -212,7 +218,7 @@ class RobustMeanEstimator:
         # Use standard SE formula with robust location estimates
         se_ctrl = float(np.std(ctrl, ddof=1)) / math.sqrt(len(ctrl))
         se_trt = float(np.std(trt, ddof=1)) / math.sqrt(len(trt))
-        se = math.sqrt(se_ctrl ** 2 + se_trt ** 2)
+        se = math.sqrt(se_ctrl**2 + se_trt**2)
 
         if se > 0:
             z = ate / se

@@ -7,11 +7,11 @@ from splita.variance.cuped import CUPED
 from splita.variance.double_ml import DoubleML
 from splita.variance.inex import InExperimentVR
 from splita.variance.multivariate_cuped import MultivariateCUPED
+from splita.variance.nonstationary import NonstationaryAdjustment
 from splita.variance.outliers import OutlierHandler
 from splita.variance.post_stratification import PostStratification
-from splita.variance.regression_adjustment import RegressionAdjustment
-from splita.variance.nonstationary import NonstationaryAdjustment
 from splita.variance.ppi import PredictionPoweredInference
+from splita.variance.regression_adjustment import RegressionAdjustment
 from splita.variance.robust_estimators import RobustMeanEstimator
 from splita.variance.trimmed_mean import TrimmedMeanEstimator
 
@@ -23,11 +23,11 @@ __all__ = [
     "DoubleML",
     "InExperimentVR",
     "MultivariateCUPED",
+    "NonstationaryAdjustment",
     "OutlierHandler",
     "PostStratification",
-    "RegressionAdjustment",
-    "NonstationaryAdjustment",
     "PredictionPoweredInference",
+    "RegressionAdjustment",
     "RobustMeanEstimator",
     "TrimmedMeanEstimator",
 ]

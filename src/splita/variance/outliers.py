@@ -132,10 +132,8 @@ class OutlierHandler:
         ):
             raise ValueError(
                 format_error(
-                    f"`lower` must be less than `upper`, "
-                    f"got lower={lower}, upper={upper}.",
-                    detail="the lower percentile must be strictly "
-                    "below the upper percentile.",
+                    f"`lower` must be less than `upper`, got lower={lower}, upper={upper}.",
+                    detail="the lower percentile must be strictly below the upper percentile.",
                     hint="e.g. lower=0.01, upper=0.99.",
                 )
             )
@@ -219,14 +217,10 @@ class OutlierHandler:
 
         if self.method in ("winsorize", "trim"):
             self.lower_threshold_ = (
-                float(np.percentile(combined, self.lower * 100))
-                if self.lower is not None
-                else None
+                float(np.percentile(combined, self.lower * 100)) if self.lower is not None else None
             )
             self.upper_threshold_ = (
-                float(np.percentile(combined, self.upper * 100))
-                if self.upper is not None
-                else None
+                float(np.percentile(combined, self.upper * 100)) if self.upper is not None else None
             )
         elif self.method == "iqr":
             q1 = float(np.percentile(combined, 25))

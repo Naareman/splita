@@ -97,8 +97,7 @@ def _validate_features(
                 "`X_control` and `control` must have the same number of rows.",
                 detail=f"X_control has {X_control.shape[0]} rows, "
                 f"control has {len(control_arr)} elements.",
-                hint="each row of X_control should correspond to one control "
-                "observation.",
+                hint="each row of X_control should correspond to one control observation.",
             )
         )
 
@@ -108,8 +107,7 @@ def _validate_features(
                 "`X_treatment` and `treatment` must have the same number of rows.",
                 detail=f"X_treatment has {X_treatment.shape[0]} rows, "
                 f"treatment has {len(treatment_arr)} elements.",
-                hint="each row of X_treatment should correspond to one treatment "
-                "observation.",
+                hint="each row of X_treatment should correspond to one treatment observation.",
             )
         )
 
@@ -366,9 +364,7 @@ class CUPAC:
             )
 
         # Compute CUPED stats from OOF predictions
-        theta, correlation, variance_reduction, _y_hat_mean, _ = (
-            self._compute_cuped_stats(Y, Y_hat)
-        )
+        theta, correlation, variance_reduction, _y_hat_mean, _ = self._compute_cuped_stats(Y, Y_hat)
         self.theta_ = theta
         self.correlation_ = correlation
         self.variance_reduction_ = variance_reduction
@@ -547,8 +543,8 @@ class CUPAC:
             )
 
         # Compute CUPED stats
-        theta, correlation, variance_reduction, y_hat_mean, degenerate = (
-            self._compute_cuped_stats(Y, Y_hat)
+        theta, correlation, variance_reduction, y_hat_mean, degenerate = self._compute_cuped_stats(
+            Y, Y_hat
         )
         self.theta_ = theta
         self.correlation_ = correlation

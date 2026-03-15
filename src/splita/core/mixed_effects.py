@@ -155,7 +155,7 @@ class MixedEffectsExperiment:
         ss_between = 0.0
         ss_within = 0.0
 
-        for i, uid in enumerate(unique_users):
+        for _i, uid in enumerate(unique_users):
             mask = u == uid
             user_y = y[mask]
             n_i = len(user_y)

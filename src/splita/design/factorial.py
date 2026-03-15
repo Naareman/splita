@@ -47,7 +47,7 @@ class FractionalFactorialDesign:
         if alpha <= 0 or alpha >= 1:
             raise ValueError(
                 format_error(
-                    "`alpha` must be in (0, 1), got {}.".format(alpha),
+                    f"`alpha` must be in (0, 1), got {alpha}.",
                     "alpha represents the false positive rate.",
                     "typical values are 0.05, 0.01, or 0.10.",
                 )
@@ -92,7 +92,7 @@ class FractionalFactorialDesign:
         if resolution > 5:
             raise ValueError(
                 format_error(
-                    "`resolution` must be 3, 4, or 5, got {}.".format(resolution),
+                    f"`resolution` must be 3, 4, or 5, got {resolution}.",
                     "higher resolutions are not supported.",
                 )
             )
@@ -243,10 +243,7 @@ class FractionalFactorialDesign:
             high = y[col > 0]
             low = y[col < 0]
 
-            if len(high) > 0 and len(low) > 0:
-                effect = float(np.mean(high) - np.mean(low))
-            else:
-                effect = 0.0
+            effect = float(np.mean(high) - np.mean(low)) if len(high) > 0 and len(low) > 0 else 0.0
 
             main_effects[factor_names[j]] = effect
             effect_list.append(effect)
@@ -264,10 +261,7 @@ class FractionalFactorialDesign:
             s0 = 1.5 * float(np.median(abs_effects))
             # PSE = 1.5 * median of |effects| <= 2.5 * s0
             trimmed = abs_effects[abs_effects <= 2.5 * s0] if s0 > 0 else abs_effects
-            if len(trimmed) > 0:
-                resid_se = 1.5 * float(np.median(trimmed))
-            else:
-                resid_se = s0
+            resid_se = 1.5 * float(np.median(trimmed)) if len(trimmed) > 0 else s0
             if resid_se == 0:
                 resid_se = y_std
 
@@ -291,10 +285,7 @@ class FractionalFactorialDesign:
             high = y[interaction_col > 0]
             low = y[interaction_col < 0]
 
-            if len(high) > 0 and len(low) > 0:
-                effect = float(np.mean(high) - np.mean(low))
-            else:
-                effect = 0.0
+            effect = float(np.mean(high) - np.mean(low)) if len(high) > 0 and len(low) > 0 else 0.0
 
             key = f"{factor_names[i]}:{factor_names[j]}"
             interactions[key] = effect
@@ -326,7 +317,7 @@ class FractionalFactorialDesign:
         int
             Estimated resolution (3, 4, or 5).
         """
-        n_runs, n_factors = design_matrix.shape
+        _n_runs, n_factors = design_matrix.shape
 
         if n_factors <= 1:
             return 5
@@ -334,7 +325,7 @@ class FractionalFactorialDesign:
         # Check if any main effect is aliased with a 2FI (resolution < IV)
         for i in range(n_factors):
             for j, k in combinations(range(n_factors), 2):
-                if i == j or i == k:
+                if i in (j, k):
                     continue
                 interaction = design_matrix[:, j] * design_matrix[:, k]
                 corr = abs(float(np.corrcoef(design_matrix[:, i], interaction)[0, 1]))

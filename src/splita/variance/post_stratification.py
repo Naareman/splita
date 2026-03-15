@@ -53,7 +53,10 @@ class PostStratification:
 
     def __init__(self, *, alpha: float = 0.05) -> None:
         check_in_range(
-            alpha, "alpha", 0.0, 1.0,
+            alpha,
+            "alpha",
+            0.0,
+            1.0,
             hint="typical values are 0.05, 0.01, or 0.10",
         )
         self._alpha = alpha
@@ -172,10 +175,7 @@ class PostStratification:
         ci_upper = ate + z_crit * se
 
         # Variance reduction vs naive (unstratified)
-        naive_var = float(
-            np.var(ctrl, ddof=1) / len(ctrl)
-            + np.var(trt, ddof=1) / len(trt)
-        )
+        naive_var = float(np.var(ctrl, ddof=1) / len(ctrl) + np.var(trt, ddof=1) / len(trt))
         variance_reduction = 1.0 - var_ate / naive_var if naive_var > 0 else 0.0
 
         return PostStratResult(

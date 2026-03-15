@@ -53,7 +53,7 @@ class MarketplaceExperiment:
         if not 0.0 < alpha < 1.0:
             raise ValueError(
                 format_error(
-                    "`alpha` must be in (0, 1), got {}.".format(alpha),
+                    f"`alpha` must be in (0, 1), got {alpha}.",
                     "alpha controls the significance level.",
                     "typical values are 0.05, 0.01, or 0.10.",
                 )
@@ -94,7 +94,7 @@ class MarketplaceExperiment:
         if side not in ("buyer", "seller"):
             raise ValueError(
                 format_error(
-                    "`side` must be 'buyer' or 'seller', got {!r}.".format(side),
+                    f"`side` must be 'buyer' or 'seller', got {side!r}.",
                     "specify which side of the marketplace was randomized.",
                 )
             )
@@ -166,9 +166,7 @@ class MarketplaceExperiment:
         ate = float(np.mean(cluster_effects_arr))
 
         # Cluster-robust standard error
-        se = float(
-            np.std(cluster_effects_arr, ddof=1) / np.sqrt(len(cluster_effects_arr))
-        )
+        se = float(np.std(cluster_effects_arr, ddof=1) / np.sqrt(len(cluster_effects_arr)))
 
         # p-value
         if se > 0:

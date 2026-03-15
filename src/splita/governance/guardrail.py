@@ -161,13 +161,12 @@ class GuardrailMonitor:
 
             # Determine if breached by direction
             breached_by_direction = False
-            if pvalue < adjusted_alpha:
-                if direction == "any":
-                    breached_by_direction = True
-                elif direction == "increase" and lift > 0:
-                    breached_by_direction = True
-                elif direction == "decrease" and lift < 0:
-                    breached_by_direction = True
+            if pvalue < adjusted_alpha and (
+                direction == "any"
+                or (direction == "increase" and lift > 0)
+                or (direction == "decrease" and lift < 0)
+            ):
+                breached_by_direction = True
 
             # Determine if breached by threshold
             breached_by_threshold = False

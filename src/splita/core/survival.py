@@ -44,7 +44,7 @@ def _kaplan_meier(times: np.ndarray, events: np.ndarray) -> tuple[np.ndarray, np
 
     unique_times = np.unique(times[events == 1])
     survival = np.ones(len(unique_times))
-    n_at_risk = len(times)
+    len(times)
     s = 1.0
 
     for i, t in enumerate(unique_times):
@@ -191,7 +191,7 @@ class SurvivalExperiment:
         all_times = np.concatenate([t_c, t_t])
         all_events = np.concatenate([e_c, e_t])
         # Group indicator: 0 = control, 1 = treatment
-        group = np.concatenate([np.zeros(len(t_c)), np.ones(len(t_t))])
+        np.concatenate([np.zeros(len(t_c)), np.ones(len(t_t))])
 
         # Get unique event times
         event_times = np.unique(all_times[all_events == 1])

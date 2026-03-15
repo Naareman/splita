@@ -50,7 +50,10 @@ class RandomizationValidator:
 
     def __init__(self, *, alpha: float = 0.05) -> None:
         check_in_range(
-            alpha, "alpha", 0.0, 1.0,
+            alpha,
+            "alpha",
+            0.0,
+            1.0,
             hint="typical values are 0.05, 0.01, or 0.10",
         )
         self._alpha = alpha

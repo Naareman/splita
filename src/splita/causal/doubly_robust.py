@@ -131,8 +131,7 @@ class DoublyRobustEstimator:
         if X.ndim != 2:
             raise ValueError(
                 format_error(
-                    "`covariates` must be a 2-D array, got "
-                    f"{X.ndim}-D array with shape {X.shape}.",
+                    f"`covariates` must be a 2-D array, got {X.ndim}-D array with shape {X.shape}.",
                     hint="pass a matrix with shape (n_samples, n_features).",
                 )
             )
@@ -142,8 +141,7 @@ class DoublyRobustEstimator:
                 format_error(
                     "`outcome`, `treatment`, and `covariates` must have the "
                     "same number of samples.",
-                    detail=f"outcome: {len(y)}, treatment: {len(t)}, "
-                    f"covariates: {X.shape[0]}.",
+                    detail=f"outcome: {len(y)}, treatment: {len(t)}, covariates: {X.shape[0]}.",
                 )
             )
 
@@ -171,8 +169,8 @@ class DoublyRobustEstimator:
 
         for train_idx, test_idx in kf.split(X):
             X_train, X_test = X[train_idx], X[test_idx]
-            y_train, y_test = y[train_idx], y[test_idx]
-            t_train, t_test = t[train_idx], t[test_idx]
+            y_train, _y_test = y[train_idx], y[test_idx]
+            t_train, _t_test = t[train_idx], t[test_idx]
 
             # Outcome model (separate for treated and control)
             outcome_model_0 = Ridge(alpha=1.0)
@@ -183,8 +181,7 @@ class DoublyRobustEstimator:
 
             if np.sum(mask_0) < 2 or np.sum(mask_1) < 2:
                 warnings.warn(
-                    "Too few treated/control observations in fold. "
-                    "Results may be unreliable.",
+                    "Too few treated/control observations in fold. Results may be unreliable.",
                     RuntimeWarning,
                     stacklevel=2,
                 )
@@ -210,16 +207,11 @@ class DoublyRobustEstimator:
                 random_state=self._random_state,
             )
             prop_model.fit(X_train, t_train)
-            e_hat[test_idx] = np.clip(
-                prop_model.predict_proba(X_test)[:, 1], 0.01, 0.99
-            )
+            e_hat[test_idx] = np.clip(prop_model.predict_proba(X_test)[:, 1], 0.01, 0.99)
 
         # AIPW scores
         aipw_scores = (
-            mu1_hat
-            - mu0_hat
-            + t * (y - mu1_hat) / e_hat
-            - (1 - t) * (y - mu0_hat) / (1 - e_hat)
+            mu1_hat - mu0_hat + t * (y - mu1_hat) / e_hat - (1 - t) * (y - mu0_hat) / (1 - e_hat)
         )
 
         ate = float(np.mean(aipw_scores))

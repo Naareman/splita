@@ -120,9 +120,7 @@ class MetricSensitivity:
             ctrl = self._rng.normal(0, estimated_std, size=n_per_group)
             trt = self._rng.normal(mde, estimated_std, size=n_per_group)
 
-            se = math.sqrt(
-                np.var(ctrl, ddof=1) / n_per_group + np.var(trt, ddof=1) / n_per_group
-            )
+            se = math.sqrt(np.var(ctrl, ddof=1) / n_per_group + np.var(trt, ddof=1) / n_per_group)
             if se > 0:
                 z = (np.mean(trt) - np.mean(ctrl)) / se
                 pval = 2.0 * norm.sf(abs(z))
@@ -250,9 +248,7 @@ class VarianceEstimator:
                 "of a standard t-test."
             )
         if not recommendations:
-            recommendations.append(
-                "Distribution appears well-behaved for standard A/B testing."
-            )
+            recommendations.append("Distribution appears well-behaved for standard A/B testing.")
 
         return VarianceEstimateResult(
             mean=mean,

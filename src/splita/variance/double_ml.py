@@ -141,9 +141,7 @@ class DoubleML:
             ("outcome_model", outcome_model),
             ("propensity_model", propensity_model),
         ]:
-            if model is not None and not (
-                hasattr(model, "fit") and hasattr(model, "predict")
-            ):
+            if model is not None and not (hasattr(model, "fit") and hasattr(model, "predict")):
                 raise ValueError(
                     format_error(
                         f"`{name}` must have fit() and predict() methods.",
@@ -205,8 +203,7 @@ class DoubleML:
             raise ValueError(
                 format_error(
                     "`outcome` and `treatment` must have the same length.",
-                    detail=f"outcome has {n} elements, "
-                    f"treatment has {len(T)} elements.",
+                    detail=f"outcome has {n} elements, treatment has {len(T)} elements.",
                 )
             )
         if X.shape[0] != n:
@@ -219,14 +216,10 @@ class DoubleML:
 
         # Resolve models
         outcome_est = (
-            clone(self.outcome_model)
-            if self.outcome_model is not None
-            else Ridge(alpha=1.0)
+            clone(self.outcome_model) if self.outcome_model is not None else Ridge(alpha=1.0)
         )
         propensity_est = (
-            clone(self.propensity_model)
-            if self.propensity_model is not None
-            else Ridge(alpha=1.0)
+            clone(self.propensity_model) if self.propensity_model is not None else Ridge(alpha=1.0)
         )
 
         # Resolve random state for KFold
@@ -296,10 +289,7 @@ class DoubleML:
 
         # Variance reduction: compare SE to naive difference-in-means SE
         naive_se = float(np.std(Y, ddof=1)) / np.sqrt(n)
-        if naive_se > 0:
-            variance_reduction = max(0.0, 1.0 - (se / naive_se) ** 2)
-        else:
-            variance_reduction = 0.0
+        variance_reduction = max(0.0, 1.0 - (se / naive_se) ** 2) if naive_se > 0 else 0.0
 
         return DoubleMLResult(
             ate=theta,

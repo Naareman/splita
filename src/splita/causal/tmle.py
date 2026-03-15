@@ -52,7 +52,7 @@ class TMLE:
         if not 0 < alpha < 1:
             raise ValueError(
                 format_error(
-                    "`alpha` must be in (0, 1), got {}.".format(alpha),
+                    f"`alpha` must be in (0, 1), got {alpha}.",
                     "alpha represents the significance level.",
                     "typical values are 0.05, 0.01, or 0.10.",
                 )
@@ -179,7 +179,7 @@ class TMLE:
 
         Uses sklearn Ridge if available, falls back to OLS.
         """
-        n, p = X.shape
+        n, _p = X.shape
         X_with_a = np.column_stack([X, A])
 
         try:

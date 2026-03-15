@@ -7,7 +7,6 @@ when treatment assignment is imperfect (non-compliance).
 from __future__ import annotations
 
 import numpy as np
-from scipy.stats import f as f_dist
 from scipy.stats import norm
 
 from splita._types import IVResult
@@ -121,7 +120,7 @@ class InstrumentalVariables:
             X1 = np.column_stack([np.ones(n), z])
 
         # Stage 1: regress T on Z (and covariates)
-        beta1, residuals1, rank1, _ = np.linalg.lstsq(X1, t, rcond=None)
+        beta1, _residuals1, _rank1, _ = np.linalg.lstsq(X1, t, rcond=None)
         t_hat = X1 @ beta1
 
         # First-stage F-statistic for instrument strength
@@ -141,9 +140,7 @@ class InstrumentalVariables:
         df_den = n - X1.shape[1]
 
         if ssr_full > 0 and df_den > 0:
-            first_stage_f = float(
-                ((ssr_restricted - ssr_full) / df_num) / (ssr_full / df_den)
-            )
+            first_stage_f = float(((ssr_restricted - ssr_full) / df_num) / (ssr_full / df_den))
         else:
             first_stage_f = 0.0
 
@@ -161,7 +158,7 @@ class InstrumentalVariables:
         # Compute SE using actual residuals (not fitted residuals)
         y_pred = X2 @ beta2
         residuals2 = y - y_pred
-        sigma2 = float(np.sum(residuals2 ** 2)) / max(n - X2.shape[1], 1)
+        sigma2 = float(np.sum(residuals2**2)) / max(n - X2.shape[1], 1)
 
         # Variance of beta2
         try:

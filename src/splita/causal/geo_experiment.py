@@ -7,10 +7,9 @@ incrementality measurement, inspired by Google's GeoexperimentsResearch.
 from __future__ import annotations
 
 import numpy as np
-from scipy.stats import norm
 
 from splita._types import GeoResult
-from splita._validation import check_array_like, format_error
+from splita._validation import format_error
 
 ArrayLike = list | tuple | np.ndarray
 
@@ -52,7 +51,7 @@ class GeoExperiment:
         if not 0 < alpha < 1:
             raise ValueError(
                 format_error(
-                    "`alpha` must be in (0, 1), got {}.".format(alpha),
+                    f"`alpha` must be in (0, 1), got {alpha}.",
                     "alpha represents the significance level.",
                     "typical values are 0.05, 0.01, or 0.10.",
                 )
@@ -60,7 +59,7 @@ class GeoExperiment:
         if n_bootstrap < 100:
             raise ValueError(
                 format_error(
-                    "`n_bootstrap` must be >= 100, got {}.".format(n_bootstrap),
+                    f"`n_bootstrap` must be >= 100, got {n_bootstrap}.",
                     "too few bootstrap samples yield unreliable intervals.",
                     "use at least 1000 for stable results.",
                 )
@@ -199,9 +198,7 @@ class GeoExperiment:
         )
 
     @staticmethod
-    def _fit_synthetic_weights(
-        target: np.ndarray, donor: np.ndarray
-    ) -> float:
+    def _fit_synthetic_weights(target: np.ndarray, donor: np.ndarray) -> float:
         """Fit a scalar weight: target ~ w * donor via OLS."""
         denom = float(np.dot(donor, donor))
         if denom < 1e-12:

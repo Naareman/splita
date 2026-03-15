@@ -34,10 +34,7 @@ def _team_draft_interleave(
     while True:
         prev_len = len(interleaved)
 
-        if a_first:
-            order = [("a", 0), ("b", 1)]
-        else:
-            order = [("b", 1), ("a", 0)]
+        order = [("a", 0), ("b", 1)] if a_first else [("b", 1), ("a", 0)]
 
         for label, team_id in order:
             idx = idx_a if label == "a" else idx_b
@@ -64,9 +61,7 @@ def _team_draft_interleave(
     return interleaved, teams
 
 
-def _balanced_interleave(
-    ranking_a: list, ranking_b: list
-) -> tuple[list, list[int]]:
+def _balanced_interleave(ranking_a: list, ranking_b: list) -> tuple[list, list[int]]:
     """Balanced interleaving: merge by rank, credit both if tied.
 
     Items at the same rank get priority based on their rank in each list.
@@ -207,8 +202,7 @@ class InterleavingExperiment:
             raise ValueError(
                 format_error(
                     "`rankings_a` and `clicks` must have the same length.",
-                    f"rankings_a has {len(rankings_a)} queries, "
-                    f"clicks has {len(clicks)} queries.",
+                    f"rankings_a has {len(rankings_a)} queries, clicks has {len(clicks)} queries.",
                 )
             )
 
@@ -216,11 +210,11 @@ class InterleavingExperiment:
         wins_a = 0
         wins_b = 0
 
-        for ra, rb, click_positions in zip(rankings_a, rankings_b, clicks):
+        for ra, rb, click_positions in zip(rankings_a, rankings_b, clicks, strict=False):
             if self._method == "team_draft":
-                interleaved, teams = _team_draft_interleave(ra, rb, rng=rng)
+                _interleaved2, teams = _team_draft_interleave(ra, rb, rng=rng)
             else:
-                interleaved, teams = _balanced_interleave(ra, rb)
+                _interleaved, teams = _balanced_interleave(ra, rb)
 
             # Credit clicks to teams
             clicks_a = 0
@@ -253,10 +247,7 @@ class InterleavingExperiment:
         delta = preference_a - preference_b
         significant = pvalue < self._alpha
 
-        if significant:
-            winner = "A" if wins_a > wins_b else "B"
-        else:
-            winner = "tie"
+        winner = ("A" if wins_a > wins_b else "B") if significant else "tie"
 
         return InterleavingResult(
             preference_a=preference_a,

@@ -180,9 +180,7 @@ class SurrogateEstimator:
             )
 
         ctrl = check_array_like(short_term_control, "short_term_control", min_length=2)
-        trt = check_array_like(
-            short_term_treatment, "short_term_treatment", min_length=2
-        )
+        trt = check_array_like(short_term_treatment, "short_term_treatment", min_length=2)
 
         model = self._model
 

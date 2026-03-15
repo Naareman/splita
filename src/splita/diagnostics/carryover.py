@@ -15,7 +15,6 @@ from splita._validation import (
     check_array_like,
     check_in_range,
     check_is_integer,
-    format_error,
 )
 
 ArrayLike = list | tuple | np.ndarray
@@ -102,9 +101,7 @@ class CarryoverDetector:
         c_pre = check_array_like(control_pre, "control_pre", min_length=2)
         c_post = check_array_like(control_post, "control_post", min_length=2)
         _t_pre = check_array_like(treatment_pre, "treatment_pre", min_length=2)
-        _t_post = check_array_like(
-            treatment_post, "treatment_post", min_length=2
-        )
+        _t_post = check_array_like(treatment_post, "treatment_post", min_length=2)
 
         control_pre_mean = float(np.mean(c_pre))
         control_post_mean = float(np.mean(c_post))

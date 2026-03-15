@@ -149,9 +149,7 @@ class SampleSize:
             mde = baseline * relative_mde
 
         # --- validation ---
-        check_in_range(
-            baseline, "baseline", 0.0, 1.0, hint="pass a proportion between 0 and 1."
-        )
+        check_in_range(baseline, "baseline", 0.0, 1.0, hint="pass a proportion between 0 and 1.")
         p2 = baseline + mde
         if not (0.0 < p2 < 1.0):
             raise ValueError(
@@ -161,12 +159,8 @@ class SampleSize:
                     "reduce the MDE or adjust the baseline.",
                 )
             )
-        check_in_range(
-            alpha, "alpha", 0.0, 1.0, hint="typical values are 0.05, 0.01, or 0.10."
-        )
-        check_in_range(
-            power, "power", 0.0, 1.0, hint="typical values are 0.80 or 0.90."
-        )
+        check_in_range(alpha, "alpha", 0.0, 1.0, hint="typical values are 0.05, 0.01, or 0.10.")
+        check_in_range(power, "power", 0.0, 1.0, hint="typical values are 0.80 or 0.90.")
         check_is_integer(
             n_variants,
             "n_variants",
@@ -550,12 +544,8 @@ class SampleSize:
         10
         """
         # --- validation ---
-        check_positive(
-            n_required, "n_required", hint="pass the total required sample size."
-        )
-        check_positive(
-            daily_users, "daily_users", hint="pass the expected number of daily users."
-        )
+        check_positive(n_required, "n_required", hint="pass the total required sample size.")
+        check_positive(daily_users, "daily_users", hint="pass the expected number of daily users.")
         check_in_range(
             traffic_fraction,
             "traffic_fraction",

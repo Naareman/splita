@@ -106,8 +106,7 @@ class MetricDecomposition:
         if set(components_control.keys()) != set(components_treatment.keys()):
             raise ValueError(
                 format_error(
-                    "`components_control` and `components_treatment` must have "
-                    "the same keys.",
+                    "`components_control` and `components_treatment` must have the same keys.",
                     detail=f"control keys: {sorted(components_control.keys())}, "
                     f"treatment keys: {sorted(components_treatment.keys())}.",
                     hint="ensure both dicts contain the same component names.",
@@ -155,9 +154,8 @@ class MetricDecomposition:
 
         # Only mark a dominant component if it is significant
         dominant = None
-        if best_component is not None:
-            if component_results[best_component]["significant"]:
-                dominant = best_component
+        if best_component is not None and component_results[best_component]["significant"]:
+            dominant = best_component
 
         return MetricDecompResult(
             total_lift=total_lift,

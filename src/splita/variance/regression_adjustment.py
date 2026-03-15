@@ -202,9 +202,7 @@ class RegressionAdjustment:
         var_ctrl = float(np.var(ctrl, ddof=1))
         var_trt = float(np.var(trt, ddof=1))
         se_unadjusted = float(np.sqrt(var_ctrl / n_ctrl + var_trt / n_trt))
-        variance_reduction = (
-            1.0 - (se**2) / (se_unadjusted**2) if se_unadjusted > 0 else 0.0
-        )
+        variance_reduction = 1.0 - (se**2) / (se_unadjusted**2) if se_unadjusted > 0 else 0.0
 
         return RegressionAdjustmentResult(
             ate=ate,
@@ -244,8 +242,7 @@ class RegressionAdjustment:
         elif X.ndim != 2:
             raise ValueError(
                 format_error(
-                    f"`{name}` must be 1-D or 2-D, got {X.ndim}-D array "
-                    f"with shape {X.shape}.",
+                    f"`{name}` must be 1-D or 2-D, got {X.ndim}-D array with shape {X.shape}.",
                 )
             )
 

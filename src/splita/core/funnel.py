@@ -22,9 +22,7 @@ from splita._validation import (
 )
 
 
-def _proportion_ztest(
-    x1: int, n1: int, x2: int, n2: int
-) -> tuple[float, float]:
+def _proportion_ztest(x1: int, n1: int, x2: int, n2: int) -> tuple[float, float]:
     """Two-proportion z-test.  Returns (z-statistic, two-sided p-value)."""
     p1 = x1 / n1 if n1 > 0 else 0.0
     p2 = x2 / n2 if n2 > 0 else 0.0
@@ -66,7 +64,10 @@ class FunnelExperiment:
         step_names: list[str] | None = None,
     ) -> None:
         check_in_range(
-            alpha, "alpha", 0.0, 1.0,
+            alpha,
+            "alpha",
+            0.0,
+            1.0,
             hint="typical values are 0.05, 0.01, or 0.10",
         )
         self._alpha = alpha
@@ -209,8 +210,16 @@ class FunnelExperiment:
         # Overall lift: last step rate difference
         first = self._steps[0]
         last = self._steps[-1]
-        overall_c = (last["control_converted"] / first["control_total"]) if first["control_total"] > 0 else 0.0
-        overall_t = (last["treatment_converted"] / first["treatment_total"]) if first["treatment_total"] > 0 else 0.0
+        overall_c = (
+            (last["control_converted"] / first["control_total"])
+            if first["control_total"] > 0
+            else 0.0
+        )
+        overall_t = (
+            (last["treatment_converted"] / first["treatment_total"])
+            if first["treatment_total"] > 0
+            else 0.0
+        )
         overall_lift = float(overall_t - overall_c)
 
         return FunnelResult(

@@ -289,8 +289,7 @@ def check_array_like(
     if arr.ndim > 1:
         raise ValueError(
             format_error(
-                f"`{name}` must be a 1-D array, got "
-                f"{arr.ndim}-D array with shape {arr.shape}.",
+                f"`{name}` must be a 1-D array, got {arr.ndim}-D array with shape {arr.shape}.",
                 hint="pass a 1-D list, numpy array, or pandas Series.",
             )
         )

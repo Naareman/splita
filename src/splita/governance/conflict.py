@@ -91,8 +91,7 @@ class ConflictDetector:
     def __init__(self, registry: ExperimentRegistry) -> None:
         if not isinstance(registry, ExperimentRegistry):
             raise TypeError(
-                f"`registry` must be an ExperimentRegistry, "
-                f"got type {type(registry).__name__}."
+                f"`registry` must be an ExperimentRegistry, got type {type(registry).__name__}."
             )
         self._registry = registry
 

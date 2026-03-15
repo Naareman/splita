@@ -85,7 +85,7 @@ class OfflineEvaluator:
         if clip is not None and clip <= 0:
             raise ValueError(
                 format_error(
-                    "`clip` must be positive or None, got {}.".format(clip),
+                    f"`clip` must be positive or None, got {clip}.",
                     "the clip parameter bounds the maximum importance weight.",
                 )
             )
@@ -134,7 +134,7 @@ class OfflineEvaluator:
         a = check_array_like(actions, "actions", min_length=2)
 
         # contexts can be multi-dimensional, handle separately
-        ctx = np.asarray(contexts, dtype="float64")
+        np.asarray(contexts, dtype="float64")
 
         mu = check_array_like(logging_policy_probs, "logging_policy_probs", min_length=2)
         pi = check_array_like(target_policy_probs, "target_policy_probs", min_length=2)

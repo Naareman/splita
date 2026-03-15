@@ -96,9 +96,7 @@ class LinUCB:
 
     # ── Public API ──────────────────────────────────────────────────
 
-    def update(
-        self, arm: int, context: np.ndarray | list | tuple, reward: float
-    ) -> None:
+    def update(self, arm: int, context: np.ndarray | list | tuple, reward: float) -> None:
         """Update the model for *arm* given a context-reward pair.
 
         Parameters
@@ -253,8 +251,7 @@ class LinUCB:
             raise ValueError(
                 format_error(
                     f"`context` must have shape ({self._n_features},), got {x.shape}.",
-                    f"expected {self._n_features} features, received "
-                    f"array with shape {x.shape}.",
+                    f"expected {self._n_features} features, received array with shape {x.shape}.",
                     "ensure context is a 1-D array with n_features elements.",
                 )
             )

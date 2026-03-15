@@ -84,8 +84,7 @@ class mSPRT:
             if not isinstance(truncation, (int, float)):
                 raise TypeError(
                     format_error(
-                        f"`truncation` must be an integer, got type "
-                        f"{type(truncation).__name__}.",
+                        f"`truncation` must be an integer, got type {type(truncation).__name__}.",
                     )
                 )
             if truncation <= 0:
@@ -226,9 +225,7 @@ class mSPRT:
         tau = self._tau
 
         # ── mixture likelihood ratio ──
-        mlr = math.sqrt(V / (V + tau)) * math.exp(
-            tau * delta_hat**2 / (2.0 * V * (V + tau))
-        )
+        mlr = math.sqrt(V / (V + tau)) * math.exp(tau * delta_hat**2 / (2.0 * V * (V + tau)))
 
         # ── always-valid p-value ──
         p_value = min(1.0, 1.0 / mlr) if mlr > 0.0 else 1.0
@@ -328,10 +325,7 @@ class mSPRT:
     ) -> float:
         """Compute the variance of the difference for continuous metric."""
         # Sample variances via sum-of-squares formulation
-        if n_c > 1:
-            var_c = (self._ss_control - self._sum_control**2 / n_c) / (n_c - 1)
-        else:
-            var_c = 0.0
+        var_c = (self._ss_control - self._sum_control**2 / n_c) / (n_c - 1) if n_c > 1 else 0.0
 
         if n_t > 1:
             var_t = (self._ss_treatment - self._sum_treatment**2 / n_t) / (n_t - 1)

@@ -42,7 +42,7 @@ class RegressionDiscontinuity:
         if not 0 < alpha < 1:
             raise ValueError(
                 format_error(
-                    "`alpha` must be in (0, 1), got {}.".format(alpha),
+                    f"`alpha` must be in (0, 1), got {alpha}.",
                     "alpha represents the significance level.",
                     "typical values are 0.05, 0.01, or 0.10.",
                 )
@@ -90,7 +90,7 @@ class RegressionDiscontinuity:
         if bandwidth is not None and bandwidth <= 0:
             raise ValueError(
                 format_error(
-                    "`bandwidth` must be > 0, got {}.".format(bandwidth),
+                    f"`bandwidth` must be > 0, got {bandwidth}.",
                     "bandwidth controls the window around the cutoff.",
                     "pass None for automatic IK bandwidth selection.",
                 )
@@ -171,9 +171,7 @@ class RegressionDiscontinuity:
         )
 
     @staticmethod
-    def _wls(
-        x: np.ndarray, y: np.ndarray, w: np.ndarray
-    ) -> tuple[float, float, np.ndarray]:
+    def _wls(x: np.ndarray, y: np.ndarray, w: np.ndarray) -> tuple[float, float, np.ndarray]:
         """Weighted least squares: y = a + b*x. Returns (a, b, residuals)."""
         W = np.diag(w)
         X = np.column_stack([np.ones(len(x)), x])
@@ -183,9 +181,7 @@ class RegressionDiscontinuity:
         return float(beta[0]), float(beta[1]), residuals
 
     @staticmethod
-    def _robust_se_intercept(
-        x: np.ndarray, resid: np.ndarray, w: np.ndarray
-    ) -> float:
+    def _robust_se_intercept(x: np.ndarray, resid: np.ndarray, w: np.ndarray) -> float:
         """HC1 robust standard error for the intercept in WLS."""
         n = len(x)
         X = np.column_stack([np.ones(n), x])

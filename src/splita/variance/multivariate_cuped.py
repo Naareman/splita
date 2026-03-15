@@ -133,15 +133,12 @@ class MultivariateCUPED:
         treatment_arr = check_array_like(treatment, "treatment", min_length=2)
 
         X_c = self._validate_covariate_matrix(X_control, "X_control", len(control_arr))
-        X_t = self._validate_covariate_matrix(
-            X_treatment, "X_treatment", len(treatment_arr)
-        )
+        X_t = self._validate_covariate_matrix(X_treatment, "X_treatment", len(treatment_arr))
 
         if X_c.shape[1] != X_t.shape[1]:
             raise ValueError(
                 format_error(
-                    "`X_control` and `X_treatment` must have "
-                    "the same number of covariates.",
+                    "`X_control` and `X_treatment` must have the same number of covariates.",
                     detail=f"X_control has {X_c.shape[1]} columns, "
                     f"X_treatment has {X_t.shape[1]} columns.",
                 )
@@ -260,9 +257,7 @@ class MultivariateCUPED:
         treatment_arr = check_array_like(treatment, "treatment", min_length=2)
 
         X_c = self._validate_covariate_matrix(X_control, "X_control", len(control_arr))
-        X_t = self._validate_covariate_matrix(
-            X_treatment, "X_treatment", len(treatment_arr)
-        )
+        X_t = self._validate_covariate_matrix(X_treatment, "X_treatment", len(treatment_arr))
 
         # Y_adj = Y - X @ theta + mean(X @ theta)
         # where mean(X @ theta) uses the pooled X mean from fit
@@ -308,9 +303,7 @@ class MultivariateCUPED:
     # ── private helpers ─────────────────────────────────────────────
 
     @staticmethod
-    def _validate_covariate_matrix(
-        X: ArrayLike, name: str, expected_rows: int
-    ) -> np.ndarray:
+    def _validate_covariate_matrix(X: ArrayLike, name: str, expected_rows: int) -> np.ndarray:
         """Validate and convert a covariate matrix to 2-D."""
         if not isinstance(X, (list, tuple, np.ndarray)):
             raise TypeError(

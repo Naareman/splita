@@ -90,8 +90,7 @@ class InterferenceExperiment:
             raise ValueError(
                 format_error(
                     "`clusters` must be a 1-D array.",
-                    f"got {self._clusters.ndim}-D array "
-                    f"with shape {self._clusters.shape}.",
+                    f"got {self._clusters.ndim}-D array with shape {self._clusters.shape}.",
                 )
             )
 
@@ -150,8 +149,7 @@ class InterferenceExperiment:
 
         n_total = len(values)
         ssb = sum(
-            n * (m - grand_mean) ** 2
-            for n, m in zip(cluster_sizes, cluster_means, strict=True)
+            n * (m - grand_mean) ** 2 for n, m in zip(cluster_sizes, cluster_means, strict=True)
         )
 
         df_b = k - 1

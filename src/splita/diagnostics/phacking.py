@@ -43,8 +43,7 @@ class PHackingDetector:
         if not 0 < significance_threshold < 1:
             raise ValueError(
                 format_error(
-                    "`significance_threshold` must be in (0, 1), "
-                    "got {}.".format(significance_threshold),
+                    f"`significance_threshold` must be in (0, 1), got {significance_threshold}.",
                     "this is the threshold for selecting significant p-values.",
                     "the standard threshold is 0.05.",
                 )
@@ -81,9 +80,7 @@ class PHackingDetector:
         if n_experiments < 3:
             raise ValueError(
                 format_error(
-                    "`pvalues` must have at least 3 elements, got {}.".format(
-                        n_experiments
-                    ),
+                    f"`pvalues` must have at least 3 elements, got {n_experiments}.",
                     "p-curve analysis requires multiple experiments.",
                     "collect more p-values before running this test.",
                 )
@@ -130,7 +127,7 @@ class PHackingDetector:
 
         # Test for right-skewness using KS test against Uniform(0,1)
         # Under true effect, pp should be right-skewed (more mass near 0)
-        ks_stat, ks_pvalue = kstest(pp, "uniform", args=(0, 1))
+        _ks_stat, ks_pvalue = kstest(pp, "uniform", args=(0, 1))
 
         # Check if distribution is right-skewed (more small pp-values)
         # Median of pp < 0.5 under true effect
@@ -145,9 +142,7 @@ class PHackingDetector:
 
         # Determine if suspicious:
         # 1. Not right-skewed (flat or left-skewed) OR bunching near threshold
-        suspicious = bool(
-            (not is_right_skewed and ks_pvalue < 0.1) or bunching_near_05
-        )
+        suspicious = bool((not is_right_skewed and ks_pvalue < 0.1) or bunching_near_05)
 
         # Build message
         if suspicious and bunching_near_05:

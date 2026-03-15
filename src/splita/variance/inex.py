@@ -16,7 +16,6 @@ import warnings
 
 import numpy as np
 
-from splita._types import InExperimentVRResult
 from splita._validation import (
     check_array_like,
     check_same_length,
@@ -94,12 +93,8 @@ class InExperimentVR:
         """
         ctrl = check_array_like(control, "control", min_length=2)
         trt = check_array_like(treatment, "treatment", min_length=2)
-        cov_ctrl = check_array_like(
-            control_covariate, "control_covariate", min_length=2
-        )
-        cov_trt = check_array_like(
-            treatment_covariate, "treatment_covariate", min_length=2
-        )
+        cov_ctrl = check_array_like(control_covariate, "control_covariate", min_length=2)
+        cov_trt = check_array_like(treatment_covariate, "treatment_covariate", min_length=2)
 
         check_same_length(ctrl, cov_ctrl, "control", "control_covariate")
         check_same_length(trt, cov_trt, "treatment", "treatment_covariate")
@@ -178,12 +173,8 @@ class InExperimentVR:
 
         ctrl = check_array_like(control, "control", min_length=2)
         trt = check_array_like(treatment, "treatment", min_length=2)
-        cov_ctrl = check_array_like(
-            control_covariate, "control_covariate", min_length=2
-        )
-        cov_trt = check_array_like(
-            treatment_covariate, "treatment_covariate", min_length=2
-        )
+        cov_ctrl = check_array_like(control_covariate, "control_covariate", min_length=2)
+        cov_trt = check_array_like(treatment_covariate, "treatment_covariate", min_length=2)
 
         check_same_length(ctrl, cov_ctrl, "control", "control_covariate")
         check_same_length(trt, cov_trt, "treatment", "treatment_covariate")
@@ -219,6 +210,4 @@ class InExperimentVR:
             ``(control_adjusted, treatment_adjusted)``.
         """
         self.fit(control, treatment, control_covariate, treatment_covariate)
-        return self.transform(
-            control, treatment, control_covariate, treatment_covariate
-        )
+        return self.transform(control, treatment, control_covariate, treatment_covariate)

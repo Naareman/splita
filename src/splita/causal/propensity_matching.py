@@ -12,12 +12,18 @@ import numpy as np
 from scipy.stats import norm
 
 from splita._types import PSMResult
-from splita._validation import check_array_like, check_in_range, check_positive, format_error
+from splita._validation import (
+    check_array_like,
+    check_positive,
+    format_error,
+)
 
 ArrayLike = list | tuple | np.ndarray
 
 
-def _logistic_regression(X: np.ndarray, y: np.ndarray, max_iter: int = 100, tol: float = 1e-6) -> np.ndarray:
+def _logistic_regression(
+    X: np.ndarray, y: np.ndarray, max_iter: int = 100, tol: float = 1e-6
+) -> np.ndarray:
     """Fit logistic regression via IRLS (no sklearn dependency).
 
     Parameters
@@ -36,7 +42,7 @@ def _logistic_regression(X: np.ndarray, y: np.ndarray, max_iter: int = 100, tol:
     np.ndarray
         Coefficient vector.
     """
-    n, p = X.shape
+    _n, p = X.shape
     beta = np.zeros(p)
 
     for _ in range(max_iter):
@@ -127,7 +133,7 @@ class PropensityScoreMatching:
         if not isinstance(n_neighbors, int) or n_neighbors < 1:
             raise ValueError(
                 format_error(
-                    "`n_neighbors` must be a positive integer, got {}.".format(n_neighbors),
+                    f"`n_neighbors` must be a positive integer, got {n_neighbors}.",
                     hint="use n_neighbors=1 for 1:1 matching.",
                 )
             )
@@ -227,9 +233,7 @@ class PropensityScoreMatching:
         n_covariates = covariates.shape[1]
         balance_before: dict[str, float] = {}
         for j in range(n_covariates):
-            smd = _standardised_mean_diff(
-                covariates[treated_idx, j], covariates[control_idx, j]
-            )
+            smd = _standardised_mean_diff(covariates[treated_idx, j], covariates[control_idx, j])
             balance_before[f"X{j}"] = smd
 
         # Nearest-neighbor matching for each treated unit
@@ -265,10 +269,20 @@ class PropensityScoreMatching:
 
         # ATT from matched pairs
         y_treated_matched = y[matched_treated]
-        y_control_matched = np.array(
-            [float(np.mean(y[matched_control[i * self._n_neighbors : (i + 1) * self._n_neighbors]]))
-             for i in range(n_matched)]
-        ) if self._n_neighbors > 1 else y[matched_control]
+        y_control_matched = (
+            np.array(
+                [
+                    float(
+                        np.mean(
+                            y[matched_control[i * self._n_neighbors : (i + 1) * self._n_neighbors]]
+                        )
+                    )
+                    for i in range(n_matched)
+                ]
+            )
+            if self._n_neighbors > 1
+            else y[matched_control]
+        )
 
         # Truncate to same length
         min_len = min(len(y_treated_matched), len(y_control_matched))
@@ -298,7 +312,7 @@ class PropensityScoreMatching:
             if len(matched_treated) > 0 and len(matched_control) > 0:
                 smd = _standardised_mean_diff(
                     covariates[matched_treated, j],
-                    covariates[matched_control[:len(matched_treated)], j]
+                    covariates[matched_control[: len(matched_treated)], j]
                     if len(matched_control) >= len(matched_treated)
                     else covariates[matched_control, j],
                 )

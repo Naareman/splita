@@ -32,20 +32,25 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=7.0",
-    "pytest-cov>=4.0",
-    "ruff>=0.4",
-    "mypy>=1.0",
-]
 ml = [
     "scikit-learn>=1.2",
+]
+viz = [
+    "matplotlib>=3.5",
 ]
 
 [project.urls]
 Homepage = "https://github.com/Naareman/splita"
 Documentation = "https://github.com/Naareman/splita"
 Repository = "https://github.com/Naareman/splita"
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.4",
+    "mypy>=1.0",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/splita"]
@@ -58,7 +63,6 @@ markers = [
 ]
 
 [tool.ruff]
-target-version = "py310"
 line-length = 100
 src = ["src"]
 

@@ -1,6 +1,11 @@
 """splita — A/B test analysis that is correct by default, informative by design."""
 
-__version__ = "0.1.0"
+from importlib.metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("splita")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
 
 from splita._types import (
     AATestResult,
@@ -163,6 +168,13 @@ from splita.diagnostics import (
     RandomizationValidator,
     VarianceEstimator,
 )
+from splita.errors import (
+    InsufficientDataError,
+    NotFittedError,
+    SplitaError,
+    ValidationError,
+)
+from splita.explain import explain
 from splita.governance import (
     ConflictDetector,
     ConflictResult,
@@ -272,6 +284,7 @@ __all__ = [
     "InExperimentVR",
     "InExperimentVRResult",
     "InstrumentalVariables",
+    "InsufficientDataError",
     "InteractionResult",
     "InteractionTest",
     "InterferenceExperiment",
@@ -298,6 +311,7 @@ __all__ = [
     "NonStationaryResult",
     "NonstationaryAdjResult",
     "NonstationaryAdjustment",
+    "NotFittedError",
     "NoveltyCurve",
     "NoveltyCurveResult",
     "OECBuilder",
@@ -343,6 +357,7 @@ __all__ = [
     "SampleSize",
     "SampleSizeReestimation",
     "SampleSizeResult",
+    "SplitaError",
     "StratifiedExperiment",
     "StratifiedResult",
     "SurrogateEstimator",
@@ -362,11 +377,13 @@ __all__ = [
     "TriggeredResult",
     "TrimmedMeanEstimator",
     "TrimmedMeanResult",
+    "ValidationError",
     "VarianceEstimateResult",
     "VarianceEstimator",
     "YEASTResult",
     "YEASTSequentialTest",
     "YEASTState",
+    "explain",
     "mSPRT",
     "mSPRTResult",
     "mSPRTState",

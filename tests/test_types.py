@@ -200,6 +200,55 @@ class TestCreation:
         assert len(bandit_result.arm_credible_intervals) == 3
 
 
+# ─── Test: _repr_html_ ───────────────────────────────────────────────
+
+
+class TestReprHtml:
+    def test_repr_html_returns_html_string(
+        self, experiment_result: ExperimentResult
+    ) -> None:
+        html = experiment_result._repr_html_()
+        assert isinstance(html, str)
+        assert "<table" in html
+
+    def test_repr_html_contains_class_name(
+        self, experiment_result: ExperimentResult
+    ) -> None:
+        html = experiment_result._repr_html_()
+        assert "ExperimentResult" in html
+
+    def test_repr_html_significant_green(
+        self, experiment_result: ExperimentResult
+    ) -> None:
+        # experiment_result has significant=True
+        html = experiment_result._repr_html_()
+        assert "#28a745" in html
+        assert "True" in html
+
+    def test_repr_html_not_significant_red(self) -> None:
+        result = ExperimentResult(
+            control_mean=0.10,
+            treatment_mean=0.101,
+            lift=0.001,
+            relative_lift=0.01,
+            pvalue=0.80,
+            statistic=0.25,
+            ci_lower=-0.005,
+            ci_upper=0.007,
+            significant=False,
+            alpha=0.05,
+            method="ztest",
+            metric="conversion",
+            control_n=100,
+            treatment_n=100,
+            power=0.05,
+            effect_size=0.003,
+        )
+        html = result._repr_html_()
+        assert "#dc3545" in html
+        assert "False" in html
+
+
 # ─── Test: frozen dataclasses ────────────────────────────────────────
 
 

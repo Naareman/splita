@@ -49,6 +49,56 @@ def _fmt(val: Any, as_pct: bool = False) -> str:
 class _DictMixin:
     """Mixin providing to_dict() for frozen dataclasses."""
 
+    def _repr_html_(self) -> str:
+        """Rich HTML representation for Jupyter notebooks."""
+        class_name = type(self).__name__
+        rows: list[str] = []
+        for i, f in enumerate(fields(self)):  # type: ignore[arg-type]
+            val = getattr(self, f.name)
+            bg = ' style="background: #f8f9fa;"' if i % 2 == 0 else ""
+            # Format value cell
+            if isinstance(val, bool):
+                if val:
+                    val_html = '<span style="color: #28a745;">True &#10003;</span>'
+                else:
+                    val_html = '<span style="color: #dc3545;">False &#10007;</span>'
+            elif isinstance(val, float):
+                if abs(val) < 0.0001 and val != 0.0:
+                    val_html = (
+                        f'<span style="font-family: monospace;">'
+                        f"{val:.2e}</span>"
+                    )
+                else:
+                    val_html = (
+                        f'<span style="font-family: monospace;">'
+                        f"{val:.4f}</span>"
+                    )
+            elif isinstance(val, int):
+                val_html = (
+                    f'<span style="font-family: monospace;">{val}</span>'
+                )
+            else:
+                from html import escape
+
+                val_html = escape(str(val))
+            rows.append(
+                f"    <tr{bg}>\n"
+                f'      <td style="padding: 4px 8px; font-weight: 600;">'
+                f"{f.name}</td>\n"
+                f'      <td style="padding: 4px 8px;">{val_html}</td>\n'
+                f"    </tr>"
+            )
+        return (
+            '<div style="font-family: -apple-system, sans-serif;'
+            ' max-width: 500px;">\n'
+            f'  <h4 style="margin: 0 0 8px 0; color: #333;">'
+            f"{class_name}</h4>\n"
+            '  <table style="border-collapse: collapse; width: 100%;'
+            ' font-size: 13px;">\n'
+            + "\n".join(rows)
+            + "\n  </table>\n</div>"
+        )
+
     def to_dict(self) -> dict[str, Any]:
         """Convert the result to a plain Python dictionary.
 
@@ -79,6 +129,74 @@ class _DictMixin:
         for f in fields(self):  # type: ignore[arg-type]
             result[f.name] = _to_python(getattr(self, f.name))
         return result
+
+    def to_json(self, indent: int = 2) -> str:
+        """Serialize the result to a JSON string.
+
+        Parameters
+        ----------
+        indent : int, default 2
+            Number of spaces for JSON indentation.
+
+        Returns
+        -------
+        str
+            JSON-encoded string representation.
+
+        Examples
+        --------
+        >>> from splita import ExperimentResult
+        >>> r = ExperimentResult(
+        ...     control_mean=0.10, treatment_mean=0.12,
+        ...     lift=0.02, relative_lift=0.2, pvalue=0.03,
+        ...     statistic=2.1, ci_lower=0.002, ci_upper=0.038,
+        ...     significant=True, alpha=0.05, method="ztest",
+        ...     metric="conversion", control_n=1000,
+        ...     treatment_n=1000, power=0.65, effect_size=0.06,
+        ... )
+        >>> json_str = r.to_json()
+        >>> '"control_mean": 0.1' in json_str
+        True
+        """
+        import json
+
+        return json.dumps(self.to_dict(), indent=indent, default=str)
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> Any:
+        """Create a result instance from a dictionary.
+
+        Keys in *d* that do not correspond to dataclass fields are
+        silently ignored, making this safe for forward-compatible
+        deserialization.
+
+        Parameters
+        ----------
+        d : dict[str, Any]
+            Dictionary with field names as keys.
+
+        Returns
+        -------
+        Self
+            A new instance of the result class.
+
+        Examples
+        --------
+        >>> from splita import ExperimentResult
+        >>> d = dict(
+        ...     control_mean=0.10, treatment_mean=0.12,
+        ...     lift=0.02, relative_lift=0.2, pvalue=0.03,
+        ...     statistic=2.1, ci_lower=0.002, ci_upper=0.038,
+        ...     significant=True, alpha=0.05, method="ztest",
+        ...     metric="conversion", control_n=1000,
+        ...     treatment_n=1000, power=0.65, effect_size=0.06,
+        ... )
+        >>> r = ExperimentResult.from_dict(d)
+        >>> r.control_mean
+        0.1
+        """
+        valid_keys = {f.name for f in fields(cls)}  # type: ignore[arg-type]
+        return cls(**{k: v for k, v in d.items() if k in valid_keys})
 
 
 # ─── ExperimentResult ────────────────────────────────────────────────

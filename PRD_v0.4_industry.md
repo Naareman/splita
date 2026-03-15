@@ -223,6 +223,159 @@ platforms (GrowthBook, Eppo, Statsig) that no open-source Python library has.
 
 ---
 
+---
+
+## Additional Methods Found in Research (v0.5+ backlog)
+
+### Quasi-Experimental Methods
+
+#### 16. Geo Experiments (GeoLift)
+- **Paper**: Google GeoexperimentsResearch (open-source), Eppo GeoLift
+- **Used by**: Google, Wayfair, Meta
+- **What**: When you can't randomize users (ads, offline), randomize geographic regions.
+  Uses Bayesian Synthetic Control at geo level. Measures incrementality of marketing spend.
+- **Algorithm**: Time-based regression (TBR) or geo-based regression (GBR) on
+  control vs treatment regions. Synthetic control for counterfactual.
+- **Module**: `splita.causal.geo_experiment`
+- **Class**: `GeoExperiment`
+- **Difficulty**: 7/10
+
+#### 17. Regression Discontinuity Design (RDD)
+- **Paper**: Imbens & Lemieux (2008), Lee & Lemieux (2010)
+- **Used by**: Various (policy, pricing thresholds)
+- **What**: When treatment is assigned by a threshold (e.g., users above X score
+  get the feature). Estimates local treatment effect at the cutoff.
+- **Algorithm**: Local linear regression on both sides of the cutoff,
+  bandwidth selection via MSE-optimal methods (Calonico, Cattaneo & Titiunik 2014).
+- **Module**: `splita.causal.rdd`
+- **Class**: `RegressionDiscontinuity`
+- **Difficulty**: 6/10
+
+#### 18. Instrumental Variables (IV)
+- **Paper**: Angrist & Pischke (2009)
+- **Used by**: Various (when randomization is imperfect)
+- **What**: When compliance is imperfect (some users assigned to treatment don't
+  actually get treated). IV estimates the Local Average Treatment Effect (LATE)
+  for compliers using 2SLS.
+- **Algorithm**: Two-stage least squares. First stage: predict treatment from
+  instrument. Second stage: regress outcome on predicted treatment.
+- **Module**: `splita.causal.instrumental_variables`
+- **Class**: `InstrumentalVariables`
+- **Difficulty**: 5/10
+
+#### 19. Propensity Score Matching
+- **Paper**: Rosenbaum & Rubin (1983)
+- **Used by**: Various (observational causal inference)
+- **What**: Match treated and control units with similar propensity scores.
+  Creates pseudo-randomization from observational data.
+- **Algorithm**: Logistic regression for propensity, nearest-neighbor or
+  caliper matching, ATT estimation with matched pairs.
+- **Module**: `splita.causal.propensity_matching`
+- **Class**: `PropensityScoreMatching`
+- **Difficulty**: 5/10
+
+### Cutting-Edge Research Methods (2024-2026)
+
+#### 20. Prediction-Powered Inference (PPI)
+- **Paper**: Angelopoulos et al. (2023) "Prediction-Powered Inference", ICLR 2025 extensions
+- **Used by**: Research frontier (Meta, Stanford)
+- **What**: Uses ML predictions to augment small labeled datasets for valid inference.
+  Relevant for A/B tests where only a subset of users have outcome data (delayed conversions).
+- **Algorithm**: Combine ML-imputed outcomes with a small labeled set for debiased
+  estimation with valid confidence intervals.
+- **Module**: `splita.variance.ppi`
+- **Class**: `PredictionPoweredInference`
+- **Difficulty**: 7/10
+
+#### 21. Optimal Proxy Metrics (Powerful Metrics)
+- **Paper**: Jeunen (2024) "Powerful A/B-Testing Metrics and Where to Find Them"
+- **Used by**: ShareChat, research frontier
+- **What**: Learns "optimal" short-term proxy metrics from historical experiments
+  that maximize statistical power for detecting effects on the north star metric.
+- **Algorithm**: Optimize a weighted combination of candidate metrics to maximize
+  correlation with the north star, then use as an OEC.
+- **Module**: Extend `splita.core.oec`
+- **Difficulty**: 6/10
+
+#### 22. Bayesian Optimization for Long-term Outcomes
+- **Paper**: Meta (2025) "Experimenting, Fast and Slow"
+- **Used by**: Meta
+- **What**: Combines short-running and long-running experiments using Bayesian
+  optimization to find optimal treatments while targeting long-term outcomes.
+  Reduces experimentation wall time by 60%+.
+- **Algorithm**: Multi-fidelity Bayesian optimization with Gaussian processes,
+  short experiments as cheap evaluations, long experiments as expensive ones.
+- **Module**: `splita.design.bayesian_optimization`
+- **Class**: `BayesianExperimentOptimizer`
+- **Difficulty**: 8/10
+
+#### 23. Automated Randomization Validation
+- **Paper**: Microsoft (2022) "Ensure A/B Test Quality at Scale"
+- **Used by**: Microsoft
+- **What**: Automated pre-test and during-test quality checks: population stability
+  index (PSI), sample ratio mismatch via sequential analysis, covariate balance checks.
+- **Algorithm**: PSI for distribution drift, sequential SRM with alpha-spending,
+  standardized mean difference for covariate balance.
+- **Module**: Extend `splita.diagnostics`
+- **Class**: `RandomizationValidator`
+- **Difficulty**: 4/10
+
+#### 24. Experimentation Accelerator (AI-Powered)
+- **Paper**: arxiv 2602.13852 (2026)
+- **Used by**: Research frontier
+- **What**: Uses content embeddings and historical A/B results to prioritize
+  which variants to test, explain why winners win, and suggest new variants.
+- **Algorithm**: Content-aware ranking with semantic similarity, transfer learning
+  from historical experiments.
+- **Module**: Out of scope for v0.5 (requires LLM/embedding infrastructure)
+- **Difficulty**: 9/10
+
+#### 25. Combining RCTs and Observational Data
+- **Paper**: Rosenman et al. (2025 review), Degtiar & Rose (2023)
+- **Used by**: Research frontier
+- **What**: Combines experimental (high internal validity) and observational data
+  (high external validity) for better generalizability. Transports treatment effects
+  from experiment population to target population.
+- **Algorithm**: Inverse probability weighting for population transport,
+  doubly robust estimators, calibration weighting.
+- **Module**: `splita.causal.transportability`
+- **Class**: `EffectTransport`
+- **Difficulty**: 7/10
+
+---
+
+## Complete Build Backlog (all versions)
+
+| # | Method | Version | Difficulty | Source |
+|---|--------|---------|-----------|--------|
+| 1 | GuardrailMonitor | v0.4 | 3/10 | Microsoft/all |
+| 2 | FlickerDetector | v0.4 | 3/10 | All platforms |
+| 3 | OECBuilder | v0.4 | 4/10 | Microsoft/LinkedIn |
+| 4 | Dilution Analysis | v0.4 | 4/10 | Microsoft/Uber |
+| 5 | PostStratification | v0.4 | 4/10 | Alibaba |
+| 6 | ClusterBootstrap | v0.4 | 4/10 | Uber |
+| 7 | RandomizationValidator | v0.4 | 4/10 | Microsoft 2022 |
+| 8 | InterleavingExperiment | v0.4 | 5/10 | Airbnb/Netflix |
+| 9 | CarryoverDetector | v0.4 | 5/10 | Uber/LinkedIn |
+| 10 | RobustMeanEstimator | v0.4 | 5/10 | Huber 1964 |
+| 11 | InstrumentalVariables | v0.4 | 5/10 | Angrist 2009 |
+| 12 | PropensityScoreMatching | v0.4 | 5/10 | Rosenbaum 1983 |
+| 13 | InExperimentVR (INEX) | v0.4 | 6/10 | Microsoft KDD'23 |
+| 14 | MetricDecomposition | v0.4 | 6/10 | Microsoft KDD'24 |
+| 15 | ObjectiveBayesianExperiment | v0.4 | 6/10 | Microsoft/Bing |
+| 16 | RiskAwareDecision | v0.4 | 6/10 | Spotify 2024 |
+| 17 | OptimalProxyMetrics | v0.4 | 6/10 | Jeunen 2024 |
+| 18 | RegressionDiscontinuity | v0.5 | 6/10 | Imbens 2008 |
+| 19 | NonstationaryAdjustment | v0.5 | 7/10 | Microsoft 2024 |
+| 20 | GeoExperiment | v0.5 | 7/10 | Google |
+| 21 | PredictionPoweredInference | v0.5 | 7/10 | Angelopoulos 2023 |
+| 22 | EffectTransport | v0.5 | 7/10 | Rosenman 2025 |
+| 23 | DynamicCausalEffect | v0.5 | 8/10 | Microsoft JASA'22 |
+| 24 | BayesianExperimentOptimizer | v0.5 | 8/10 | Meta 2025 |
+| 25 | ExperimentationAccelerator | v0.6+ | 9/10 | arxiv 2026 |
+
+---
+
 ## Sources
 
 - [Uber XP Platform](https://www.uber.com/blog/xp/)

@@ -342,6 +342,94 @@ platforms (GrowthBook, Eppo, Statsig) that no open-source Python library has.
 - **Class**: `EffectTransport`
 - **Difficulty**: 7/10
 
+### Advanced Causal Estimators
+
+#### 26. Doubly Robust / AIPW Estimator
+- **Paper**: Robins et al. (1994), Bang & Robins (2005); Tutorial: arxiv 2406.00853 (2024)
+- **Used by**: Microsoft (EconML), Uber (CausalML), Stanford (grf)
+- **What**: Combines outcome modeling AND propensity weighting. Unbiased if EITHER
+  model is correctly specified. The gold standard for observational causal inference.
+- **Algorithm**: `ATE = 1/n * sum[ (T_i/e(X_i) - (1-T_i)/(1-e(X_i))) * Y_i -
+  ((T_i - e(X_i)) / (e(X_i)*(1-e(X_i)))) * (mu_1(X_i) - mu_0(X_i)) ]`
+- **Module**: `splita.causal.doubly_robust`
+- **Class**: `DoublyRobustEstimator`
+- **Difficulty**: 6/10
+
+#### 27. TMLE (Targeted Maximum Likelihood Estimation)
+- **Paper**: van der Laan & Rubin (2006), van der Laan & Rose (2011)
+- **Used by**: Research frontier, epidemiology
+- **What**: Two-step procedure: (1) fit outcome + treatment models, (2) targeted bias
+  correction step. Compatible with machine learning. Asymptotically efficient.
+- **Algorithm**: Initial estimate → clever covariate → fluctuation → update.
+- **Module**: `splita.causal.tmle`
+- **Class**: `TMLE`
+- **Difficulty**: 7/10
+
+### Adaptive Experiment Design
+
+#### 28. Sample Size Re-estimation
+- **Paper**: Mehta & Pocock (2011), rpact R package
+- **Used by**: Clinical trials, mature experimentation platforms
+- **What**: Mid-experiment sample size adjustment based on interim results. If the
+  effect is smaller than expected, increase n to maintain power. Preserves Type I error.
+- **Algorithm**: Conditional power at interim → re-estimate required n → adjust.
+  Uses Chen-DeMets-Lan method for Type I error control.
+- **Module**: Extend `splita.sequential.group_sequential`
+- **Class**: `SampleSizeReestimation`
+- **Difficulty**: 6/10
+
+#### 29. Adaptive Enrichment Design
+- **Paper**: Simon & Simon (2013), Bayesian enrichment (arxiv 2603.09919, 2025)
+- **Used by**: Clinical trials, precision targeting
+- **What**: Mid-experiment population selection. If treatment works better in a
+  subgroup, enrich the trial by recruiting more from that subgroup. Stops recruiting
+  from subgroups where treatment doesn't work.
+- **Algorithm**: Stage-wise enrichment rules via conditional power or Bayesian
+  posterior probability of benefit.
+- **Module**: `splita.design.adaptive_enrichment`
+- **Class**: `AdaptiveEnrichment`
+- **Difficulty**: 8/10
+
+#### 30. Response-Adaptive Randomization
+- **Paper**: Hu & Rosenberger (2006), Thompson (1933)
+- **Used by**: Clinical trials, ethical experimentation
+- **What**: Update randomization probabilities based on accumulating data.
+  More patients assigned to the better-performing arm. Bridges bandits and
+  clinical trial design.
+- **Algorithm**: Bayesian response-adaptive randomization using posterior
+  probability of superiority. Generalizes Thompson Sampling to trial design.
+- **Module**: `splita.design.response_adaptive`
+- **Class**: `ResponseAdaptiveRandomization`
+- **Difficulty**: 5/10
+
+### Funnel & Journey Analysis
+
+#### 31. Funnel Experiment Analysis
+- **Paper**: Industry standard (Optimizely, VWO, Statsig)
+- **Used by**: All e-commerce platforms
+- **What**: Analyze treatment effects at each step of a conversion funnel
+  (landing → product → cart → checkout → purchase). Identifies WHERE the
+  treatment helps or hurts.
+- **Algorithm**: Per-step conversion rate test + conditional conversion analysis +
+  funnel visualization data.
+- **Module**: `splita.core.funnel`
+- **Class**: `FunnelExperiment`
+- **Difficulty**: 4/10
+
+### Specialized Variance Reduction
+
+#### 32. Trimmed Mean Estimator
+- **Paper**: Tukey (1960), recent: "Can we do better than the trimmed mean?" (2024)
+- **Used by**: Various platforms internally
+- **What**: Alternative to winsorization. Removes extreme values and computes mean
+  on the remaining data. More statistically efficient than winsorized mean for
+  certain distributions.
+- **Algorithm**: Sort, trim alpha/2 from each end, compute mean + SE on trimmed data.
+  Correct SE accounts for trimming: Staudte & Sheather (1990).
+- **Module**: `splita.variance.trimmed_mean`
+- **Class**: `TrimmedMeanEstimator`
+- **Difficulty**: 3/10
+
 ---
 
 ## Complete Build Backlog (all versions)
@@ -350,29 +438,36 @@ platforms (GrowthBook, Eppo, Statsig) that no open-source Python library has.
 |---|--------|---------|-----------|--------|
 | 1 | GuardrailMonitor | v0.4 | 3/10 | Microsoft/all |
 | 2 | FlickerDetector | v0.4 | 3/10 | All platforms |
-| 3 | OECBuilder | v0.4 | 4/10 | Microsoft/LinkedIn |
-| 4 | Dilution Analysis | v0.4 | 4/10 | Microsoft/Uber |
-| 5 | PostStratification | v0.4 | 4/10 | Alibaba |
-| 6 | ClusterBootstrap | v0.4 | 4/10 | Uber |
-| 7 | RandomizationValidator | v0.4 | 4/10 | Microsoft 2022 |
-| 8 | InterleavingExperiment | v0.4 | 5/10 | Airbnb/Netflix |
-| 9 | CarryoverDetector | v0.4 | 5/10 | Uber/LinkedIn |
-| 10 | RobustMeanEstimator | v0.4 | 5/10 | Huber 1964 |
-| 11 | InstrumentalVariables | v0.4 | 5/10 | Angrist 2009 |
-| 12 | PropensityScoreMatching | v0.4 | 5/10 | Rosenbaum 1983 |
-| 13 | InExperimentVR (INEX) | v0.4 | 6/10 | Microsoft KDD'23 |
-| 14 | MetricDecomposition | v0.4 | 6/10 | Microsoft KDD'24 |
-| 15 | ObjectiveBayesianExperiment | v0.4 | 6/10 | Microsoft/Bing |
-| 16 | RiskAwareDecision | v0.4 | 6/10 | Spotify 2024 |
-| 17 | OptimalProxyMetrics | v0.4 | 6/10 | Jeunen 2024 |
-| 18 | RegressionDiscontinuity | v0.5 | 6/10 | Imbens 2008 |
-| 19 | NonstationaryAdjustment | v0.5 | 7/10 | Microsoft 2024 |
-| 20 | GeoExperiment | v0.5 | 7/10 | Google |
-| 21 | PredictionPoweredInference | v0.5 | 7/10 | Angelopoulos 2023 |
-| 22 | EffectTransport | v0.5 | 7/10 | Rosenman 2025 |
-| 23 | DynamicCausalEffect | v0.5 | 8/10 | Microsoft JASA'22 |
-| 24 | BayesianExperimentOptimizer | v0.5 | 8/10 | Meta 2025 |
-| 25 | ExperimentationAccelerator | v0.6+ | 9/10 | arxiv 2026 |
+| 3 | TrimmedMeanEstimator | v0.4 | 3/10 | Tukey 1960 |
+| 4 | OECBuilder | v0.4 | 4/10 | Microsoft/LinkedIn |
+| 5 | Dilution Analysis | v0.4 | 4/10 | Microsoft/Uber |
+| 6 | PostStratification | v0.4 | 4/10 | Alibaba |
+| 7 | ClusterBootstrap | v0.4 | 4/10 | Uber |
+| 8 | RandomizationValidator | v0.4 | 4/10 | Microsoft 2022 |
+| 9 | FunnelExperiment | v0.4 | 4/10 | Industry standard |
+| 10 | InterleavingExperiment | v0.4 | 5/10 | Airbnb/Netflix |
+| 11 | CarryoverDetector | v0.4 | 5/10 | Uber/LinkedIn |
+| 12 | RobustMeanEstimator | v0.4 | 5/10 | Huber 1964 |
+| 13 | InstrumentalVariables | v0.4 | 5/10 | Angrist 2009 |
+| 14 | PropensityScoreMatching | v0.4 | 5/10 | Rosenbaum 1983 |
+| 15 | ResponseAdaptiveRandomization | v0.4 | 5/10 | Hu & Rosenberger 2006 |
+| 16 | InExperimentVR (INEX) | v0.4 | 6/10 | Microsoft KDD'23 |
+| 17 | MetricDecomposition | v0.4 | 6/10 | Microsoft KDD'24 |
+| 18 | ObjectiveBayesianExperiment | v0.4 | 6/10 | Microsoft/Bing |
+| 19 | RiskAwareDecision | v0.4 | 6/10 | Spotify 2024 |
+| 20 | OptimalProxyMetrics | v0.4 | 6/10 | Jeunen 2024 |
+| 21 | DoublyRobustEstimator | v0.4 | 6/10 | Robins 1994 |
+| 22 | SampleSizeReestimation | v0.4 | 6/10 | Mehta & Pocock 2011 |
+| 23 | RegressionDiscontinuity | v0.5 | 6/10 | Imbens 2008 |
+| 24 | NonstationaryAdjustment | v0.5 | 7/10 | Microsoft 2024 |
+| 25 | GeoExperiment | v0.5 | 7/10 | Google |
+| 26 | PredictionPoweredInference | v0.5 | 7/10 | Angelopoulos 2023 |
+| 27 | EffectTransport | v0.5 | 7/10 | Rosenman 2025 |
+| 28 | TMLE | v0.5 | 7/10 | van der Laan 2006 |
+| 29 | DynamicCausalEffect | v0.5 | 8/10 | Microsoft JASA'22 |
+| 30 | BayesianExperimentOptimizer | v0.5 | 8/10 | Meta 2025 |
+| 31 | AdaptiveEnrichment | v0.5 | 8/10 | Simon 2013 |
+| 32 | ExperimentationAccelerator | v0.6+ | 9/10 | arxiv 2026 |
 
 ---
 

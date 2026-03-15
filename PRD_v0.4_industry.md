@@ -542,6 +542,61 @@ platforms (GrowthBook, Eppo, Statsig) that no open-source Python library has.
 - **Class**: `OfflineEvaluator`
 - **Difficulty**: 7/10
 
+### Novel Sequential Methods
+
+#### 41. YEAST Sequential Test
+- **Paper**: Kurennoy (Meta) — "YEAST: Yet Another Sequential Test" (arxiv 2406.16523, 2024)
+- **Used by**: Meta, major e-commerce platform
+- **What**: Novel sequential test that outperforms mSPRT. Uses constant or staircase
+  significance boundaries. No tuning parameters. Works for any metric type including
+  real-valued financial metrics (revenue). Based on generalized Levy's inequalities.
+- **Algorithm**: Constructs confidence sequence using inverted Levy bounds. Supports
+  unlimited interim checks. All inputs estimable from pre-experiment data.
+- **Module**: `splita.sequential.yeast`
+- **Class**: `YEAST`
+- **Difficulty**: 5/10
+
+### Two-Sided Marketplace Methods
+
+#### 42. MarketplaceExperiment
+- **Paper**: Bajari et al. (2023) "Experimental Design in Two-Sided Platforms" (Management Science);
+  Johari et al. (2022) "Interference, Bias, and Variance" (WWW)
+- **Used by**: Uber, Lyft, Airbnb, DoorDash
+- **What**: Framework for choosing buyer-side vs seller-side randomization in two-sided
+  marketplaces. Analyzes bias-variance tradeoff. Recommends optimal randomization side
+  based on market balance (supply-constrained vs demand-constrained).
+- **Algorithm**: Market model → compute expected bias under each randomization design →
+  select bias-minimizing design → adjust variance for interference.
+- **Module**: `splita.causal.marketplace`
+- **Class**: `MarketplaceExperiment`
+- **Difficulty**: 7/10
+
+#### 43. BudgetSplitDesign
+- **Paper**: Liu et al. (LinkedIn) — "Trustworthy Online Marketplace Experimentation
+  with Budget-split Design" (KDD 2021)
+- **Used by**: LinkedIn
+- **What**: Creates two independent sub-marketplaces (treatment and control) to eliminate
+  cannibalization bias. Each sub-marketplace operates with its own budget, preventing
+  interference between groups. More powerful than advertiser-side randomization.
+- **Algorithm**: Split advertiser budgets proportionally → create isolated sub-campaigns →
+  compare marketplace-level outcomes. Delta method for SE.
+- **Module**: `splita.design.budget_split`
+- **Class**: `BudgetSplitDesign`
+- **Difficulty**: 6/10
+
+#### 44. BipartiteExperiment
+- **Paper**: Harshaw et al. (2023); Vinted (2024) "Measuring Sell Side Outcomes
+  in Buy Side Marketplace Experiments"
+- **Used by**: Vinted, marketplaces
+- **What**: When randomization units (buyers) differ from outcome units (sellers).
+  Constructs in-experiment bipartite graph to measure cross-side effects.
+  Novel direction at intersection of bipartite experiments and mediation analysis.
+- **Algorithm**: Build bipartite graph from transaction data → Horvitz-Thompson
+  estimator with exposure mapping → cross-side effect estimation.
+- **Module**: `splita.causal.bipartite`
+- **Class**: `BipartiteExperiment`
+- **Difficulty**: 7/10
+
 ---
 
 ## Complete Build Backlog (all versions)
@@ -587,7 +642,12 @@ platforms (GrowthBook, Eppo, Statsig) that no open-source Python library has.
 | 37 | ContinuousTreatmentEffect | v0.5 | 6/10 | Hirano & Imbens 2004 |
 | 38 | PHackingDetector | v0.4 | 4/10 | Research integrity |
 | 39 | OfflineEvaluator | v0.5 | 7/10 | Li et al. 2011 |
-| 40 | ExperimentationAccelerator | v0.6+ | 9/10 | arxiv 2026 |
+| 40 | OfflineEvaluator | v0.5 | 7/10 | Li et al. 2011 |
+| 41 | YEASTSequentialTest | v0.4 | 5/10 | Meta (arxiv 2024) |
+| 42 | MarketplaceExperiment | v0.5 | 7/10 | Stanford/Airbnb (WWW 2022) |
+| 43 | BudgetSplitDesign | v0.5 | 6/10 | LinkedIn (KDD 2021) |
+| 44 | BipartiteExperiment | v0.5 | 7/10 | Vinted (2024) |
+| 45 | ExperimentationAccelerator | v0.6+ | 9/10 | arxiv 2026 |
 
 ---
 

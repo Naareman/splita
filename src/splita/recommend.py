@@ -122,6 +122,46 @@ def recommend(
                 f"Parametric tests are appropriate."
             )
 
+    # ── Ties Assessment ──────────────────────────────────────────
+    n_unique = len(np.unique(combined))
+    tie_ratio = 1.0 - n_unique / len(combined)
+    if tie_ratio > 0.5 and detected_metric == "continuous":
+        reasoning.append(
+            f"Data has many tied values ({tie_ratio:.0%} of observations are duplicates). "
+            f"Mann-Whitney U test handles ties better than the t-test."
+        )
+        warnings.append(
+            f"High proportion of tied values ({tie_ratio:.0%}). "
+            f"Consider using method='mannwhitney' which handles ties correctly."
+        )
+
+    # ── Large Sample Warning ─────────────────────────────────────
+    if total_n > 50000:
+        reasoning.append(
+            f"Very large sample size (n={total_n:,}). With this many observations, "
+            f"even trivially small effects will be statistically significant."
+        )
+        warnings.append(
+            f"With n={total_n:,}, focus on practical significance (effect size), not "
+            f"just statistical significance. Use Cohen's d or relative lift to "
+            f"decide whether the effect is worth shipping."
+        )
+
+    # ── Low Baseline Warning (conversion) ────────────────────────
+    if detected_metric == "conversion":
+        baseline_rate = float(np.mean(combined))
+        if baseline_rate < 0.01:
+            reasoning.append(
+                f"Very low baseline conversion rate ({baseline_rate:.4f}). "
+                f"The normal approximation used by the z-test may not hold."
+            )
+            warnings.append(
+                f"Baseline rate is very low ({baseline_rate:.2%}). The z-test's "
+                f"normal approximation may be inaccurate. Consider using "
+                f"method='bootstrap' or an exact test (Fisher's exact) for "
+                f"more reliable inference."
+            )
+
     # ── Test Selection ────────────────────────────────────────────
     if has_clusters:
         recommended_test = "ClusterExperiment (accounts for within-cluster correlation)"

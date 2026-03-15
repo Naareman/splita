@@ -566,4 +566,21 @@ class CUPAC:
         control_adj = Y_adj[:n_ctrl]
         treatment_adj = Y_adj[n_ctrl:]
 
+        # Inform user about variance reduction achieved
+        from splita._advisory import info
+
+        if self.variance_reduction_ > 0:
+            equiv_multiplier = 1.0 / (1.0 - self.variance_reduction_)
+            if self.variance_reduction_ > 0.5:
+                quality = "excellent"
+            elif self.variance_reduction_ > 0.2:
+                quality = "good"
+            else:
+                quality = "modest"
+            info(
+                f"CUPAC variance reduction: {self.variance_reduction_:.1%} ({quality}). "
+                f"This is equivalent to running the experiment {equiv_multiplier:.1f}x longer. "
+                f"CV R-squared of the ML model: {self.cv_r2_:.2f}."
+            )
+
         return control_adj, treatment_adj

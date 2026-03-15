@@ -82,13 +82,24 @@ def auto(
     combined = np.concatenate([ctrl, trt])
     detected_metric = auto_detect_metric(combined)
 
+    ctrl_mean = float(np.mean(ctrl))
+    ctrl_std = float(np.std(ctrl, ddof=1))
+    trt_mean = float(np.mean(trt))
+    trt_std = float(np.std(trt, ddof=1))
+
     if detected_metric == "conversion":
-        reasoning.append("Detected metric type: conversion (all values are 0 or 1)")
+        reasoning.append(
+            f"Detected metric type: conversion (all values are 0 or 1). "
+            f"Control: n={len(ctrl)}, rate={ctrl_mean:.4f}. "
+            f"Treatment: n={len(trt)}, rate={trt_mean:.4f}."
+        )
     else:
         min_val = float(np.min(combined))
         max_val = float(np.max(combined))
         reasoning.append(
-            f"Detected metric type: continuous (values range from {min_val:.1f} to {max_val:.1f})"
+            f"Detected metric type: continuous (values range from {min_val:.1f} to {max_val:.1f}). "
+            f"Control: n={len(ctrl)}, mean={ctrl_mean:.4f}, std={ctrl_std:.4f}. "
+            f"Treatment: n={len(trt)}, mean={trt_mean:.4f}, std={trt_std:.4f}."
         )
 
     # ── Step 2: SRM Check ────────────────────────────────────────
@@ -231,13 +242,42 @@ def auto(
     # ── Result Interpretation ─────────────────────────────────────
     if primary_result.significant:
         direction = "increased" if primary_result.lift > 0 else "decreased"
+        abs_lift = abs(primary_result.lift)
+        rel_lift = abs(primary_result.relative_lift)
         reasoning.append(
             f"Result: SIGNIFICANT (p={primary_result.pvalue:.4f}). "
             f"Treatment {direction} by {primary_result.relative_lift:+.2%}"
         )
+        # Practical significance note
+        if abs(primary_result.effect_size) < 0.05:
+            reasoning.append(
+                f"Note: effect of {abs_lift:.4f} is statistically significant but "
+                f"represents only a {rel_lift:.1%} relative change (effect size = "
+                f"{primary_result.effect_size:.4f}). Consider whether this is "
+                f"practically meaningful enough to justify shipping."
+            )
         reasoning.append("Recommendation: SHIP — effect is statistically significant")
     else:
         reasoning.append(f"Result: NOT significant (p={primary_result.pvalue:.3f})")
+        # Compute MDE at this sample size for context
+        from scipy.stats import norm as _norm
+
+        n_harmonic = (
+            2.0
+            * primary_result.control_n
+            * primary_result.treatment_n
+            / (primary_result.control_n + primary_result.treatment_n)
+        )
+        z_alpha = float(_norm.ppf(1 - alpha / 2))
+        z_beta = float(_norm.ppf(0.8))
+        mde_approx = (z_alpha + z_beta) / (n_harmonic**0.5) if n_harmonic > 0 else 0
+        observed_abs = abs(primary_result.lift)
+        if mde_approx > 0 and observed_abs < mde_approx:
+            reasoning.append(
+                f"The observed effect ({observed_abs:.4f}) is smaller than the minimum "
+                f"detectable effect ({mde_approx:.4f}) at this sample size with 80% power. "
+                f"The experiment may need more data to detect an effect this small."
+            )
         reasoning.append("Recommendation: DO NOT SHIP — insufficient evidence of an effect")
         recommendations.append(
             "Result is not statistically significant. Consider running "

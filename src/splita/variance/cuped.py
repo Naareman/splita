@@ -274,13 +274,23 @@ class CUPED:
         result = self.transform(control, treatment, control_pre, treatment_pre)
 
         # Advisory: suggest alternatives if CUPED variance reduction is weak
-        from splita._advisory import advise_variance_reduction
+        from splita._advisory import advise_cuped_high_correlation, advise_variance_reduction, info
+
+        info(
+            f"CUPED reduced variance by {self.variance_reduction_:.1%} "
+            f"(correlation = {self.correlation_:.3f}, theta = {self.theta_:.4f}). "
+            f"This is equivalent to running the experiment "
+            f"{1 / (1 - self.variance_reduction_):.1f}x longer."
+        )
 
         advise_variance_reduction(
             self.variance_reduction_,
             method_used="CUPED",
             has_pre_data=control_pre is not None,
         )
+
+        # Advisory: excellent correlation - suggest multivariate CUPED
+        advise_cuped_high_correlation(abs(self.correlation_))
 
         return result
 

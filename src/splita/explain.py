@@ -347,10 +347,24 @@ def _explain_bandit(result: Any, lang: str = "en") -> str:
     best = result.current_best_arm
     prob = result.prob_best[best]
     loss = result.expected_loss[best]
+    n_arms = len(result.n_pulls_per_arm)
+    stop_text = (
+        f"The stopping criterion has been met -- you can confidently pick arm {best}."
+        if result.should_stop
+        else "The stopping criterion has NOT been met -- continue collecting data before deciding."
+    )
+    # Arm summary
+    arm_summaries = []
+    for i in range(n_arms):
+        mean_str = _fmt_num(result.arm_means[i]) if result.arm_means else "?"
+        arm_summaries.append(f"arm {i}: mean={mean_str}, pulls={result.n_pulls_per_arm[i]}")
+    arm_detail = "; ".join(arm_summaries)
     return (
-        f"After {total_pulls} pulls, arm {best} is the best "
-        f"with {prob:.0%} probability. "
-        f"Expected loss from choosing it: {loss:.4f}."
+        f"After {total_pulls} total pulls across {n_arms} arms, arm {best} is the current "
+        f"best with {prob:.0%} probability of being optimal. "
+        f"Expected loss from choosing arm {best}: {loss:.4f}. "
+        f"{stop_text} "
+        f"Arm summary: {arm_detail}."
     )
 
 
@@ -361,80 +375,167 @@ def _explain_correction(result: Any, lang: str = "en") -> str:
     for i, rej in enumerate(result.rejected):
         label = result.labels[i] if result.labels else f"test_{i}"
         if rej:
-            sig_labels.append(label)
+            sig_labels.append(f"{label} (adj. p={_fmt_num(result.adjusted_pvalues[i])})")
         else:
-            nonsig_labels.append(label)
+            nonsig_labels.append(f"{label} (adj. p={_fmt_num(result.adjusted_pvalues[i])})")
     sig_str = ", ".join(sig_labels) if sig_labels else "none"
     nonsig_str = ", ".join(nonsig_labels) if nonsig_labels else "none"
+    lost = result.n_tests - result.n_rejected
     return (
-        f"{result.n_rejected} of {result.n_tests} metrics are significant "
-        f"after {result.method} correction. "
-        f"Significant: {sig_str}. Not significant: {nonsig_str}."
+        f"Multiple testing correction ({result.method}) was applied to {result.n_tests} metrics "
+        f"at alpha = {_fmt_num(result.alpha)}. "
+        f"{result.n_rejected} of {result.n_tests} survived correction. "
+        f"Significant after correction: {sig_str}. "
+        f"Not significant after correction: {nonsig_str}. "
+        + (
+            f"{lost} metric(s) that might have appeared significant without correction "
+            f"did not survive, protecting you from false discoveries. "
+            if lost > 0
+            else ""
+        )
+        + "Next step: focus on the metrics that survived correction for your ship decision."
     )
 
 
 def _explain_msprt_state(result: Any, lang: str = "en") -> str:
     """Interpret an mSPRTState."""
     n = result.n_control + result.n_treatment
-    stop_word = "Should" if result.should_stop else "Should not"
-    detected = "has" if result.should_stop else "has not"
+    effect = result.current_effect_estimate
+    if result.should_stop:
+        action = (
+            f"STOP the experiment. A significant effect has been detected "
+            f"(estimated effect = {_fmt_num(effect)}). You can make a decision now."
+        )
+    else:
+        action = (
+            f"CONTINUE the experiment. No significant effect detected yet "
+            f"(current estimate = {_fmt_num(effect)}). Keep collecting data."
+        )
     return (
-        f"After {n} observations, the always-valid p-value is "
-        f"{result.always_valid_pvalue:.4f}. {stop_word} stop. "
-        f"The test {detected} detected a significant effect."
+        f"Sequential test (mSPRT) after {n} observations "
+        f"({result.n_control} control, {result.n_treatment} treatment). "
+        f"Always-valid p-value: {result.always_valid_pvalue:.4f}, "
+        f"CI: [{_fmt_num(result.always_valid_ci_lower)}, {_fmt_num(result.always_valid_ci_upper)}]. "
+        f"Recommendation: {action}"
     )
 
 
 def _explain_msprt_result(result: Any, lang: str = "en") -> str:
     """Interpret an mSPRTResult."""
-    stop_word = "Should" if result.should_stop else "Should not"
-    detected = "has" if result.should_stop else "has not"
+    effect = result.current_effect_estimate
+    reason_map = {
+        "boundary_crossed": "the effect crossed the significance boundary",
+        "truncation": "the maximum sample size was reached",
+        "not_stopped": "neither boundary has been crossed yet",
+    }
+    reason_text = reason_map.get(result.stopping_reason, result.stopping_reason)
+    if result.should_stop:
+        action = f"STOP the experiment ({reason_text}). Estimated effect: {_fmt_num(effect)}."
+    else:
+        action = f"CONTINUE the experiment ({reason_text}). Current estimate: {_fmt_num(effect)}."
     return (
-        f"After {result.total_observations} observations, the always-valid p-value is "
-        f"{result.always_valid_pvalue:.4f}. {stop_word} stop. "
-        f"The test {detected} detected a significant effect."
+        f"Sequential test (mSPRT) final result after {result.total_observations} observations "
+        f"({result.n_control} control, {result.n_treatment} treatment). "
+        f"Always-valid p-value: {result.always_valid_pvalue:.4f}, "
+        f"CI: [{_fmt_num(result.always_valid_ci_lower)}, {_fmt_num(result.always_valid_ci_upper)}]. "
+        f"Recommendation: {action}"
     )
 
 
 def _explain_quantile(result: Any, lang: str = "en") -> str:
     """Interpret a QuantileResult."""
     sig_quantiles = [f"{result.quantiles[i]:.0%}" for i, s in enumerate(result.significant) if s]
+    n_tested = len(result.quantiles)
     if sig_quantiles:
         q_str = ", ".join(sig_quantiles)
+        # Build details about each significant quantile
+        details = []
+        for i, s in enumerate(result.significant):
+            if s:
+                q = result.quantiles[i]
+                diff = result.differences[i]
+                direction = "higher" if diff > 0 else "lower"
+                details.append(f"{q:.0%} quantile is {_fmt_num(abs(diff))} {direction}")
+        details_str = "; ".join(details)
         median_idx = len(result.quantiles) // 2
-        diff = result.differences[median_idx]
+        median_diff = result.differences[median_idx]
         return (
-            f"Treatment differs from control at the following quantiles: {q_str}. "
-            f"The median difference is {diff:.4f}."
+            f"Quantile test compared {n_tested} quantiles between treatment and control. "
+            f"Treatment differs significantly at: {q_str}. "
+            f"Specifically: {details_str}. "
+            f"The median difference is {_fmt_num(median_diff)}. "
+            f"This means the treatment effect is not uniform across the distribution "
+            f"-- it affects some parts of the distribution more than others. "
+            f"Next step: examine which quantiles changed to understand if the effect "
+            f"is concentrated in the tails or the center of the distribution."
         )
-    return "No significant differences were found at any tested quantile."
+    return (
+        f"Quantile test compared {n_tested} quantiles between treatment and control. "
+        f"No significant differences were found at any tested quantile. "
+        f"This suggests the treatment had no meaningful effect on the distribution shape. "
+        f"Next step: consider increasing sample size or checking if the effect is too small to detect."
+    )
 
 
 def _explain_cluster(result: Any, lang: str = "en") -> str:
     """Interpret a ClusterResult."""
     de = 1.0 / (1.0 - result.icc) if result.icc < 1.0 else float("inf")
+    sig_text = (
+        "statistically significant" if result.significant else "not statistically significant"
+    )
+    n_clusters = result.n_clusters_control + result.n_clusters_treatment
     return (
-        f"Cluster-robust analysis: lift = {_fmt_num(result.lift)}, "
-        f"p = {_fmt_num(result.pvalue)}. "
-        f"The design effect is {de:.1f}, meaning cluster-robust SEs are "
-        f"{de:.1f}x wider than naive."
+        f"Cluster-robust analysis tested the treatment effect while accounting for "
+        f"within-cluster correlation (ICC = {_fmt_num(result.icc)}). "
+        f"The treatment effect (lift = {_fmt_num(result.lift)}) is {sig_text} "
+        f"(p = {_fmt_num(result.pvalue)}, CI: [{_fmt_num(result.ci_lower)}, {_fmt_num(result.ci_upper)}]). "
+        f"The design effect is {de:.1f}, meaning standard errors are {de:.1f}x wider than a naive "
+        f"analysis that ignores clustering would produce. "
+        f"In practice, ignoring the clustering would have made the test {de:.1f}x too optimistic "
+        f"about statistical significance. "
+        f"With {n_clusters} total clusters ({result.n_clusters_control} control, "
+        f"{result.n_clusters_treatment} treatment), power depends primarily on the number of clusters, "
+        f"not the number of individual observations."
     )
 
 
 def _explain_stratified(result: Any, lang: str = "en") -> str:
     """Interpret a StratifiedResult."""
+    sig_text = (
+        "statistically significant" if result.significant else "not statistically significant"
+    )
     return (
-        f"Stratified analysis across {result.n_strata} strata: "
-        f"ATE = {_fmt_num(result.ate)}, p = {_fmt_num(result.pvalue)}."
+        f"Stratified analysis partitioned the data into {result.n_strata} strata and estimated "
+        f"a weighted average treatment effect across them. "
+        f"The overall ATE is {_fmt_num(result.ate)} (p = {_fmt_num(result.pvalue)}, "
+        f"CI: [{_fmt_num(result.ci_lower)}, {_fmt_num(result.ci_upper)}]), which is {sig_text}. "
+        f"Stratification reduces variance by removing between-stratum variation, "
+        f"giving you a more precise estimate than a pooled analysis. "
+        f"This is equivalent to running a longer experiment without stratification. "
+        f"Next step: check individual stratum effects to see if the treatment works "
+        f"differently across segments."
     )
 
 
 def _explain_hte(result: Any, lang: str = "en") -> str:
     """Interpret an HTEResult."""
+    heterogeneity = "substantial" if result.cate_std > abs(result.mean_cate) * 0.5 else "modest"
+    method_name = result.method.replace("_", "-")
+    top_str = ""
+    if result.top_features is not None and len(result.top_features) > 0:
+        top_str = (
+            f" The most important features driving heterogeneity are at indices "
+            f"{result.top_features[:5]}."
+        )
     return (
-        f"Average treatment effect varies across subgroups "
-        f"(CATE std = {result.cate_std:.3f}). "
-        f"Mean CATE = {result.mean_cate:.3f}."
+        f"Heterogeneous treatment effect analysis ({method_name}) found that the treatment "
+        f"effect varies across individuals. The average effect (CATE) is {_fmt_num(result.mean_cate)}, "
+        f"but individual effects have a standard deviation of {_fmt_num(result.cate_std)}, "
+        f"indicating {heterogeneity} heterogeneity. "
+        f"This means the treatment does not affect everyone equally -- some users benefit "
+        f"more than others, and some may even be harmed.{top_str} "
+        f"Next step: segment users by their predicted CATE to identify who benefits most, "
+        f"and consider targeting the treatment to high-CATE users."
     )
 
 
@@ -452,10 +553,23 @@ def _explain_triggered(result: Any, lang: str = "en") -> str:
 
 def _explain_interaction(result: Any, lang: str = "en") -> str:
     """Interpret an InteractionResult."""
-    verb = "does" if result.has_interaction else "does not"
+    n_segments = len(result.segment_results)
+    if result.has_interaction:
+        return (
+            f"Interaction test across {n_segments} segments found that the treatment effect "
+            f"significantly differs across segments (interaction p = {_fmt_num(result.interaction_pvalue)}). "
+            f"The segment with the strongest effect is '{result.strongest_segment}'. "
+            f"This means a one-size-fits-all launch may not be optimal -- some segments "
+            f"respond much better to the treatment than others. "
+            f"Next step: consider a targeted rollout to the highest-performing segments, "
+            f"or investigate why some segments respond differently."
+        )
     return (
-        f"Treatment effect {verb} differ across segments "
-        f"(interaction p={_fmt_num(result.interaction_pvalue)})."
+        f"Interaction test across {n_segments} segments found that the treatment effect "
+        f"does not significantly differ across segments (interaction p = {_fmt_num(result.interaction_pvalue)}). "
+        f"The treatment appears to have a consistent effect regardless of segment. "
+        f"This is good news for a broad rollout -- you can ship the treatment to all users "
+        f"without worrying about negative effects in specific segments."
     )
 
 
@@ -471,11 +585,29 @@ def _explain_multi_objective(result: Any, lang: str = "en") -> str:
 
 def _explain_did(result: Any, lang: str = "en") -> str:
     """Interpret a DiDResult."""
-    trend = "pass" if result.parallel_trends_pvalue > 0.05 else "fail"
+    sig_text = (
+        "statistically significant" if result.significant else "not statistically significant"
+    )
+    if result.parallel_trends_pvalue > 0.05:
+        trend_text = (
+            f"The parallel trends assumption holds (p = {_fmt_num(result.parallel_trends_pvalue)}), "
+            f"meaning the control group is a valid counterfactual for what would have happened "
+            f"to the treatment group without the intervention."
+        )
+    else:
+        trend_text = (
+            f"WARNING: The parallel trends assumption fails (p = {_fmt_num(result.parallel_trends_pvalue)}, "
+            f"pre-trend difference = {_fmt_num(result.pre_trend_diff)}). "
+            f"The control group may not be a valid counterfactual. "
+            f"The DiD estimate may be biased. Consider synthetic control or matching methods."
+        )
     return (
-        f"Difference-in-differences: ATT = {_fmt_num(result.att)}, "
-        f"p = {_fmt_num(result.pvalue)}. "
-        f"Parallel trends {trend}."
+        f"Difference-in-differences estimated the average treatment effect on the treated (ATT) "
+        f"as {_fmt_num(result.att)} (p = {_fmt_num(result.pvalue)}, "
+        f"CI: [{_fmt_num(result.ci_lower)}, {_fmt_num(result.ci_upper)}]), which is {sig_text}. "
+        f"{trend_text} "
+        f"Next step: plot the pre- and post-treatment trends for both groups to visually "
+        f"verify the parallel trends assumption."
     )
 
 
@@ -489,10 +621,35 @@ def _explain_synthetic_control(result: Any, lang: str = "en") -> str:
 
 def _explain_meta_analysis(result: Any, lang: str = "en") -> str:
     """Interpret a MetaAnalysisResult."""
+    # Classify heterogeneity
+    if result.i_squared < 0.25:
+        het_label = "low"
+        het_advice = "The studies are measuring a consistent effect."
+    elif result.i_squared < 0.75:
+        het_label = "moderate"
+        het_advice = (
+            "There is moderate variability across studies, which may reflect "
+            "genuine differences in populations, interventions, or contexts."
+        )
+    else:
+        het_label = "high"
+        het_advice = (
+            "The studies show substantially different effects. The combined estimate "
+            "may mask important differences. Investigate study-level characteristics "
+            "to understand what drives the variation."
+        )
+    sig_text = (
+        "statistically significant" if result.pvalue < 0.05 else "not statistically significant"
+    )
     return (
-        f"Meta-analysis ({result.method}): combined effect = "
-        f"{_fmt_num(result.combined_effect)} (p={_fmt_num(result.pvalue)}). "
-        f"Heterogeneity: I² = {result.i_squared:.0%}."
+        f"Meta-analysis combined {len(result.study_weights)} studies using the "
+        f"{result.method}-effects model. The pooled effect is {_fmt_num(result.combined_effect)} "
+        f"(p = {_fmt_num(result.pvalue)}, CI: [{_fmt_num(result.ci_lower)}, {_fmt_num(result.ci_upper)}]), "
+        f"which is {sig_text}. "
+        f"Heterogeneity is {het_label} (I-squared = {result.i_squared:.0%}, "
+        f"Cochran's Q p = {_fmt_num(result.heterogeneity_pvalue)}). {het_advice} "
+        f"Next step: if heterogeneity is high, consider subgroup analysis or "
+        f"meta-regression to identify moderating factors."
     )
 
 
@@ -565,10 +722,30 @@ def _explain_survival(result: Any, lang: str = "en") -> str:
         if result.median_survival_trt is not None
         else "not reached"
     )
+    hr = result.hazard_ratio
+    if hr < 1:
+        hr_meaning = (
+            f"a hazard ratio of {_fmt_num(hr)} means the treatment group experiences events "
+            f"at {(1 - hr) * 100:.0f}% lower rate than control -- the treatment is protective"
+        )
+    elif hr > 1:
+        hr_meaning = (
+            f"a hazard ratio of {_fmt_num(hr)} means the treatment group experiences events "
+            f"at {(hr - 1) * 100:.0f}% higher rate than control -- the treatment increases risk"
+        )
+    else:
+        hr_meaning = "a hazard ratio of 1.00 means no difference in event rates"
+    sig_text = (
+        "statistically significant" if result.significant else "not statistically significant"
+    )
     return (
-        f"Hazard ratio: {_fmt_num(result.hazard_ratio)}. "
-        f"Log-rank p = {_fmt_num(result.logrank_pvalue)}. "
-        f"Median survival: ctrl={ctrl_str}, trt={trt_str}."
+        f"Survival analysis compared time-to-event outcomes between groups. "
+        f"The result is {sig_text} (log-rank p = {_fmt_num(result.logrank_pvalue)}, "
+        f"CI: [{_fmt_num(result.ci_lower)}, {_fmt_num(result.ci_upper)}]). "
+        f"In plain terms, {hr_meaning}. "
+        f"Median survival time: control = {ctrl_str}, treatment = {trt_str}. "
+        f"Next step: examine Kaplan-Meier curves to understand when the survival "
+        f"curves diverge and whether the effect is early or late."
     )
 
 

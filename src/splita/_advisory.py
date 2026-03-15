@@ -33,7 +33,7 @@ def advise_method_choice(
         s = float(scipy_skew(data))
 
         # Skewed data + ttest
-        if chosen_method == "ttest" and abs(s) > 2:
+        if chosen_method == "ttest" and abs(s) > 1.5:
             warnings.warn(
                 f"Your data has high skewness ({s:.1f}). The t-test assumes "
                 f"approximate normality. Consider method='mannwhitney' or "
@@ -86,8 +86,11 @@ def advise_sample_size(n_ctrl: int, n_trt: int, metric_type: str) -> None:
 
 def advise_pre_analysis(n_ctrl: int, n_trt: int) -> None:
     """Suggest running SRM check before analysis."""
-    # This is a gentle reminder, not a warning
-    pass  # Could emit info-level message if we had a logging system
+    info(
+        "Tip: consider running SRMCheck before analyzing results to verify "
+        "that the traffic split matches your randomization design. "
+        "Use: SRMCheck([n_ctrl, n_trt]).run()"
+    )
 
 
 def advise_variance_reduction(
@@ -129,6 +132,68 @@ def advise_sequential(n_peeks: int, is_sequential: bool) -> None:
             f"You've peeked at results {n_peeks} times. Without sequential "
             f"testing (mSPRT, GroupSequential), this inflates false positives. "
             f"Consider using mSPRT for always-valid inference.",
+            RuntimeWarning,
+            stacklevel=3,
+        )
+
+
+def advise_ratio_without_delta(metric_type: str, method: str) -> None:
+    """Warn when user has a ratio metric but doesn't use delta method."""
+    if metric_type == "ratio" and method != "delta":
+        warnings.warn(
+            f"You have a ratio metric but are using method='{method}'. "
+            f"Ratio metrics require the delta method to correctly account for "
+            f"the covariance between numerator and denominator. "
+            f"Use method='delta' or method='auto' for ratio metrics.",
+            RuntimeWarning,
+            stacklevel=3,
+        )
+
+
+def advise_bootstrap_iterations(n_bootstrap: int) -> None:
+    """Warn when bootstrap iterations are too low for stable CIs."""
+    if n_bootstrap < 5000:
+        warnings.warn(
+            f"Bootstrap is using only {n_bootstrap} iterations. "
+            f"Consider increasing to n_bootstrap=10000 for more stable "
+            f"confidence intervals, especially for small effect sizes.",
+            RuntimeWarning,
+            stacklevel=3,
+        )
+
+
+def advise_cuped_high_correlation(correlation: float) -> None:
+    """Suggest MultivariateCUPED when single-covariate correlation is excellent."""
+    if correlation > 0.8:
+        info(
+            f"Excellent covariate correlation ({correlation:.2f}). "
+            f"CUPED is already providing strong variance reduction. "
+            f"If you have additional covariates available, consider "
+            f"MultivariateCUPED to potentially reduce variance even further."
+        )
+
+
+def advise_large_effect(effect_size: float) -> None:
+    """Warn when effect size is unusually large, suggesting data quality check."""
+    if abs(effect_size) > 1.0:
+        warnings.warn(
+            f"Effect size is unusually large (Cohen's d = {effect_size:.2f}). "
+            f"Effects this large are rare in A/B tests. Verify data quality: "
+            f"check for logging errors, bot traffic, outliers, or a bug in "
+            f"the treatment implementation.",
+            RuntimeWarning,
+            stacklevel=3,
+        )
+
+
+def advise_large_sample_practical_significance(n: int, pvalue: float, effect_size: float) -> None:
+    """Warn that large samples detect trivially small effects."""
+    if n > 50000 and pvalue < 0.05 and abs(effect_size) < 0.01:
+        warnings.warn(
+            f"With n={n:,}, even trivially small effects become statistically "
+            f"significant (effect size={effect_size:.4f}). This result is "
+            f"statistically significant but may not be practically meaningful. "
+            f"Consider whether the observed lift justifies the cost of shipping.",
             RuntimeWarning,
             stacklevel=3,
         )

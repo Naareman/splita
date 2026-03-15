@@ -298,7 +298,29 @@ class MultivariateCUPED:
             ``(control_adjusted, treatment_adjusted)``.
         """
         self.fit(control, treatment, X_control, X_treatment)
-        return self.transform(control, treatment, X_control, X_treatment)
+        result = self.transform(control, treatment, X_control, X_treatment)
+
+        # Inform user about variance reduction achieved
+        from splita._advisory import info
+
+        info(
+            f"MultivariateCUPED reduced variance by {self.variance_reduction_:.1%} "
+            f"(R = {self.correlation_:.3f}). "
+            f"This is equivalent to running the experiment "
+            f"{1 / (1 - self.variance_reduction_):.1f}x longer."
+        )
+
+        if self.variance_reduction_ < 0.05:
+            warnings.warn(
+                f"MultivariateCUPED reduced variance by only {self.variance_reduction_:.1%}. "
+                f"The covariates are weakly predictive of the outcome. "
+                f"Consider using CUPAC with ML features for better reduction, "
+                f"or check that the covariates are from the right time period.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+
+        return result
 
     # ── private helpers ─────────────────────────────────────────────
 

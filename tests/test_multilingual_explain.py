@@ -229,7 +229,7 @@ class TestAdvancedTypesLangFallback:
         for lang in ("en", "ar", "es", "zh"):
             text = explain(result, lang=lang)
             assert "arm 0" in text
-            assert "1000 pulls" in text
+            assert "1000 total pulls" in text
 
     def test_correction_all_langs(self):
         result = CorrectionResult(
@@ -296,7 +296,7 @@ class TestAdvancedTypesLangFallback:
         )
         for lang in ("en", "ar", "es", "zh"):
             text = explain(result, lang=lang)
-            assert "Hazard ratio" in text
+            assert "hazard ratio" in text.lower()
 
 
 # ─── Unsupported language ────────────────────────────────────────────

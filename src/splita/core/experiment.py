@@ -238,7 +238,7 @@ class Experiment:
             if np.std(arr) == 0.0:
                 continue  # zero-variance data has no meaningful skewness
             s = float(scipy_skew(arr))
-            if abs(s) > 2:
+            if abs(s) > 1.5:
                 warnings.warn(
                     f"{label} data has high skewness ({s:.1f}). "
                     "The t-test assumes approximate normality via CLT. "
@@ -672,6 +672,29 @@ class Experiment:
         info(f"Selected method: {self._method}")
         info(f"Running {self._method} test on {n1}+{n2} observations")
 
+        # Always explain auto-selected method (not just in verbose mode)
+        if self._user_method == "auto":
+            _method_reasons = {
+                ("conversion", "ztest"): (
+                    "Auto-selected z-test because the metric is binary "
+                    "(conversion). The z-test is the standard and most "
+                    "powerful test for comparing two proportions."
+                ),
+                ("continuous", "ttest"): (
+                    "Auto-selected Welch's t-test because the metric is "
+                    "continuous. The t-test is the standard choice and does "
+                    "not assume equal variances."
+                ),
+                ("ratio", "delta"): (
+                    "Auto-selected delta method because the metric is a ratio. "
+                    "The delta method correctly handles the covariance between "
+                    "numerator and denominator (Deng et al. 2018)."
+                ),
+            }
+            reason = _method_reasons.get((self._metric, self._method))
+            if reason:
+                info(reason)
+
         # Advisory: warn if user explicitly chose a sub-optimal method
         if self._user_method != "auto":
             combined = np.concatenate([self._control, self._treatment])
@@ -682,6 +705,20 @@ class Experiment:
                 n1 + n2,
             )
 
+        # Advisory: ratio metric without delta method
+        from splita._advisory import (
+            advise_bootstrap_iterations,
+            advise_large_effect,
+            advise_large_sample_practical_significance,
+            advise_ratio_without_delta,
+        )
+
+        advise_ratio_without_delta(self._metric, self._method)
+
+        # Advisory: low bootstrap iterations
+        if self._method == "bootstrap":
+            advise_bootstrap_iterations(self._n_bootstrap)
+
         dispatch = {
             "ztest": self._run_ztest,
             "ttest": self._run_ttest,
@@ -690,4 +727,14 @@ class Experiment:
             "delta": self._run_delta,
             "bootstrap": self._run_bootstrap,
         }
-        return dispatch[self._method]()
+        result = dispatch[self._method]()
+
+        # Post-result advisories
+        advise_large_effect(result.effect_size)
+        advise_large_sample_practical_significance(
+            result.control_n + result.treatment_n,
+            result.pvalue,
+            result.effect_size,
+        )
+
+        return result

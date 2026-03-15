@@ -266,21 +266,91 @@ print(corrected)
 
 ## API Reference
 
-| Class | Module | Description |
-|---|---|---|
-| `Experiment` | `splita` | Frequentist A/B test (z-test, t-test, Mann-Whitney, chi-square, delta method, bootstrap) |
-| `SampleSize` | `splita` | Power analysis for proportions, means, and ratios; MDE calculator; duration estimator |
-| `SRMCheck` | `splita` | Sample Ratio Mismatch detector (chi-square goodness-of-fit) |
-| `MultipleCorrection` | `splita` | Adjust p-values for multiple comparisons (BH, Bonferroni, Holm, BY) |
-| `CUPED` | `splita.variance` | Variance reduction using pre-experiment covariates |
-| `CUPAC` | `splita.variance` | Variance reduction using ML-predicted covariates (requires `splita[ml]`) |
-| `OutlierHandler` | `splita.variance` | Outlier capping/trimming (winsorize, trim, IQR) with pooled thresholds |
-| `mSPRT` | `splita.sequential` | Always-valid sequential testing (no peeking problem) |
-| `GroupSequential` | `splita.sequential` | Pre-planned group sequential testing with alpha-spending functions |
-| `ThompsonSampler` | `splita.bandits` | Thompson Sampling multi-armed bandit (Bernoulli, Gaussian, Poisson) |
-| `LinTS` | `splita.bandits` | Linear Thompson Sampling contextual bandit |
+### Core Analysis
 
-All result types (`ExperimentResult`, `SampleSizeResult`, `SRMResult`, `CorrectionResult`, `mSPRTResult`, `BanditResult`, etc.) are frozen dataclasses with `.to_dict()` and pretty `__repr__`.
+| Class | Type | Description | Reference |
+|---|---|---|---|
+| `Experiment` | Hybrid | Frequentist A/B test (z-test, t-test, Mann-Whitney, chi-square, delta method, bootstrap) | Welch 1947, Deng et al. 2018 |
+| `BayesianExperiment` | Original | Bayesian A/B test with P(B>A), expected loss, ROPE | Berry 2006 |
+| `QuantileExperiment` | Original | Bootstrap inference at arbitrary quantiles (median, p90, p99) | Efron 1979 |
+| `SampleSize` | Hybrid | Power analysis for proportions, means, and ratios | Farrington & Manning 1990, Cohen 1988 |
+| `SRMCheck` | Wrapper | Sample Ratio Mismatch detector (chi-square goodness-of-fit) | Fabijan et al. 2019 |
+| `MultipleCorrection` | Original | p-value correction (BH, Bonferroni, Holm, BY) | Benjamini & Hochberg 1995 |
+| `PowerSimulation` | Wrapper | Monte Carlo power for complex designs | — |
+| `HTEEstimator` | Wrapper | Heterogeneous treatment effects (T-learner, S-learner) | Kunzel et al. 2019 |
+| `TriggeredExperiment` | Wrapper | Intent-to-treat vs per-protocol analysis | Hernan & Robins 2020 |
+| `InteractionTest` | Hybrid | Segment-level treatment effect heterogeneity (Cochran's Q) | Cochran 1954 |
+| `MultiObjectiveExperiment` | Wrapper | Pareto analysis across multiple metrics | — |
+| `StratifiedExperiment` | Original | Neyman-style stratified inference | Neyman 1923, Miratrix et al. 2013 |
+| `CausalForest` | Hybrid | Honest T-learner with jackknife CIs | Athey & Wager 2018 |
+
+### Variance Reduction
+
+| Class | Type | Description | Reference |
+|---|---|---|---|
+| `CUPED` | Original | Pre-experiment covariate adjustment | Deng et al. WSDM 2013 |
+| `CUPAC` | Hybrid | ML-predicted covariate adjustment (cross-validated) | Tang et al. 2020 (DoorDash) |
+| `OutlierHandler` | Hybrid | Winsorize, trim, IQR, DBSCAN clustering | Tukey 1977, Ester et al. 1996 |
+| `MultivariateCUPED` | Original | Multi-covariate CUPED extension | Deng & Shi 2016 |
+| `RegressionAdjustment` | Original | Lin's OLS with HC2 robust SEs | Lin 2013 |
+| `AdaptiveWinsorizer` | Original | Grid-search optimal capping thresholds | Gupta et al. 2019 (Microsoft ExP) |
+| `DoubleML` | Hybrid | Double/debiased ML for treatment effects | Chernozhukov et al. 2018 |
+
+### Sequential Testing
+
+| Class | Type | Description | Reference |
+|---|---|---|---|
+| `mSPRT` | Original | Always-valid p-values via mixture likelihood ratio | Johari et al. 2015/2022 |
+| `GroupSequential` | Original | Alpha-spending boundaries (OBF, Pocock, Kim-DeMets) | O'Brien & Fleming 1979, Lan & DeMets 1983 |
+| `EValue` | Original | E-value sequential testing | Grunwald et al. 2020 |
+| `ConfidenceSequence` | Original | Time-uniform confidence sequences | Howard et al. 2021 |
+| `EProcess` | Original | Safe testing with e-processes (GRAPA, universal) | Grunwald et al. 2020, Ramdas et al. 2023 |
+
+### Bandits
+
+| Class | Type | Description | Reference |
+|---|---|---|---|
+| `ThompsonSampler` | Original | Multi-armed bandit (Bernoulli, Gaussian, Poisson) | Russo et al. 2018 |
+| `LinTS` | Original | Linear Thompson Sampling contextual bandit | Agrawal & Goyal 2013 |
+| `LinUCB` | Original | Upper confidence bound contextual bandit | Li et al. 2010 |
+| `BayesianStopping` | Original | Stopping rule evaluator for bandits | — |
+
+### Causal Inference
+
+| Class | Type | Description | Reference |
+|---|---|---|---|
+| `DifferenceInDifferences` | Hybrid | Classic two-period DiD with parallel trends check | Card & Krueger 1994 |
+| `SyntheticControl` | Hybrid | Weighted donor combination via constrained optimization | Abadie et al. 2010 |
+| `ClusterExperiment` | Hybrid | Cluster-robust inference with ICC | Cameron & Miller 2015 |
+| `SwitchbackExperiment` | Hybrid | Time-based switchback design analysis | Bojinov & Shephard 2019 |
+| `SurrogateEstimator` | Wrapper | Short-term to long-term effect prediction | Athey et al. 2019 |
+| `SurrogateIndex` | Hybrid | Multi-surrogate index with cross-fitting | Athey et al. 2019 |
+| `InterferenceExperiment` | Original | Network interference with Horvitz-Thompson estimator | Basse & Feller 2018 |
+
+### Diagnostics
+
+| Class | Type | Description | Reference |
+|---|---|---|---|
+| `NoveltyCurve` | Original | Rolling-window novelty/primacy effect detection | — |
+| `AATest` | Wrapper | Validate randomization via simulation | Kohavi et al. 2020 |
+| `EffectTimeSeries` | Hybrid | Cumulative treatment effect over time | Kohavi et al. 2020 |
+| `MetricSensitivity` | Hybrid | Pre-experiment power estimation from historical data | — |
+| `VarianceEstimator` | Original | Distributional analysis with A/B-specific recommendations | — |
+| `NonStationaryDetector` | Original | CUSUM change-point detection on effect series | Page 1954 |
+
+### Design and Governance
+
+| Class | Type | Description | Reference |
+|---|---|---|---|
+| `PairwiseDesign` | Original | Mahalanobis distance matched-pair assignment | Greevy et al. 2004 |
+| `ExperimentRegistry` | Original | In-memory experiment tracking | — |
+| `ConflictDetector` | Original | Overlapping experiment detection | Kohavi et al. 2020 |
+
+**Type legend**: **Original** = algorithm from paper equations. **Wrapper** = delegates to scipy/sklearn. **Hybrid** = original algorithm + scipy/sklearn numerical primitives.
+
+For full citations, see [REFERENCES.md](REFERENCES.md).
+
+All result types are frozen dataclasses with `.to_dict()` and pretty `__repr__`.
 
 ## Requirements
 

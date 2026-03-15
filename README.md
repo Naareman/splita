@@ -370,6 +370,10 @@ ruff check src/ tests/
 mypy src/splita/
 ```
 
+## Roadmap
+
+**Experimentation Accelerator** (planned): AI-powered experiment prioritization using content embeddings and historical A/B results to suggest which variants to test next and explain why winners win. Based on recent research in content-aware ranking for experimentation (arxiv:2602.13852, 2026). Requires LLM/embedding infrastructure — not yet in scope for a pure statistics library.
+
 ## License
 
 MIT

@@ -2,11 +2,10 @@
 
 A/B test analysis that is correct by default, informative by design, and composable by construction.
 
-[![PyPI version](https://img.shields.io/pypi/v/splita)](https://pypi.org/project/splita/)
-[![Tests](https://img.shields.io/github/actions/workflow/status/Naareman/splita/tests.yml?label=tests)](https://github.com/Naareman/splita/actions)
-[![Coverage](https://img.shields.io/codecov/c/github/Naareman/splita)](https://codecov.io/gh/Naareman/splita)
+[![Tests](https://img.shields.io/github/actions/workflow/status/Naareman/splita/ci.yml?label=tests)](https://github.com/Naareman/splita/actions)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://pypi.org/project/splita/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-live-brightgreen)](https://Naareman.github.io/splita/)
 
 ## Quick Start
 

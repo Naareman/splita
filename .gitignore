@@ -18,3 +18,4 @@ venv/
 .DS_Store
 splita_api_spec.docx
 .internal/
+dist/

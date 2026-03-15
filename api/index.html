@@ -1,0 +1,2311 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A/B test analysis — correct by default, informative by design">
+      
+      
+      
+        <link rel="canonical" href="https://Naareman.github.io/splita/api/">
+      
+      
+        <link rel="prev" href="../cookbook/mobile/">
+      
+      
+        <link rel="next" href="../comparison/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+    
+    
+      
+        <title>API Reference - splita</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#api-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="splita" class="md-header__button md-logo" aria-label="splita" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            splita
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              API Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Naareman/splita" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Naareman/splita
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../guide/experiment/" class="md-tabs__link">
+          
+  
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../cookbook/ecommerce/" class="md-tabs__link">
+          
+  
+  
+  Cookbook
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../comparison/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Comparison
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../benchmarks/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Benchmarks
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../references/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  References
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="splita" class="md-nav__button md-logo" aria-label="splita" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    splita
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Naareman/splita" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Naareman/splita
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/experiment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running an A/B Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/planning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Planning (Sample Size)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/data-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Quality (SRM)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/variance-reduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Variance Reduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/sequential/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sequential Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/bayesian/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bayesian Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/bandits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bandits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guide/causal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Causal Inference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookbook
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Cookbook
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cookbook/ecommerce/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    E-commerce
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cookbook/marketplace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cookbook/subscription/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subscription
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cookbook/mobile/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mobile App
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#core-analysis-24-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Analysis (24 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variance-reduction-14-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variance Reduction (14 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sequential-testing-7-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sequential Testing (7 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bandits-5-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bandits (5 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#causal-inference-19-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Causal Inference (19 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#diagnostics-10-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostics (10 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-6-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design (6 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#governance-3-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Governance (3 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#top-level-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Top-level functions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plugin-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin system
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Datasets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error classes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comparison
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#core-analysis-24-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Analysis (24 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#variance-reduction-14-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variance Reduction (14 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sequential-testing-7-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sequential Testing (7 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bandits-5-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bandits (5 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#causal-inference-19-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Causal Inference (19 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#diagnostics-10-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostics (10 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-6-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design (6 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#governance-3-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Governance (3 classes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#top-level-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Top-level functions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plugin-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin system
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Datasets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error classes
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h1>
+<p>splita exposes <strong>88 classes</strong> across 8 modules. Every class returns frozen dataclasses with <code>.to_dict()</code> and a pretty <code>__repr__</code>.</p>
+<p><strong>Type legend</strong>: <strong>Original</strong> = algorithm implemented from paper equations. <strong>Wrapper</strong> = delegates to scipy/sklearn. <strong>Hybrid</strong> = original algorithm + scipy/sklearn numerical primitives.</p>
+<hr />
+<h2 id="core-analysis-24-classes">Core Analysis (24 classes)<a class="headerlink" href="#core-analysis-24-classes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Experiment</code></td>
+<td>Hybrid</td>
+<td>Frequentist A/B test (z-test, t-test, Mann-Whitney, chi-square, delta method, bootstrap)</td>
+</tr>
+<tr>
+<td><code>BayesianExperiment</code></td>
+<td>Original</td>
+<td>Bayesian A/B test with P(B&gt;A), expected loss, ROPE</td>
+</tr>
+<tr>
+<td><code>ObjectiveBayesianExperiment</code></td>
+<td>Original</td>
+<td>Empirical Bayes A/B test with prior learned from historical experiments</td>
+</tr>
+<tr>
+<td><code>QuantileExperiment</code></td>
+<td>Original</td>
+<td>Bootstrap inference at arbitrary quantiles (median, p90, p99)</td>
+</tr>
+<tr>
+<td><code>SampleSize</code></td>
+<td>Hybrid</td>
+<td>Power analysis for proportions, means, and ratios</td>
+</tr>
+<tr>
+<td><code>SRMCheck</code></td>
+<td>Wrapper</td>
+<td>Sample Ratio Mismatch detector (chi-square goodness-of-fit)</td>
+</tr>
+<tr>
+<td><code>MultipleCorrection</code></td>
+<td>Original</td>
+<td>p-value correction (BH, Bonferroni, Holm, BY)</td>
+</tr>
+<tr>
+<td><code>PermutationTest</code></td>
+<td>Original</td>
+<td>Exact distribution-free hypothesis testing via label permutation</td>
+</tr>
+<tr>
+<td><code>PowerSimulation</code></td>
+<td>Wrapper</td>
+<td>Monte Carlo power for complex designs</td>
+</tr>
+<tr>
+<td><code>HTEEstimator</code></td>
+<td>Wrapper</td>
+<td>Heterogeneous treatment effects (T-learner, S-learner)</td>
+</tr>
+<tr>
+<td><code>CausalForest</code></td>
+<td>Hybrid</td>
+<td>Honest T-learner with jackknife CIs</td>
+</tr>
+<tr>
+<td><code>TriggeredExperiment</code></td>
+<td>Wrapper</td>
+<td>Intent-to-treat vs per-protocol analysis</td>
+</tr>
+<tr>
+<td><code>DilutionAnalysis</code></td>
+<td>Hybrid</td>
+<td>Dilute triggered effect back to full ITT population</td>
+</tr>
+<tr>
+<td><code>InteractionTest</code></td>
+<td>Hybrid</td>
+<td>Segment-level treatment effect heterogeneity (Cochran's Q)</td>
+</tr>
+<tr>
+<td><code>MultiObjectiveExperiment</code></td>
+<td>Wrapper</td>
+<td>Pareto analysis across multiple metrics</td>
+</tr>
+<tr>
+<td><code>StratifiedExperiment</code></td>
+<td>Original</td>
+<td>Neyman-style stratified inference</td>
+</tr>
+<tr>
+<td><code>FunnelExperiment</code></td>
+<td>Hybrid</td>
+<td>Per-step conversion funnel analysis</td>
+</tr>
+<tr>
+<td><code>InterleavingExperiment</code></td>
+<td>Hybrid</td>
+<td>Team Draft / Balanced interleaving for ranking comparison</td>
+</tr>
+<tr>
+<td><code>MetricDecomposition</code></td>
+<td>Wrapper</td>
+<td>Decompose metric into additive components and test each</td>
+</tr>
+<tr>
+<td><code>MixedEffectsExperiment</code></td>
+<td>Original</td>
+<td>Random-intercept model for repeated-measures experiments</td>
+</tr>
+<tr>
+<td><code>OECBuilder</code></td>
+<td>Hybrid</td>
+<td>Combine multiple metrics into an Overall Evaluation Criterion</td>
+</tr>
+<tr>
+<td><code>OptimalProxyMetrics</code></td>
+<td>Original</td>
+<td>Learn optimal weighted proxy for a north star metric</td>
+</tr>
+<tr>
+<td><code>RiskAwareDecision</code></td>
+<td>Hybrid</td>
+<td>Multi-metric constrained decision framework</td>
+</tr>
+<tr>
+<td><code>SurvivalExperiment</code></td>
+<td>Hybrid</td>
+<td>Kaplan-Meier survival estimation and log-rank test</td>
+</tr>
+</tbody>
+</table>
+<h2 id="variance-reduction-14-classes">Variance Reduction (14 classes)<a class="headerlink" href="#variance-reduction-14-classes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CUPED</code></td>
+<td>Original</td>
+<td>Pre-experiment covariate adjustment</td>
+</tr>
+<tr>
+<td><code>CUPAC</code></td>
+<td>Hybrid</td>
+<td>ML-predicted covariate adjustment (cross-validated)</td>
+</tr>
+<tr>
+<td><code>OutlierHandler</code></td>
+<td>Hybrid</td>
+<td>Winsorize, trim, IQR, DBSCAN clustering</td>
+</tr>
+<tr>
+<td><code>MultivariateCUPED</code></td>
+<td>Original</td>
+<td>Multi-covariate CUPED extension</td>
+</tr>
+<tr>
+<td><code>RegressionAdjustment</code></td>
+<td>Original</td>
+<td>Lin's OLS with HC2 robust SEs</td>
+</tr>
+<tr>
+<td><code>AdaptiveWinsorizer</code></td>
+<td>Original</td>
+<td>Grid-search optimal capping thresholds</td>
+</tr>
+<tr>
+<td><code>DoubleML</code></td>
+<td>Hybrid</td>
+<td>Double/debiased ML for treatment effects</td>
+</tr>
+<tr>
+<td><code>ClusterBootstrap</code></td>
+<td>Original</td>
+<td>Cluster-level bootstrap for ratio metrics with within-cluster correlation</td>
+</tr>
+<tr>
+<td><code>InExperimentVR</code></td>
+<td>Original</td>
+<td>Variance reduction using in-experiment control-group covariates</td>
+</tr>
+<tr>
+<td><code>NonstationaryAdjustment</code></td>
+<td>Hybrid</td>
+<td>Bias-corrected ATE via time-series decomposition</td>
+</tr>
+<tr>
+<td><code>PostStratification</code></td>
+<td>Original</td>
+<td>Post-experiment stratification with inverse-variance weighting</td>
+</tr>
+<tr>
+<td><code>PredictionPoweredInference</code></td>
+<td>Original</td>
+<td>Augment small labeled data with ML predictions for valid inference</td>
+</tr>
+<tr>
+<td><code>RobustMeanEstimator</code></td>
+<td>Original</td>
+<td>Huber M-estimator, Median of Means, Catoni estimator</td>
+</tr>
+<tr>
+<td><code>TrimmedMeanEstimator</code></td>
+<td>Original</td>
+<td>Robust ATE via symmetric tail trimming</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sequential-testing-7-classes">Sequential Testing (7 classes)<a class="headerlink" href="#sequential-testing-7-classes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mSPRT</code></td>
+<td>Original</td>
+<td>Always-valid p-values via mixture likelihood ratio</td>
+</tr>
+<tr>
+<td><code>GroupSequential</code></td>
+<td>Original</td>
+<td>Alpha-spending boundaries (OBF, Pocock, Kim-DeMets)</td>
+</tr>
+<tr>
+<td><code>EValue</code></td>
+<td>Original</td>
+<td>E-value sequential testing</td>
+</tr>
+<tr>
+<td><code>ConfidenceSequence</code></td>
+<td>Original</td>
+<td>Time-uniform confidence sequences</td>
+</tr>
+<tr>
+<td><code>EProcess</code></td>
+<td>Original</td>
+<td>Safe testing with e-processes (GRAPA, universal)</td>
+</tr>
+<tr>
+<td><code>SampleSizeReestimation</code></td>
+<td>Original</td>
+<td>Mid-experiment sample size adjustment via conditional power</td>
+</tr>
+<tr>
+<td><code>YEASTSequentialTest</code></td>
+<td>Original</td>
+<td>Tuning-free sequential test via Levy's inequality</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bandits-5-classes">Bandits (5 classes)<a class="headerlink" href="#bandits-5-classes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ThompsonSampler</code></td>
+<td>Original</td>
+<td>Multi-armed bandit (Bernoulli, Gaussian, Poisson)</td>
+</tr>
+<tr>
+<td><code>LinTS</code></td>
+<td>Original</td>
+<td>Linear Thompson Sampling contextual bandit</td>
+</tr>
+<tr>
+<td><code>LinUCB</code></td>
+<td>Original</td>
+<td>Upper confidence bound contextual bandit</td>
+</tr>
+<tr>
+<td><code>BayesianStopping</code></td>
+<td>Original</td>
+<td>Stopping rule evaluator for bandits</td>
+</tr>
+<tr>
+<td><code>OfflineEvaluator</code></td>
+<td>Hybrid</td>
+<td>Offline policy evaluation via IPS and doubly robust estimator</td>
+</tr>
+</tbody>
+</table>
+<h2 id="causal-inference-19-classes">Causal Inference (19 classes)<a class="headerlink" href="#causal-inference-19-classes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DifferenceInDifferences</code></td>
+<td>Hybrid</td>
+<td>Classic two-period DiD with parallel trends check</td>
+</tr>
+<tr>
+<td><code>SyntheticControl</code></td>
+<td>Hybrid</td>
+<td>Weighted donor combination via constrained optimization</td>
+</tr>
+<tr>
+<td><code>ClusterExperiment</code></td>
+<td>Hybrid</td>
+<td>Cluster-robust inference with ICC</td>
+</tr>
+<tr>
+<td><code>SwitchbackExperiment</code></td>
+<td>Hybrid</td>
+<td>Time-based switchback design analysis</td>
+</tr>
+<tr>
+<td><code>SurrogateEstimator</code></td>
+<td>Wrapper</td>
+<td>Short-term to long-term effect prediction</td>
+</tr>
+<tr>
+<td><code>SurrogateIndex</code></td>
+<td>Hybrid</td>
+<td>Multi-surrogate index with cross-fitting</td>
+</tr>
+<tr>
+<td><code>InterferenceExperiment</code></td>
+<td>Original</td>
+<td>Network interference with Horvitz-Thompson estimator</td>
+</tr>
+<tr>
+<td><code>BipartiteExperiment</code></td>
+<td>Original</td>
+<td>Cross-side exposure mapping for two-sided experiments</td>
+</tr>
+<tr>
+<td><code>ContinuousTreatmentEffect</code></td>
+<td>Original</td>
+<td>Dose-response curve via kernel-weighted local linear regression</td>
+</tr>
+<tr>
+<td><code>DoublyRobustEstimator</code></td>
+<td>Hybrid</td>
+<td>Augmented IPW (AIPW) with cross-fitting</td>
+</tr>
+<tr>
+<td><code>DynamicCausalEffect</code></td>
+<td>Hybrid</td>
+<td>Time-varying treatment effects with doubly robust estimation</td>
+</tr>
+<tr>
+<td><code>EffectTransport</code></td>
+<td>Original</td>
+<td>Transport treatment effects across populations via inverse odds weighting</td>
+</tr>
+<tr>
+<td><code>GeoExperiment</code></td>
+<td>Hybrid</td>
+<td>Bayesian synthetic control for geo-level marketing experiments</td>
+</tr>
+<tr>
+<td><code>InstrumentalVariables</code></td>
+<td>Original</td>
+<td>Two-Stage Least Squares (2SLS) for LATE estimation</td>
+</tr>
+<tr>
+<td><code>MarketplaceExperiment</code></td>
+<td>Hybrid</td>
+<td>Buyer/seller randomization bias analysis for two-sided marketplaces</td>
+</tr>
+<tr>
+<td><code>MediationAnalysis</code></td>
+<td>Original</td>
+<td>Baron-Kenny mediation with Sobel test for indirect effects (ACME)</td>
+</tr>
+<tr>
+<td><code>PropensityScoreMatching</code></td>
+<td>Original</td>
+<td>Logistic propensity scores with nearest-neighbor matching</td>
+</tr>
+<tr>
+<td><code>RegressionDiscontinuity</code></td>
+<td>Original</td>
+<td>Sharp RDD with local linear regression and IK bandwidth</td>
+</tr>
+<tr>
+<td><code>TMLE</code></td>
+<td>Hybrid</td>
+<td>Targeted Maximum Likelihood Estimation for ATE</td>
+</tr>
+</tbody>
+</table>
+<h2 id="diagnostics-10-classes">Diagnostics (10 classes)<a class="headerlink" href="#diagnostics-10-classes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NoveltyCurve</code></td>
+<td>Original</td>
+<td>Rolling-window novelty/primacy effect detection</td>
+</tr>
+<tr>
+<td><code>AATest</code></td>
+<td>Wrapper</td>
+<td>Validate randomization via simulation</td>
+</tr>
+<tr>
+<td><code>EffectTimeSeries</code></td>
+<td>Hybrid</td>
+<td>Cumulative treatment effect over time</td>
+</tr>
+<tr>
+<td><code>MetricSensitivity</code></td>
+<td>Hybrid</td>
+<td>Pre-experiment power estimation from historical data</td>
+</tr>
+<tr>
+<td><code>VarianceEstimator</code></td>
+<td>Original</td>
+<td>Distributional analysis with A/B-specific recommendations</td>
+</tr>
+<tr>
+<td><code>NonStationaryDetector</code></td>
+<td>Original</td>
+<td>CUSUM change-point detection on effect series</td>
+</tr>
+<tr>
+<td><code>CarryoverDetector</code></td>
+<td>Wrapper</td>
+<td>Detect treatment effect leakage into control via pre/post comparison</td>
+</tr>
+<tr>
+<td><code>FlickerDetector</code></td>
+<td>Original</td>
+<td>Detect users who switched variants mid-experiment</td>
+</tr>
+<tr>
+<td><code>PHackingDetector</code></td>
+<td>Hybrid</td>
+<td>p-curve analysis for selective reporting detection</td>
+</tr>
+<tr>
+<td><code>RandomizationValidator</code></td>
+<td>Hybrid</td>
+<td>Covariate balance check via SMD and chi-squared omnibus test</td>
+</tr>
+</tbody>
+</table>
+<h2 id="design-6-classes">Design (6 classes)<a class="headerlink" href="#design-6-classes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PairwiseDesign</code></td>
+<td>Original</td>
+<td>Mahalanobis distance matched-pair assignment</td>
+</tr>
+<tr>
+<td><code>AdaptiveEnrichment</code></td>
+<td>Original</td>
+<td>Mid-experiment subgroup selection based on treatment response</td>
+</tr>
+<tr>
+<td><code>BayesianExperimentOptimizer</code></td>
+<td>Hybrid</td>
+<td>Surrogate-model-based experiment parameter optimization</td>
+</tr>
+<tr>
+<td><code>BudgetSplitDesign</code></td>
+<td>Hybrid</td>
+<td>Budget-split design to eliminate cannibalization bias</td>
+</tr>
+<tr>
+<td><code>FractionalFactorialDesign</code></td>
+<td>Hybrid</td>
+<td>Resolution III+ fractional factorial designs for factor screening</td>
+</tr>
+<tr>
+<td><code>ResponseAdaptiveRandomization</code></td>
+<td>Original</td>
+<td>Dynamic allocation probabilities favouring better-performing arms</td>
+</tr>
+</tbody>
+</table>
+<h2 id="governance-3-classes">Governance (3 classes)<a class="headerlink" href="#governance-3-classes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ExperimentRegistry</code></td>
+<td>Original</td>
+<td>In-memory experiment tracking with date filtering</td>
+</tr>
+<tr>
+<td><code>ConflictDetector</code></td>
+<td>Original</td>
+<td>Overlapping experiment detection (traffic, metric, segment)</td>
+</tr>
+<tr>
+<td><code>GuardrailMonitor</code></td>
+<td>Wrapper</td>
+<td>Safety metric monitoring with Bonferroni-corrected stopping rules</td>
+</tr>
+</tbody>
+</table>
+<h2 id="top-level-functions">Top-level functions<a class="headerlink" href="#top-level-functions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>auto()</code></td>
+<td>Auto-select and apply the best variance reduction + analysis</td>
+</tr>
+<tr>
+<td><code>check()</code></td>
+<td>Run a suite of data quality checks</td>
+</tr>
+<tr>
+<td><code>compare()</code></td>
+<td>Compare multiple experiment results</td>
+</tr>
+<tr>
+<td><code>diagnose()</code></td>
+<td>Run diagnostic checks on an experiment</td>
+</tr>
+<tr>
+<td><code>explain()</code></td>
+<td>Generate a plain-English explanation of any result</td>
+</tr>
+<tr>
+<td><code>log()</code></td>
+<td>Log an experiment result</td>
+</tr>
+<tr>
+<td><code>load_log()</code></td>
+<td>Load previously logged results</td>
+</tr>
+<tr>
+<td><code>meta_analysis()</code></td>
+<td>Combine results from multiple experiments</td>
+</tr>
+<tr>
+<td><code>monitor()</code></td>
+<td>Real-time monitoring dashboard</td>
+</tr>
+<tr>
+<td><code>notify()</code></td>
+<td>Send notifications (Slack, email)</td>
+</tr>
+<tr>
+<td><code>power_report()</code></td>
+<td>Generate a power analysis report</td>
+</tr>
+<tr>
+<td><code>report()</code></td>
+<td>Generate a full experiment report</td>
+</tr>
+<tr>
+<td><code>serve()</code></td>
+<td>Serve splita as a REST API</td>
+</tr>
+<tr>
+<td><code>simulate()</code></td>
+<td>Monte Carlo power simulation</td>
+</tr>
+<tr>
+<td><code>to_latex_table()</code></td>
+<td>Export results to LaTeX</td>
+</tr>
+<tr>
+<td><code>what_if()</code></td>
+<td>What-if scenario analysis</td>
+</tr>
+<tr>
+<td><code>audit_trail()</code></td>
+<td>Generate an audit trail for an experiment</td>
+</tr>
+</tbody>
+</table>
+<h2 id="plugin-system">Plugin system<a class="headerlink" href="#plugin-system" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>register_method()</code></td>
+<td>Register a custom statistical test method</td>
+</tr>
+<tr>
+<td><code>unregister_method()</code></td>
+<td>Remove a registered method</td>
+</tr>
+<tr>
+<td><code>get_method()</code></td>
+<td>Retrieve a registered method</td>
+</tr>
+<tr>
+<td><code>list_methods()</code></td>
+<td>List all registered methods</td>
+</tr>
+<tr>
+<td><code>clear_methods()</code></td>
+<td>Clear all registered methods</td>
+</tr>
+</tbody>
+</table>
+<h2 id="datasets">Datasets<a class="headerlink" href="#datasets" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>load_ecommerce()</code></td>
+<td>E-commerce checkout flow experiment (5,000 users, revenue, segments)</td>
+</tr>
+<tr>
+<td><code>load_marketplace()</code></td>
+<td>Two-sided marketplace experiment (3,000 buyers, 800 sellers)</td>
+</tr>
+<tr>
+<td><code>load_subscription()</code></td>
+<td>SaaS onboarding experiment (2,000 users, survival data)</td>
+</tr>
+<tr>
+<td><code>load_mobile_app()</code></td>
+<td>Mobile recommendation engine experiment (4,000 users, sessions, purchases)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="error-classes">Error classes<a class="headerlink" href="#error-classes" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SplitaError</code></td>
+<td>Base exception for all splita errors</td>
+</tr>
+<tr>
+<td><code>ValidationError</code></td>
+<td>Input validation failure</td>
+</tr>
+<tr>
+<td><code>InsufficientDataError</code></td>
+<td>Not enough data for the requested analysis</td>
+</tr>
+<tr>
+<td><code>NotFittedError</code></td>
+<td>Called a method that requires fitting first</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "content.code.copy", "search.suggest"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

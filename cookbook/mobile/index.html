@@ -1,0 +1,1790 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A/B test analysis — correct by default, informative by design">
+      
+      
+      
+        <link rel="canonical" href="https://Naareman.github.io/splita/cookbook/mobile/">
+      
+      
+        <link rel="prev" href="../subscription/">
+      
+      
+        <link rel="next" href="../../api/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+    
+    
+      
+        <title>Mobile App - splita</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#mobile-app-ab-test" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="splita" class="md-header__button md-logo" aria-label="splita" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            splita
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Mobile App
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Naareman/splita" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Naareman/splita
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/experiment/" class="md-tabs__link">
+          
+  
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../ecommerce/" class="md-tabs__link">
+          
+  
+  
+  Cookbook
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../comparison/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Comparison
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../benchmarks/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Benchmarks
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../references/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  References
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="splita" class="md-nav__button md-logo" aria-label="splita" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    splita
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Naareman/splita" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Naareman/splita
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/experiment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running an A/B Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/planning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Planning (Sample Size)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/data-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Quality (SRM)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/variance-reduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Variance Reduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/sequential/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sequential Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/bayesian/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bayesian Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/bandits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bandits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/causal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Causal Inference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cookbook
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Cookbook
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ecommerce/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    E-commerce
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../marketplace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Marketplace
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../subscription/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Subscription
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mobile App
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mobile App
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#load-the-dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Load the dataset
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-challenge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The challenge
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-check-data-quality" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Check data quality
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-handle-outliers-and-reduce-variance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Handle outliers and reduce variance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-analyze-primary-metric-session-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Analyze primary metric (session minutes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-analyze-session-count" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Analyze session count
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-analyze-in-app-purchases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Analyze in-app purchases
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-multiple-testing-correction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Multiple testing correction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-mixed-effects-model-for-tenure-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Mixed-effects model for tenure groups
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-8-heterogeneous-treatment-effects-by-tenure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Heterogeneous treatment effects by tenure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-9-novelty-effect-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 9: Novelty effect detection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-10-explain-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 10: Explain results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-takeaways-for-mobile-app-experiments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key takeaways for mobile app experiments
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../comparison/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Comparison
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#load-the-dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Load the dataset
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-challenge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The challenge
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-check-data-quality" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Check data quality
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-handle-outliers-and-reduce-variance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Handle outliers and reduce variance
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-analyze-primary-metric-session-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Analyze primary metric (session minutes)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-analyze-session-count" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Analyze session count
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-analyze-in-app-purchases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Analyze in-app purchases
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-multiple-testing-correction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Multiple testing correction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-mixed-effects-model-for-tenure-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Mixed-effects model for tenure groups
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-8-heterogeneous-treatment-effects-by-tenure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Heterogeneous treatment effects by tenure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-9-novelty-effect-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 9: Novelty effect detection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-10-explain-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 10: Explain results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-takeaways-for-mobile-app-experiments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key takeaways for mobile app experiments
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="mobile-app-ab-test">Mobile App A/B Test<a class="headerlink" href="#mobile-app-ab-test" title="Permanent link">&para;</a></h1>
+<p>A mobile app experiment: testing a new recommendation engine on engagement and purchases.</p>
+<h2 id="load-the-dataset">Load the dataset<a class="headerlink" href="#load-the-dataset" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splita.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_mobile_app</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="n">load_mobile_app</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;description&quot;</span><span class="p">])</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>Mobile app A/B test: new recommendation engine.
+4,000 users per group over a 14-day window.
+Session count uses negative binomial (overdispersed).
+Session duration uses gamma distribution (right-skewed).
+Tenure affects baseline engagement (log-scaled).
+Expected effects: +8% sessions, +5% duration, +17% purchases.
+</code></pre></div>
+<p>The dataset contains:</p>
+<ul>
+<li><code>control</code> / <code>treatment</code>: total session minutes per user (14-day window)</li>
+<li><code>control_sessions</code> / <code>treatment_sessions</code>: session count per user</li>
+<li><code>control_purchases</code> / <code>treatment_purchases</code>: in-app purchase count per user</li>
+<li><code>pre_control</code> / <code>pre_treatment</code>: sessions in 7 days before experiment</li>
+<li><code>user_tenure_days</code>: days since install</li>
+</ul>
+<h2 id="the-challenge">The challenge<a class="headerlink" href="#the-challenge" title="Permanent link">&para;</a></h2>
+<p>Mobile app experiments present several challenges:</p>
+<ol>
+<li><strong>Multiple correlated metrics</strong> -- sessions, duration, purchases are all related.</li>
+<li><strong>Overdispersed count data</strong> -- session counts are negative binomial, not normal.</li>
+<li><strong>Tenure effects</strong> -- new users behave very differently from long-term users.</li>
+<li><strong>Right-skewed durations</strong> -- session time is gamma-distributed.</li>
+</ol>
+<h2 id="step-1-check-data-quality">Step 1: Check data quality<a class="headerlink" href="#step-1-check-data-quality" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splita</span><span class="w"> </span><span class="kn">import</span> <span class="n">SRMCheck</span>
+
+<span class="n">ctrl</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;control&quot;</span><span class="p">]</span>
+<span class="n">trt</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;treatment&quot;</span><span class="p">]</span>
+
+<span class="n">srm</span> <span class="o">=</span> <span class="n">SRMCheck</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">ctrl</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">trt</span><span class="p">)])</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">srm</span><span class="o">.</span><span class="n">passed</span><span class="p">,</span> <span class="n">srm</span><span class="o">.</span><span class="n">message</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SRM: passed (p=</span><span class="si">{</span><span class="n">srm</span><span class="o">.</span><span class="n">pvalue</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-2-handle-outliers-and-reduce-variance">Step 2: Handle outliers and reduce variance<a class="headerlink" href="#step-2-handle-outliers-and-reduce-variance" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splita.variance</span><span class="w"> </span><span class="kn">import</span> <span class="n">OutlierHandler</span><span class="p">,</span> <span class="n">CUPED</span>
+
+<span class="c1"># Outlier handling (session minutes can have extreme values)</span>
+<span class="n">handler</span> <span class="o">=</span> <span class="n">OutlierHandler</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;winsorize&#39;</span><span class="p">)</span>
+<span class="n">ctrl_clean</span><span class="p">,</span> <span class="n">trt_clean</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">ctrl</span><span class="p">,</span> <span class="n">trt</span><span class="p">)</span>
+
+<span class="c1"># CUPED with pre-experiment sessions</span>
+<span class="n">cuped</span> <span class="o">=</span> <span class="n">CUPED</span><span class="p">()</span>
+<span class="n">ctrl_adj</span><span class="p">,</span> <span class="n">trt_adj</span> <span class="o">=</span> <span class="n">cuped</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span>
+    <span class="n">ctrl_clean</span><span class="p">,</span> <span class="n">trt_clean</span><span class="p">,</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;pre_control&quot;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;pre_treatment&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Variance reduction: </span><span class="si">{</span><span class="n">cuped</span><span class="o">.</span><span class="n">variance_reduction_</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-3-analyze-primary-metric-session-minutes">Step 3: Analyze primary metric (session minutes)<a class="headerlink" href="#step-3-analyze-primary-metric-session-minutes" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splita</span><span class="w"> </span><span class="kn">import</span> <span class="n">Experiment</span>
+
+<span class="n">result_duration</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">ctrl_adj</span><span class="p">,</span> <span class="n">trt_adj</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Session minutes lift: </span><span class="si">{</span><span class="n">result_duration</span><span class="o">.</span><span class="n">relative_lift</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Significant: </span><span class="si">{</span><span class="n">result_duration</span><span class="o">.</span><span class="n">significant</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-4-analyze-session-count">Step 4: Analyze session count<a class="headerlink" href="#step-4-analyze-session-count" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="n">result_sessions</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;control_sessions&quot;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;treatment_sessions&quot;</span><span class="p">]</span>
+<span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Session count lift: </span><span class="si">{</span><span class="n">result_sessions</span><span class="o">.</span><span class="n">relative_lift</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Significant: </span><span class="si">{</span><span class="n">result_sessions</span><span class="o">.</span><span class="n">significant</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-5-analyze-in-app-purchases">Step 5: Analyze in-app purchases<a class="headerlink" href="#step-5-analyze-in-app-purchases" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="n">result_purchases</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">[</span><span class="s2">&quot;control_purchases&quot;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;treatment_purchases&quot;</span><span class="p">]</span>
+<span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Purchase lift: </span><span class="si">{</span><span class="n">result_purchases</span><span class="o">.</span><span class="n">relative_lift</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Significant: </span><span class="si">{</span><span class="n">result_purchases</span><span class="o">.</span><span class="n">significant</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-6-multiple-testing-correction">Step 6: Multiple testing correction<a class="headerlink" href="#step-6-multiple-testing-correction" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splita</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultipleCorrection</span>
+
+<span class="n">corrected</span> <span class="o">=</span> <span class="n">MultipleCorrection</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">result_duration</span><span class="o">.</span><span class="n">pvalue</span><span class="p">,</span> <span class="n">result_sessions</span><span class="o">.</span><span class="n">pvalue</span><span class="p">,</span> <span class="n">result_purchases</span><span class="o">.</span><span class="n">pvalue</span><span class="p">],</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;session_minutes&quot;</span><span class="p">,</span> <span class="s2">&quot;session_count&quot;</span><span class="p">,</span> <span class="s2">&quot;purchases&quot;</span><span class="p">],</span>
+<span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Rejected: </span><span class="si">{</span><span class="n">corrected</span><span class="o">.</span><span class="n">rejected</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Adjusted p-values: </span><span class="si">{</span><span class="n">corrected</span><span class="o">.</span><span class="n">adjusted_pvalues</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-7-mixed-effects-model-for-tenure-groups">Step 7: Mixed-effects model for tenure groups<a class="headerlink" href="#step-7-mixed-effects-model-for-tenure-groups" title="Permanent link">&para;</a></h2>
+<p>Account for the fact that user tenure strongly predicts engagement.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splita</span><span class="w"> </span><span class="kn">import</span> <span class="n">MixedEffectsExperiment</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Create tenure groups</span>
+<span class="n">tenure</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;user_tenure_days&quot;</span><span class="p">]</span>
+<span class="n">tenure_groups_ctrl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">tenure</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">ctrl</span><span class="p">)],</span> <span class="n">bins</span><span class="o">=</span><span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">180</span><span class="p">])</span>
+<span class="n">tenure_groups_trt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">tenure</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">trt</span><span class="p">)],</span> <span class="n">bins</span><span class="o">=</span><span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">180</span><span class="p">])</span>
+
+<span class="n">me</span> <span class="o">=</span> <span class="n">MixedEffectsExperiment</span><span class="p">()</span>
+<span class="n">result_me</span> <span class="o">=</span> <span class="n">me</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">ctrl</span><span class="p">,</span> <span class="n">trt</span><span class="p">,</span> <span class="n">tenure_groups_ctrl</span><span class="p">,</span> <span class="n">tenure_groups_trt</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mixed-effects ATE: </span><span class="si">{</span><span class="n">result_me</span><span class="o">.</span><span class="n">ate</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CI: </span><span class="si">{</span><span class="n">result_me</span><span class="o">.</span><span class="n">ci</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-8-heterogeneous-treatment-effects-by-tenure">Step 8: Heterogeneous treatment effects by tenure<a class="headerlink" href="#step-8-heterogeneous-treatment-effects-by-tenure" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splita</span><span class="w"> </span><span class="kn">import</span> <span class="n">InteractionTest</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">tenure</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;user_tenure_days&quot;</span><span class="p">]</span>
+
+<span class="c1"># Analyze new vs. established users</span>
+<span class="n">new_mask</span> <span class="o">=</span> <span class="n">tenure</span> <span class="o">&lt;</span> <span class="mi">30</span>
+<span class="n">est_mask</span> <span class="o">=</span> <span class="n">tenure</span> <span class="o">&gt;=</span> <span class="mi">30</span>
+
+<span class="c1"># New users</span>
+<span class="n">ctrl_new</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;control&quot;</span><span class="p">][:</span><span class="nb">len</span><span class="p">(</span><span class="n">ctrl</span><span class="p">)][</span><span class="n">new_mask</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">ctrl</span><span class="p">)]]</span>
+<span class="n">trt_new</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;treatment&quot;</span><span class="p">][:</span><span class="nb">len</span><span class="p">(</span><span class="n">trt</span><span class="p">)][</span><span class="n">new_mask</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">trt</span><span class="p">)]]</span>
+<span class="n">result_new</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">ctrl_new</span><span class="p">,</span> <span class="n">trt_new</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;New users: lift=</span><span class="si">{</span><span class="n">result_new</span><span class="o">.</span><span class="n">relative_lift</span><span class="si">}</span><span class="s2">, p=</span><span class="si">{</span><span class="n">result_new</span><span class="o">.</span><span class="n">pvalue</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Established users</span>
+<span class="n">ctrl_est</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;control&quot;</span><span class="p">][:</span><span class="nb">len</span><span class="p">(</span><span class="n">ctrl</span><span class="p">)][</span><span class="n">est_mask</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">ctrl</span><span class="p">)]]</span>
+<span class="n">trt_est</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;treatment&quot;</span><span class="p">][:</span><span class="nb">len</span><span class="p">(</span><span class="n">trt</span><span class="p">)][</span><span class="n">est_mask</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">trt</span><span class="p">)]]</span>
+<span class="n">result_est</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">ctrl_est</span><span class="p">,</span> <span class="n">trt_est</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Established users: lift=</span><span class="si">{</span><span class="n">result_est</span><span class="o">.</span><span class="n">relative_lift</span><span class="si">}</span><span class="s2">, p=</span><span class="si">{</span><span class="n">result_est</span><span class="o">.</span><span class="n">pvalue</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-9-novelty-effect-detection">Step 9: Novelty effect detection<a class="headerlink" href="#step-9-novelty-effect-detection" title="Permanent link">&para;</a></h2>
+<p>Mobile experiments are especially prone to novelty effects (users engage more initially because the feature is new, then usage drops).</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splita</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoveltyCurve</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Simulate daily effect sizes over the 14-day window</span>
+<span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">daily_effects</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">day</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">14</span><span class="p">):</span>
+    <span class="c1"># Rough daily slice</span>
+    <span class="n">n_per_day</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ctrl</span><span class="p">)</span> <span class="o">//</span> <span class="mi">14</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">day</span> <span class="o">*</span> <span class="n">n_per_day</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">n_per_day</span>
+    <span class="n">day_result</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">ctrl</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">],</span> <span class="n">trt</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">])</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+    <span class="n">daily_effects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">day_result</span><span class="o">.</span><span class="n">lift</span><span class="p">)</span>
+
+<span class="n">nc</span> <span class="o">=</span> <span class="n">NoveltyCurve</span><span class="p">()</span>
+<span class="c1"># Check for declining treatment effect over time</span>
+</code></pre></div>
+<h2 id="step-10-explain-results">Step 10: Explain results<a class="headerlink" href="#step-10-explain-results" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">splita</span><span class="w"> </span><span class="kn">import</span> <span class="n">explain</span><span class="p">,</span> <span class="n">report</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">explain</span><span class="p">(</span><span class="n">result_duration</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;---&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">(</span><span class="n">result_duration</span><span class="p">))</span>
+</code></pre></div>
+<h2 id="key-takeaways-for-mobile-app-experiments">Key takeaways for mobile app experiments<a class="headerlink" href="#key-takeaways-for-mobile-app-experiments" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Handle outliers first</strong> -- session durations have extreme right tails.</li>
+<li><strong>CUPED with pre-experiment sessions</strong> -- this is the strongest predictor for mobile engagement.</li>
+<li><strong>Correct for multiple metrics</strong> -- session count, duration, and purchases are correlated.</li>
+<li><strong>Check for novelty effects</strong> -- new features get artificially inflated engagement.</li>
+<li><strong>Segment by tenure</strong> -- treatment effects often differ dramatically for new vs. established users.</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "content.code.copy", "search.suggest"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

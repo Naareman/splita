@@ -786,16 +786,17 @@ class TestPostStratEdgeCases:
 
 # ─── viz/plots.py ───────────────────────────────────────────────────────
 
-from splita.viz.plots import power_curve
-
 
 class TestPlotsEdgeCases:
     """Cover uncovered branches in plots.py."""
 
     def test_power_curve_se_zero(self) -> None:
         """Line 184: se=0 -> powers.append(1.0)."""
+        pytest.importorskip("matplotlib")
         import matplotlib
         matplotlib.use("Agg")
+
+        from splita.viz.plots import power_curve
 
         fig = power_curve(
             baseline=0.0,

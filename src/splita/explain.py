@@ -862,15 +862,21 @@ def _explain_generic(result: Any, lang: str = "en") -> str:
 
     # ── Next step recommendation ──────────────────────────────────────
     if significant is True:
-        lines.append("Next step: review the effect size and confidence interval before making a ship decision.")
+        lines.append(
+            "Next step: review the effect size and confidence interval before making a ship decision."
+        )
     elif significant is False:
-        lines.append("Next step: consider increasing sample size or running longer to detect smaller effects.")
+        lines.append(
+            "Next step: consider increasing sample size or running longer to detect smaller effects."
+        )
     elif should_stop is True:
         lines.append("Next step: make your final decision based on the accumulated evidence.")
     elif should_stop is False:
         lines.append("Next step: wait for more data before drawing conclusions.")
     else:
-        lines.append("Next step: review the result fields above and consider whether further analysis is needed.")
+        lines.append(
+            "Next step: review the result fields above and consider whether further analysis is needed."
+        )
 
     return " ".join(lines)
 

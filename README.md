@@ -397,7 +397,7 @@ print(corrected)
 
 **Type legend**: **Original** = algorithm from paper equations. **Wrapper** = delegates to scipy/sklearn. **Hybrid** = original algorithm + scipy/sklearn numerical primitives.
 
-For full citations, see [References](docs/references.md).
+For full citations, see [References](https://naareman.github.io/splita/references/).
 
 All result types are frozen dataclasses with `.to_dict()` and pretty `__repr__`.
 

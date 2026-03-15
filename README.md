@@ -2,6 +2,7 @@
 
 A/B test analysis that is correct by default, informative by design, and composable by construction.
 
+[![PyPI](https://img.shields.io/pypi/v/splita)](https://pypi.org/project/splita/)
 [![Tests](https://img.shields.io/github/actions/workflow/status/Naareman/splita/ci.yml?label=tests)](https://github.com/Naareman/splita/actions)
 [![Coverage: 100%](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/Naareman/splita)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://pypi.org/project/splita/)

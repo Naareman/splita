@@ -11,11 +11,16 @@ class SplitaError(Exception):
     """Base exception for splita."""
 
 
-class ValidationError(SplitaError):
+class ValidationError(SplitaError, ValueError):
     """Raised when input validation fails.
 
-    Attributes:
-        parameter: The name of the parameter that failed validation, if known.
+    Also inherits from ``ValueError`` for backward compatibility — existing
+    ``except ValueError`` handlers will still catch these.
+
+    Attributes
+    ----------
+    parameter : str or None
+        The name of the parameter that failed validation, if known.
     """
 
     def __init__(self, message: str, parameter: str | None = None) -> None:
@@ -23,9 +28,16 @@ class ValidationError(SplitaError):
         super().__init__(message)
 
 
-class NotFittedError(SplitaError):
-    """Raised when transform is called before fit."""
+class NotFittedError(SplitaError, RuntimeError):
+    """Raised when transform is called before fit.
+
+    Also inherits from ``RuntimeError`` for backward compatibility — existing
+    ``except RuntimeError`` handlers will still catch these.
+    """
 
 
-class InsufficientDataError(SplitaError):
-    """Raised when there isn't enough data for analysis."""
+class InsufficientDataError(SplitaError, ValueError):
+    """Raised when there isn't enough data for analysis.
+
+    Also inherits from ``ValueError`` for backward compatibility.
+    """

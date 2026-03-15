@@ -1,4 +1,9 @@
-"""Shared test fixtures for splita."""
+"""Shared test fixtures for splita.
+
+Note: Older tests create their own RNG and data inline. New tests should
+prefer these fixtures for consistency. Existing tests are not refactored
+to avoid unnecessary churn.
+"""
 
 from __future__ import annotations
 

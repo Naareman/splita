@@ -5,6 +5,8 @@ import warnings
 
 import numpy as np
 
+from splita.errors import ValidationError
+
 # ─── Lazy pandas detection (cached) ─────────────────────────────────
 
 _pandas_available: bool | None = None
@@ -89,15 +91,16 @@ def check_in_range(
 
     Raises
     ------
-    ValueError
-        If *value* is outside the specified range.
+    ValidationError
+        If *value* is outside the specified range (also a ``ValueError``).
     """
     if math.isnan(value) or math.isinf(value):
-        raise ValueError(
+        raise ValidationError(
             format_error(
                 f"`{name}` must be a finite number, got {value}.",
                 hint="check for missing or infinite values in your input.",
-            )
+            ),
+            parameter=name,
         )
 
     left = "[" if low_inclusive else "("
@@ -108,20 +111,22 @@ def check_in_range(
     too_high = value > high if high_inclusive else value >= high
 
     if too_low:
-        raise ValueError(
+        raise ValidationError(
             format_error(
                 f"`{name}` must be in {range_str}, got {value}.",
                 f"value is below the minimum of {low}.",
                 hint,
-            )
+            ),
+            parameter=name,
         )
     if too_high:
-        raise ValueError(
+        raise ValidationError(
             format_error(
                 f"`{name}` must be in {range_str}, got {value}.",
                 f"value is above the maximum of {high}.",
                 hint,
-            )
+            ),
+            parameter=name,
         )
 
 
@@ -147,34 +152,37 @@ def check_positive(
 
     Raises
     ------
-    ValueError
-        If *value* is not positive (or not non-negative when *allow_zero* is True).
+    ValidationError
+        If *value* is not positive (also a ``ValueError``).
     """
     if math.isnan(value) or math.isinf(value):
-        raise ValueError(
+        raise ValidationError(
             format_error(
                 f"`{name}` must be a finite number, got {value}.",
                 hint="check for missing or infinite values in your input.",
-            )
+            ),
+            parameter=name,
         )
 
     if allow_zero:
         if value < 0:
-            raise ValueError(
+            raise ValidationError(
                 format_error(
                     f"`{name}` must be >= 0, got {value}.",
                     "value is negative.",
                     hint,
-                )
+                ),
+                parameter=name,
             )
     else:
         if value <= 0:
-            raise ValueError(
+            raise ValidationError(
                 format_error(
                     f"`{name}` must be > 0, got {value}.",
                     "value must be strictly positive.",
                     hint,
-                )
+                ),
+                parameter=name,
             )
 
 
@@ -202,8 +210,9 @@ def check_is_integer(
     ------
     TypeError
         If *value* is not numeric.
-    ValueError
-        If *value* is not integer-valued or is below *min_value*.
+    ValidationError
+        If *value* is not integer-valued or is below *min_value*
+        (also a ``ValueError``).
     """
     if not isinstance(value, (int, float)):
         raise TypeError(
@@ -214,27 +223,30 @@ def check_is_integer(
 
     # Check for NaN/inf before int check
     if isinstance(value, float) and (np.isnan(value) or np.isinf(value)):
-        raise ValueError(
+        raise ValidationError(
             format_error(
                 f"`{name}` must be a finite integer, got {value}.",
-            )
+            ),
+            parameter=name,
         )
 
     if isinstance(value, float) and value != int(value):
-        raise ValueError(
+        raise ValidationError(
             format_error(
                 f"`{name}` must be an integer, got {value}.",
                 f"{value} is not a whole number.",
                 hint,
-            )
+            ),
+            parameter=name,
         )
 
     if min_value is not None and value < min_value:
-        raise ValueError(
+        raise ValidationError(
             format_error(
                 f"`{name}` must be >= {min_value}, got {int(value)}.",
                 hint=hint,
-            )
+            ),
+            parameter=name,
         )
 
 
@@ -274,8 +286,9 @@ def check_array_like(
     ------
     TypeError
         If *value* cannot be converted to an array.
-    ValueError
-        If the resulting array is shorter than *min_length*.
+    ValidationError
+        If the resulting array is shorter than *min_length*
+        (also a ``ValueError``).
     """
     # Fast path: skip pandas check for common types
     if not isinstance(value, (list, tuple, np.ndarray)):
@@ -305,11 +318,12 @@ def check_array_like(
         ) from exc
 
     if arr.ndim > 1:
-        raise ValueError(
+        raise ValidationError(
             format_error(
                 f"`{name}` must be a 1-D array, got {arr.ndim}-D array with shape {arr.shape}.",
                 hint="pass a 1-D list, numpy array, or pandas Series.",
-            )
+            ),
+            parameter=name,
         )
 
     if not allow_nan:
@@ -339,11 +353,12 @@ def check_array_like(
             arr = arr[~inf_mask]
 
     if min_length is not None and len(arr) < min_length:
-        raise ValueError(
+        raise ValidationError(
             format_error(
                 f"`{name}` must have at least {min_length} elements, "
                 f"got {len(arr)} (after NaN removal).",
-            )
+            ),
+            parameter=name,
         )
 
     return arr
@@ -374,8 +389,8 @@ def check_one_of(
 
     Raises
     ------
-    ValueError
-        If *value* is not in *options*.
+    ValidationError
+        If *value* is not in *options* (also a ``ValueError``).
     """
     if value in options:
         return
@@ -383,11 +398,12 @@ def check_one_of(
     if hint is None:
         hint = _suggest_match(value, options)
 
-    raise ValueError(
+    raise ValidationError(
         format_error(
             f"`{name}` must be one of {tuple(options)}, got {value!r}.",
             hint=hint,
-        )
+        ),
+        parameter=name,
     )
 
 
@@ -426,11 +442,11 @@ def check_same_length(
         If the arrays differ in length.
     """
     if len(arr1) != len(arr2):
-        raise ValueError(
+        raise ValidationError(
             format_error(
                 f"`{name1}` and `{name2}` must have the same length.",
                 f"{name1} has {len(arr1)} elements, {name2} has {len(arr2)} elements.",
-            )
+            ),
         )
 
 
@@ -450,11 +466,12 @@ def check_not_empty(value: object, name: str) -> None:
         If *value* has length 0.
     """
     if len(value) == 0:  # type: ignore[arg-type]
-        raise ValueError(
+        raise ValidationError(
             format_error(
                 f"`{name}` can't be empty.",
                 "received a sequence with 0 elements.",
-            )
+            ),
+            parameter=name,
         )
 
 
@@ -482,10 +499,11 @@ def check_probabilities_sum_to_one(
     """
     total = float(np.sum(values))  # type: ignore[arg-type]
     if abs(total - 1.0) > tol:
-        raise ValueError(
+        raise ValidationError(
             format_error(
                 f"`{name}` must sum to 1.0, got {total}.",
                 f"the sum deviates from 1.0 by {abs(total - 1.0):.2e}.",
                 "ensure all probabilities are normalized.",
-            )
+            ),
+            parameter=name,
         )

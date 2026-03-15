@@ -33,13 +33,13 @@ def _make_continuous(mu_ctrl, mu_trt, sigma=1.0, n=5000, seed=42):
 class TestConversionBasic:
     """Conversion metric basic tests."""
 
-    def test_significant_difference(self):
+    def test_large_effect_gives_high_prob_b_beats_a(self):
         """Test 1: significant difference -> prob_b_beats_a > 0.95."""
         ctrl, trt = _make_conversion(0.10, 0.14)
         result = BayesianExperiment(ctrl, trt, random_state=0).run()
         assert result.prob_b_beats_a > 0.95
 
-    def test_no_difference(self):
+    def test_equal_rates_give_prob_near_fifty_percent(self):
         """Test 2: no difference -> prob_b_beats_a ~ 0.50."""
         ctrl, trt = _make_conversion(0.10, 0.10)
         result = BayesianExperiment(ctrl, trt, random_state=0).run()
@@ -49,13 +49,13 @@ class TestConversionBasic:
 class TestContinuousBasic:
     """Continuous metric basic tests."""
 
-    def test_significant_difference(self):
+    def test_large_mean_diff_gives_high_prob_b_beats_a(self):
         """Test 3: significant -> prob_b_beats_a > 0.95."""
         ctrl, trt = _make_continuous(10.0, 10.5)
         result = BayesianExperiment(ctrl, trt, random_state=0).run()
         assert result.prob_b_beats_a > 0.95
 
-    def test_no_difference(self):
+    def test_equal_means_give_ci_containing_zero(self):
         """Test 4: no difference -> prob_b_beats_a not extreme.
 
         With equal population means the realized sample difference can

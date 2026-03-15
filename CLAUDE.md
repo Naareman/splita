@@ -32,6 +32,13 @@ mypy src/splita/
 
 ## Conventions
 
+### Docstring Style: NumPy (not Google)
+splita uses NumPy-style docstrings (numpydoc) because this is the standard
+for scientific Python libraries (numpy, scipy, pandas, sklearn). The
+python-package-development skill recommends Google style, but NumPy style
+is more appropriate for a statistics library with complex parameter
+descriptions.
+
 ### Code Style
 - Python 3.10+ type hints: `X | Y` not `Optional[X]` or `Union[X, Y]`
 - NumPy docstrings (numpydoc format) on all public APIs

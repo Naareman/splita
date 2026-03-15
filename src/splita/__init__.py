@@ -175,6 +175,7 @@ from splita.errors import (
     ValidationError,
 )
 from splita.explain import explain
+from splita.report import report
 from splita.governance import (
     ConflictDetector,
     ConflictResult,
@@ -384,6 +385,7 @@ __all__ = [
     "YEASTSequentialTest",
     "YEASTState",
     "explain",
+    "report",
     "mSPRT",
     "mSPRTResult",
     "mSPRTState",

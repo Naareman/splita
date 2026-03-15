@@ -266,25 +266,38 @@ print(corrected)
 
 ## API Reference
 
-### Core Analysis
+88 classes across 8 modules. Every class returns frozen dataclasses with `.to_dict()`.
+
+### Core Analysis (24 classes)
 
 | Class | Type | Description | Reference |
 |---|---|---|---|
 | `Experiment` | Hybrid | Frequentist A/B test (z-test, t-test, Mann-Whitney, chi-square, delta method, bootstrap) | Welch 1947, Deng et al. 2018 |
 | `BayesianExperiment` | Original | Bayesian A/B test with P(B>A), expected loss, ROPE | Berry 2006 |
+| `ObjectiveBayesianExperiment` | Original | Empirical Bayes A/B test with prior learned from historical experiments | Microsoft/Bing 2019 |
 | `QuantileExperiment` | Original | Bootstrap inference at arbitrary quantiles (median, p90, p99) | Efron 1979 |
 | `SampleSize` | Hybrid | Power analysis for proportions, means, and ratios | Farrington & Manning 1990, Cohen 1988 |
 | `SRMCheck` | Wrapper | Sample Ratio Mismatch detector (chi-square goodness-of-fit) | Fabijan et al. 2019 |
 | `MultipleCorrection` | Original | p-value correction (BH, Bonferroni, Holm, BY) | Benjamini & Hochberg 1995 |
+| `PermutationTest` | Original | Exact distribution-free hypothesis testing via label permutation | — |
 | `PowerSimulation` | Wrapper | Monte Carlo power for complex designs | — |
 | `HTEEstimator` | Wrapper | Heterogeneous treatment effects (T-learner, S-learner) | Kunzel et al. 2019 |
+| `CausalForest` | Hybrid | Honest T-learner with jackknife CIs | Athey & Wager 2018 |
 | `TriggeredExperiment` | Wrapper | Intent-to-treat vs per-protocol analysis | Hernan & Robins 2020 |
+| `DilutionAnalysis` | Hybrid | Dilute triggered effect back to full ITT population | Deng et al. 2015 |
 | `InteractionTest` | Hybrid | Segment-level treatment effect heterogeneity (Cochran's Q) | Cochran 1954 |
 | `MultiObjectiveExperiment` | Wrapper | Pareto analysis across multiple metrics | — |
 | `StratifiedExperiment` | Original | Neyman-style stratified inference | Neyman 1923, Miratrix et al. 2013 |
-| `CausalForest` | Hybrid | Honest T-learner with jackknife CIs | Athey & Wager 2018 |
+| `FunnelExperiment` | Hybrid | Per-step conversion funnel analysis | Kohavi et al. 2020 |
+| `InterleavingExperiment` | Hybrid | Team Draft / Balanced interleaving for ranking comparison | Chapelle et al. 2012 |
+| `MetricDecomposition` | Wrapper | Decompose metric into additive components and test each | Deng et al. KDD 2024 |
+| `MixedEffectsExperiment` | Original | Random-intercept model for repeated-measures experiments | — |
+| `OECBuilder` | Hybrid | Combine multiple metrics into an Overall Evaluation Criterion | Deng et al. WSDM 2013 |
+| `OptimalProxyMetrics` | Original | Learn optimal weighted proxy for a north star metric | Jeunen 2024 |
+| `RiskAwareDecision` | Hybrid | Multi-metric constrained decision framework | Spotify 2024 |
+| `SurvivalExperiment` | Hybrid | Kaplan-Meier survival estimation and log-rank test | Kaplan & Meier 1958, Cox 1972 |
 
-### Variance Reduction
+### Variance Reduction (14 classes)
 
 | Class | Type | Description | Reference |
 |---|---|---|---|
@@ -295,8 +308,15 @@ print(corrected)
 | `RegressionAdjustment` | Original | Lin's OLS with HC2 robust SEs | Lin 2013 |
 | `AdaptiveWinsorizer` | Original | Grid-search optimal capping thresholds | Gupta et al. 2019 (Microsoft ExP) |
 | `DoubleML` | Hybrid | Double/debiased ML for treatment effects | Chernozhukov et al. 2018 |
+| `ClusterBootstrap` | Original | Cluster-level bootstrap for ratio metrics with within-cluster correlation | Cameron et al. 2008 |
+| `InExperimentVR` | Original | Variance reduction using in-experiment control-group covariates | Deng et al. KDD 2023 |
+| `NonstationaryAdjustment` | Hybrid | Bias-corrected ATE via time-series decomposition | Chen et al. 2024 |
+| `PostStratification` | Original | Post-experiment stratification with inverse-variance weighting | Miratrix et al. 2013 |
+| `PredictionPoweredInference` | Original | Augment small labeled data with ML predictions for valid inference | Angelopoulos et al. 2023 |
+| `RobustMeanEstimator` | Original | Huber M-estimator, Median of Means, Catoni estimator | Huber 1964 |
+| `TrimmedMeanEstimator` | Original | Robust ATE via symmetric tail trimming | — |
 
-### Sequential Testing
+### Sequential Testing (7 classes)
 
 | Class | Type | Description | Reference |
 |---|---|---|---|
@@ -305,8 +325,10 @@ print(corrected)
 | `EValue` | Original | E-value sequential testing | Grunwald et al. 2020 |
 | `ConfidenceSequence` | Original | Time-uniform confidence sequences | Howard et al. 2021 |
 | `EProcess` | Original | Safe testing with e-processes (GRAPA, universal) | Grunwald et al. 2020, Ramdas et al. 2023 |
+| `SampleSizeReestimation` | Original | Mid-experiment sample size adjustment via conditional power | Mehta & Pocock 2011 |
+| `YEASTSequentialTest` | Original | Tuning-free sequential test via Levy's inequality | Kurennoy (Meta) 2024 |
 
-### Bandits
+### Bandits (5 classes)
 
 | Class | Type | Description | Reference |
 |---|---|---|---|
@@ -314,8 +336,9 @@ print(corrected)
 | `LinTS` | Original | Linear Thompson Sampling contextual bandit | Agrawal & Goyal 2013 |
 | `LinUCB` | Original | Upper confidence bound contextual bandit | Li et al. 2010 |
 | `BayesianStopping` | Original | Stopping rule evaluator for bandits | — |
+| `OfflineEvaluator` | Hybrid | Offline policy evaluation via IPS and doubly robust estimator | Li et al. 2011 |
 
-### Causal Inference
+### Causal Inference (19 classes)
 
 | Class | Type | Description | Reference |
 |---|---|---|---|
@@ -326,8 +349,20 @@ print(corrected)
 | `SurrogateEstimator` | Wrapper | Short-term to long-term effect prediction | Athey et al. 2019 |
 | `SurrogateIndex` | Hybrid | Multi-surrogate index with cross-fitting | Athey et al. 2019 |
 | `InterferenceExperiment` | Original | Network interference with Horvitz-Thompson estimator | Basse & Feller 2018 |
+| `BipartiteExperiment` | Original | Cross-side exposure mapping for two-sided experiments | Harshaw et al. 2023 |
+| `ContinuousTreatmentEffect` | Original | Dose-response curve via kernel-weighted local linear regression | Hirano & Imbens 2004 |
+| `DoublyRobustEstimator` | Hybrid | Augmented IPW (AIPW) with cross-fitting | Robins 1994, Bang & Robins 2005 |
+| `DynamicCausalEffect` | Hybrid | Time-varying treatment effects with doubly robust estimation | Shi, Deng et al. JASA 2022 |
+| `EffectTransport` | Original | Transport treatment effects across populations via inverse odds weighting | Rosenman et al. 2025 |
+| `GeoExperiment` | Hybrid | Bayesian synthetic control for geo-level marketing experiments | — |
+| `InstrumentalVariables` | Original | Two-Stage Least Squares (2SLS) for LATE estimation | — |
+| `MarketplaceExperiment` | Hybrid | Buyer/seller randomization bias analysis for two-sided marketplaces | Bajari et al. 2023 |
+| `MediationAnalysis` | Original | Baron-Kenny mediation with Sobel test for indirect effects (ACME) | Imai et al. 2010 |
+| `PropensityScoreMatching` | Original | Logistic propensity scores with nearest-neighbor matching | Rosenbaum & Rubin 1983 |
+| `RegressionDiscontinuity` | Original | Sharp RDD with local linear regression and IK bandwidth | Imbens & Kalyanaraman 2012 |
+| `TMLE` | Hybrid | Targeted Maximum Likelihood Estimation for ATE | van der Laan & Rubin 2006 |
 
-### Diagnostics
+### Diagnostics (10 classes)
 
 | Class | Type | Description | Reference |
 |---|---|---|---|
@@ -337,14 +372,29 @@ print(corrected)
 | `MetricSensitivity` | Hybrid | Pre-experiment power estimation from historical data | — |
 | `VarianceEstimator` | Original | Distributional analysis with A/B-specific recommendations | — |
 | `NonStationaryDetector` | Original | CUSUM change-point detection on effect series | Page 1954 |
+| `CarryoverDetector` | Wrapper | Detect treatment effect leakage into control via pre/post comparison | — |
+| `FlickerDetector` | Original | Detect users who switched variants mid-experiment | — |
+| `PHackingDetector` | Hybrid | p-curve analysis for selective reporting detection | Simonsohn et al. 2014 |
+| `RandomizationValidator` | Hybrid | Covariate balance check via SMD and chi-squared omnibus test | Austin 2009 |
 
-### Design and Governance
+### Design (6 classes)
 
 | Class | Type | Description | Reference |
 |---|---|---|---|
 | `PairwiseDesign` | Original | Mahalanobis distance matched-pair assignment | Greevy et al. 2004 |
-| `ExperimentRegistry` | Original | In-memory experiment tracking | — |
-| `ConflictDetector` | Original | Overlapping experiment detection | Kohavi et al. 2020 |
+| `AdaptiveEnrichment` | Original | Mid-experiment subgroup selection based on treatment response | Simon & Simon 2013 |
+| `BayesianExperimentOptimizer` | Hybrid | Surrogate-model-based experiment parameter optimization | Meta 2025 |
+| `BudgetSplitDesign` | Hybrid | Budget-split design to eliminate cannibalization bias | Liu et al. KDD 2021 |
+| `FractionalFactorialDesign` | Hybrid | Resolution III+ fractional factorial designs for factor screening | Box & Hunter 1961 |
+| `ResponseAdaptiveRandomization` | Original | Dynamic allocation probabilities favouring better-performing arms | — |
+
+### Governance (3 classes)
+
+| Class | Type | Description | Reference |
+|---|---|---|---|
+| `ExperimentRegistry` | Original | In-memory experiment tracking with date filtering | — |
+| `ConflictDetector` | Original | Overlapping experiment detection (traffic, metric, segment) | Kohavi et al. 2020 |
+| `GuardrailMonitor` | Wrapper | Safety metric monitoring with Bonferroni-corrected stopping rules | — |
 
 **Type legend**: **Original** = algorithm from paper equations. **Wrapper** = delegates to scipy/sklearn. **Hybrid** = original algorithm + scipy/sklearn numerical primitives.
 

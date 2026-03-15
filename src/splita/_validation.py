@@ -5,6 +5,24 @@ import warnings
 
 import numpy as np
 
+# ─── Lazy pandas detection (cached) ─────────────────────────────────
+
+_pandas_available: bool | None = None
+
+
+def _has_pandas() -> bool:
+    """Return True if pandas is installed, caching the result."""
+    global _pandas_available
+    if _pandas_available is None:
+        try:
+            import pandas  # noqa: F401
+
+            _pandas_available = True
+        except ImportError:
+            _pandas_available = False
+    return _pandas_available
+
+
 # ─── Internal helper ────────────────────────────────────────────────
 
 
@@ -259,22 +277,22 @@ def check_array_like(
     ValueError
         If the resulting array is shorter than *min_length*.
     """
-    # Handle pandas Series
-    try:
-        import pandas as pd
-
-        if isinstance(pd.Series, type) and isinstance(value, pd.Series):
-            value = value.to_numpy()
-    except ImportError:  # pragma: no cover
-        pass
-
+    # Fast path: skip pandas check for common types
     if not isinstance(value, (list, tuple, np.ndarray)):
-        raise TypeError(
-            format_error(
-                f"`{name}` must be array-like (list, tuple, or ndarray), "
-                f"got type {type(value).__name__}.",
+        # Handle pandas Series (lazy import, cached after first call)
+        if _has_pandas():
+            import pandas as pd
+
+            if isinstance(value, pd.Series):
+                value = value.to_numpy()
+
+        if not isinstance(value, (list, tuple, np.ndarray)):
+            raise TypeError(
+                format_error(
+                    f"`{name}` must be array-like (list, tuple, or ndarray), "
+                    f"got type {type(value).__name__}.",
+                )
             )
-        )
 
     try:
         arr = np.asarray(value, dtype=dtype)

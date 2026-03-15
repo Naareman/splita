@@ -271,7 +271,18 @@ class CUPED:
             ``(control_adjusted, treatment_adjusted)``.
         """
         self.fit(control, treatment, control_pre, treatment_pre)
-        return self.transform(control, treatment, control_pre, treatment_pre)
+        result = self.transform(control, treatment, control_pre, treatment_pre)
+
+        # Advisory: suggest alternatives if CUPED variance reduction is weak
+        from splita._advisory import advise_variance_reduction
+
+        advise_variance_reduction(
+            self.variance_reduction_,
+            method_used="CUPED",
+            has_pre_data=control_pre is not None,
+        )
+
+        return result
 
     # ── private helpers ─────────────────────────────────────────────
 

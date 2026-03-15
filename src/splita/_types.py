@@ -4873,6 +4873,8 @@ class AutoResult(_DictMixin):
         Description of each step taken in the analysis.
     recommendations : list[str]
         Actionable recommendations based on the results.
+    reasoning : list[str]
+        Step-by-step explanation of every decision made during analysis.
     """
 
     primary_result: ExperimentResult
@@ -4881,6 +4883,7 @@ class AutoResult(_DictMixin):
     corrected_pvalues: list[float] | None
     pipeline_steps: list[str]
     recommendations: list[str]
+    reasoning: list[str]
 
     def __repr__(self) -> str:
         w = 40
@@ -4900,6 +4903,64 @@ class AutoResult(_DictMixin):
             lines.append("  Pipeline:")
             for step in self.pipeline_steps:
                 lines.append(f"    {step}")
+        return "\n".join(lines)
+
+
+# ─── RecommendationResult ────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class RecommendationResult(_DictMixin):
+    """Result of :func:`~splita.recommend` — experiment design guidance.
+
+    Attributes
+    ----------
+    recommended_test : str
+        The statistical test to use and why.
+    recommended_variance : str or None
+        Recommended variance reduction strategy, or ``None``.
+    recommended_correction : str or None
+        Recommended multiple testing correction, or ``None``.
+    recommended_sequential : str or None
+        Recommended sequential testing method, or ``None``.
+    reasoning : list[str]
+        Step-by-step explanation of every recommendation.
+    code_example : str
+        Copy-pasteable Python code implementing the recommendation.
+    warnings : list[str]
+        Potential issues to watch for.
+    """
+
+    recommended_test: str
+    recommended_variance: str | None
+    recommended_correction: str | None
+    recommended_sequential: str | None
+    reasoning: list[str]
+    code_example: str
+    warnings: list[str]
+
+    def __repr__(self) -> str:
+        w = 50
+        lines = [
+            "RecommendationResult",
+            _line(w),
+            f"  {'test':<25}{self.recommended_test}",
+        ]
+        if self.recommended_variance:
+            lines.append(f"  {'variance_reduction':<25}{self.recommended_variance}")
+        if self.recommended_correction:
+            lines.append(f"  {'correction':<25}{self.recommended_correction}")
+        if self.recommended_sequential:
+            lines.append(f"  {'sequential':<25}{self.recommended_sequential}")
+        lines.append(_line(w))
+        if self.reasoning:
+            lines.append("  Reasoning:")
+            for step in self.reasoning:
+                lines.append(f"    - {step}")
+        if self.warnings:
+            lines.append("  Warnings:")
+            for warn in self.warnings:
+                lines.append(f"    ! {warn}")
         return "\n".join(lines)
 
 

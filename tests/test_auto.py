@@ -158,3 +158,74 @@ class TestAutoSerialization:
         result = auto(ctrl, trt)
         text = repr(result)
         assert "AutoResult" in text
+
+
+# ─── Reasoning Chain ───────────────────────────────────────────────
+
+
+class TestAutoReasoning:
+    def test_reasoning_field_exists(self, conversion_data):
+        ctrl, trt = conversion_data
+        result = auto(ctrl, trt)
+        assert hasattr(result, "reasoning")
+        assert isinstance(result.reasoning, list)
+
+    def test_reasoning_is_nonempty(self, conversion_data):
+        ctrl, trt = conversion_data
+        result = auto(ctrl, trt)
+        assert len(result.reasoning) >= 3
+
+    def test_reasoning_contains_metric_detection(self, conversion_data):
+        ctrl, trt = conversion_data
+        result = auto(ctrl, trt)
+        metric_steps = [r for r in result.reasoning if "metric type" in r.lower()]
+        assert len(metric_steps) >= 1
+
+    def test_reasoning_contains_srm(self, conversion_data):
+        ctrl, trt = conversion_data
+        result = auto(ctrl, trt)
+        srm_steps = [r for r in result.reasoning if "SRM" in r]
+        assert len(srm_steps) >= 1
+
+    def test_reasoning_contains_method_selection(self, conversion_data):
+        ctrl, trt = conversion_data
+        result = auto(ctrl, trt)
+        method_steps = [r for r in result.reasoning if "Selected" in r]
+        assert len(method_steps) >= 1
+
+    def test_reasoning_contains_result_interpretation(self, conversion_data):
+        ctrl, trt = conversion_data
+        result = auto(ctrl, trt)
+        interp_steps = [r for r in result.reasoning if "Result:" in r]
+        assert len(interp_steps) >= 1
+
+    def test_reasoning_contains_recommendation(self, conversion_data):
+        ctrl, trt = conversion_data
+        result = auto(ctrl, trt)
+        rec_steps = [r for r in result.reasoning if "Recommendation:" in r]
+        assert len(rec_steps) >= 1
+
+    def test_reasoning_conversion_detection(self, conversion_data):
+        ctrl, trt = conversion_data
+        result = auto(ctrl, trt)
+        assert any("conversion" in r for r in result.reasoning)
+
+    def test_reasoning_continuous_detection(self, continuous_data):
+        ctrl, trt = continuous_data
+        result = auto(ctrl, trt)
+        assert any("continuous" in r for r in result.reasoning)
+
+    def test_reasoning_in_to_dict(self, conversion_data):
+        ctrl, trt = conversion_data
+        result = auto(ctrl, trt)
+        d = result.to_dict()
+        assert "reasoning" in d
+        assert isinstance(d["reasoning"], list)
+
+    def test_reasoning_with_cuped(self, rng):
+        pre = rng.normal(10, 2, 2000)
+        ctrl = pre[:1000] + rng.normal(0, 1, 1000)
+        trt = pre[1000:] + 0.5 + rng.normal(0, 1, 1000)
+        result = auto(ctrl, trt, control_pre=pre[:1000], treatment_pre=pre[1000:])
+        cuped_steps = [r for r in result.reasoning if "CUPED" in r]
+        assert len(cuped_steps) >= 1

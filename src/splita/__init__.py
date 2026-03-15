@@ -12,6 +12,7 @@ from splita._types import (
     AuditRecord,
     AutoResult,
     BanditResult,
+    RecommendationResult,
     BayesianResult,
     BayesianStoppingResult,
     BayesOptResult,
@@ -236,6 +237,9 @@ from splita.variance import (
     RobustMeanEstimator,
     TrimmedMeanEstimator,
 )
+from splita.playground import playground
+from splita.recommend import recommend
+from splita.verbose import verbose
 from splita.what_if import what_if
 
 __all__ = [
@@ -381,6 +385,7 @@ __all__ = [
     "RDDResult",
     "RandomizationResult",
     "RandomizationValidator",
+    "RecommendationResult",
     "ReestimationResult",
     "RegressionAdjustment",
     "RegressionAdjustmentResult",
@@ -440,12 +445,15 @@ __all__ = [
     "meta_analysis",
     "monitor",
     "notify",
+    "playground",
     "power_report",
+    "recommend",
     "register_method",
     "report",
     "serve",
     "simulate",
     "to_latex_table",
     "unregister_method",
+    "verbose",
     "what_if",
 ]

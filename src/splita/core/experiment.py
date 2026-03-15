@@ -196,6 +196,7 @@ class Experiment:
         self._n_bootstrap = n_bootstrap
         self._rng = ensure_rng(random_state)
         self._random_state = random_state
+        self._user_method = method  # track what the user originally chose
 
         # ── infer metric ────────────────────────────────────────────
         if metric == "auto":
@@ -218,6 +219,11 @@ class Experiment:
                 self._method = "delta"
         else:
             self._method = method
+
+        # ── advisory: sample size ────────────────────────────────────
+        from splita._advisory import advise_sample_size
+
+        advise_sample_size(len(self._control), len(self._treatment), self._metric)
 
     # ── private helpers ──────────────────────────────────────────────
 
@@ -659,6 +665,23 @@ class Experiment:
             If the method/alternative combination is invalid
             (e.g. chi-square with one-sided test).
         """
+        from splita._advisory import advise_method_choice, info
+
+        n1, n2 = len(self._control), len(self._treatment)
+        info(f"Auto-detected metric: {self._metric}")
+        info(f"Selected method: {self._method}")
+        info(f"Running {self._method} test on {n1}+{n2} observations")
+
+        # Advisory: warn if user explicitly chose a sub-optimal method
+        if self._user_method != "auto":
+            combined = np.concatenate([self._control, self._treatment])
+            advise_method_choice(
+                combined,
+                self._method,
+                self._metric,
+                n1 + n2,
+            )
+
         dispatch = {
             "ztest": self._run_ztest,
             "ttest": self._run_ttest,

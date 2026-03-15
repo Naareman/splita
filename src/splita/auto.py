@@ -1,0 +1,193 @@
+"""Zero-config complete A/B test analysis.
+
+Automatically detects metric type, checks SRM, handles outliers,
+applies CUPED if pre-data is provided, runs the right test, and
+applies multiple correction if multiple metrics are given.
+
+Examples
+--------
+>>> import numpy as np
+>>> rng = np.random.default_rng(42)
+>>> ctrl = rng.binomial(1, 0.10, 5000)
+>>> trt = rng.binomial(1, 0.12, 5000)
+>>> result = auto(ctrl, trt)
+>>> result.primary_result.metric
+'conversion'
+"""
+
+from __future__ import annotations
+
+import numpy as np
+
+from splita._types import AutoResult
+from splita._validation import check_array_like
+from splita.core.experiment import Experiment
+from splita.core.srm import SRMCheck
+
+ArrayLike = list | tuple | np.ndarray
+
+
+def auto(
+    control: ArrayLike,
+    treatment: ArrayLike,
+    *,
+    control_pre: ArrayLike | None = None,
+    treatment_pre: ArrayLike | None = None,
+    control_denominator: ArrayLike | None = None,
+    treatment_denominator: ArrayLike | None = None,
+    metrics: dict | None = None,
+    alpha: float = 0.05,
+) -> AutoResult:
+    """Complete A/B test analysis in one function call.
+
+    Automatically: detects metric type, checks SRM, handles outliers,
+    applies CUPED if pre-data provided, runs the right test, applies
+    multiple correction if multiple metrics.
+
+    Parameters
+    ----------
+    control : array-like
+        Observations from the control group.
+    treatment : array-like
+        Observations from the treatment group.
+    control_pre : array-like or None, default None
+        Pre-experiment control data (enables CUPED variance reduction).
+    treatment_pre : array-like or None, default None
+        Pre-experiment treatment data.
+    control_denominator : array-like or None, default None
+        Denominator for ratio metrics.
+    treatment_denominator : array-like or None, default None
+        Denominator for ratio metrics.
+    metrics : dict or None, default None
+        Dictionary mapping metric names to ``(control, treatment)`` tuples
+        for multi-metric analysis with multiple testing correction.
+    alpha : float, default 0.05
+        Significance level.
+
+    Returns
+    -------
+    AutoResult
+        Complete analysis result with pipeline trace.
+    """
+    pipeline_steps: list[str] = []
+    recommendations: list[str] = []
+
+    ctrl = check_array_like(control, "control", min_length=2)
+    trt = check_array_like(treatment, "treatment", min_length=2)
+
+    # ── Step 1: SRM Check ────────────────────────────────────────
+    pipeline_steps.append("1. Checked sample ratio mismatch (SRM)")
+    srm_result = SRMCheck([len(ctrl), len(trt)], alpha=0.01).run()
+    if not srm_result.passed:
+        recommendations.append(
+            "WARNING: Sample ratio mismatch detected. All results should "
+            "be treated with extreme caution."
+        )
+
+    # ── Step 2: Outlier Detection & Handling ─────────────────────
+    from splita._utils import auto_detect_metric
+
+    combined = np.concatenate([ctrl, trt])
+    detected_metric = auto_detect_metric(combined)
+
+    if detected_metric == "continuous":
+        q1, q3 = float(np.percentile(combined, 1)), float(np.percentile(combined, 99))
+        ctrl_clipped = np.clip(ctrl, q1, q3)
+        trt_clipped = np.clip(trt, q1, q3)
+        n_clipped = int(np.sum(ctrl != ctrl_clipped) + np.sum(trt != trt_clipped))
+        if n_clipped > 0:
+            pipeline_steps.append(
+                f"2. Winsorized {n_clipped} outlier values at 1st/99th percentile"
+            )
+            ctrl = ctrl_clipped
+            trt = trt_clipped
+        else:
+            pipeline_steps.append("2. No outliers detected (skipped winsorization)")
+    else:
+        pipeline_steps.append("2. Skipped outlier handling (conversion metric)")
+
+    # ── Step 3: CUPED Variance Reduction ─────────────────────────
+    variance_reduction: float | None = None
+    if control_pre is not None and treatment_pre is not None:
+        from splita.variance.cuped import CUPED
+
+        ctrl_pre = check_array_like(control_pre, "control_pre", min_length=2)
+        trt_pre = check_array_like(treatment_pre, "treatment_pre", min_length=2)
+
+        try:
+            cuped = CUPED()
+            ctrl, trt = cuped.fit_transform(ctrl, trt, ctrl_pre, trt_pre)
+            variance_reduction = float(cuped.variance_reduction_)
+            pipeline_steps.append(
+                f"3. Applied CUPED variance reduction ({variance_reduction:.1%} "
+                f"variance removed, r={cuped.correlation_:.3f})"
+            )
+        except Exception:
+            pipeline_steps.append("3. CUPED failed (insufficient correlation); skipped")
+            variance_reduction = None
+    else:
+        pipeline_steps.append("3. No pre-experiment data provided (skipped CUPED)")
+        if detected_metric == "continuous":
+            recommendations.append(
+                "Consider providing pre-experiment data for CUPED variance "
+                "reduction — it can reduce required sample size by 20-65%."
+            )
+
+    # ── Step 4: Run Experiment ───────────────────────────────────
+    exp = Experiment(
+        ctrl,
+        trt,
+        alpha=alpha,
+        control_denominator=control_denominator,
+        treatment_denominator=treatment_denominator,
+    )
+    primary_result = exp.run()
+    pipeline_steps.append(
+        f"4. Ran {primary_result.method} test (metric={primary_result.metric}, alpha={alpha})"
+    )
+
+    # ── Step 5: Multiple Metrics Correction ──────────────────────
+    corrected_pvalues: list[float] | None = None
+    if metrics is not None and len(metrics) >= 1:
+        from splita.core.correction import MultipleCorrection
+
+        all_pvalues = [primary_result.pvalue]
+        metric_labels = ["primary"]
+
+        for name, (mc, mt) in metrics.items():
+            mc_arr = check_array_like(mc, f"metrics[{name!r}][0]", min_length=2)
+            mt_arr = check_array_like(mt, f"metrics[{name!r}][1]", min_length=2)
+            r = Experiment(mc_arr, mt_arr, alpha=alpha).run()
+            all_pvalues.append(r.pvalue)
+            metric_labels.append(name)
+
+        correction = MultipleCorrection(
+            all_pvalues, method="bh", alpha=alpha, labels=metric_labels
+        ).run()
+        corrected_pvalues = correction.adjusted_pvalues
+        pipeline_steps.append(
+            f"5. Applied Benjamini-Hochberg correction across {len(all_pvalues)} metrics"
+        )
+    else:
+        pipeline_steps.append("5. Single metric (no multiple testing correction needed)")
+
+    # ── Recommendations ──────────────────────────────────────────
+    if not primary_result.significant:
+        recommendations.append(
+            "Result is not statistically significant. Consider running "
+            "longer or increasing sample size."
+        )
+    if primary_result.power < 0.8:
+        recommendations.append(
+            f"Post-hoc power is {primary_result.power:.1%}, below 80%. "
+            "The experiment may be underpowered."
+        )
+
+    return AutoResult(
+        primary_result=primary_result,
+        srm_result=srm_result,
+        variance_reduction=variance_reduction,
+        corrected_pvalues=corrected_pvalues,
+        pipeline_steps=pipeline_steps,
+        recommendations=recommendations,
+    )

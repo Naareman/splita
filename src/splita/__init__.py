@@ -9,6 +9,8 @@ except PackageNotFoundError:
 
 from splita._types import (
     AATestResult,
+    AuditRecord,
+    AutoResult,
     BanditResult,
     BayesianResult,
     BayesianStoppingResult,
@@ -18,11 +20,14 @@ from splita._types import (
     BudgetSplitResult,
     CarryoverResult,
     CausalForestResult,
+    CheckResult,
     ClusterBootstrapResult,
     ClusterResult,
+    ComparisonResult,
     CorrectionResult,
     CSResult,
     CSState,
+    DiagnosisResult,
     DiDResult,
     DilutionResult,
     DoseResponseResult,
@@ -50,9 +55,11 @@ from splita._types import (
     IVResult,
     MarketplaceResult,
     MediationResult,
+    MetaAnalysisResult,
     MetricDecompResult,
     MetricSensitivityResult,
     MixedEffectsResult,
+    MonitorResult,
     MultiObjectiveResult,
     NonstationaryAdjResult,
     NonStationaryResult,
@@ -77,6 +84,7 @@ from splita._types import (
     RiskAwareResult,
     RobustMeanResult,
     SampleSizeResult,
+    SimulationResult,
     SRMResult,
     StratifiedResult,
     SurrogateIndexResult,
@@ -89,11 +97,14 @@ from splita._types import (
     TriggeredResult,
     TrimmedMeanResult,
     VarianceEstimateResult,
+    WhatIfResult,
     YEASTResult,
     YEASTState,
     mSPRTResult,
     mSPRTState,
 )
+from splita.audit_trail import audit_trail
+from splita.auto import auto
 from splita.bandits import (
     BayesianStopping,
     LinTS,
@@ -122,6 +133,8 @@ from splita.causal import (
     SwitchbackExperiment,
     SyntheticControl,
 )
+from splita.check import check
+from splita.compare import compare
 from splita.core import (
     BayesianExperiment,
     CausalForest,
@@ -156,6 +169,7 @@ from splita.design import (
     PairwiseDesign,
     ResponseAdaptiveRandomization,
 )
+from splita.diagnose import diagnose
 from splita.diagnostics import (
     AATest,
     CarryoverDetector,
@@ -175,13 +189,26 @@ from splita.errors import (
     ValidationError,
 )
 from splita.explain import explain
-from splita.report import report
+from splita.export.latex import to_latex_table
 from splita.governance import (
     ConflictDetector,
     ConflictResult,
     ExperimentRegistry,
     GuardrailMonitor,
 )
+from splita.integrations.notify import notify
+from splita.log import load_log, log
+from splita.meta_analysis import meta_analysis
+from splita.monitor import monitor
+from splita.plugins import (
+    clear_methods,
+    get_method,
+    list_methods,
+    register_method,
+    unregister_method,
+)
+from splita.power_report import power_report
+from splita.report import report
 from splita.sequential import (
     ConfidenceSequence,
     EProcess,
@@ -191,6 +218,8 @@ from splita.sequential import (
     YEASTSequentialTest,
     mSPRT,
 )
+from splita.serve import serve
+from splita.simulate import simulate
 from splita.variance import (
     CUPAC,
     CUPED,
@@ -207,6 +236,7 @@ from splita.variance import (
     RobustMeanEstimator,
     TrimmedMeanEstimator,
 )
+from splita.what_if import what_if
 
 __all__ = [
     "CUPAC",
@@ -216,6 +246,8 @@ __all__ = [
     "AATestResult",
     "AdaptiveEnrichment",
     "AdaptiveWinsorizer",
+    "AuditRecord",
+    "AutoResult",
     "BanditResult",
     "BayesOptResult",
     "BayesianExperiment",
@@ -234,16 +266,19 @@ __all__ = [
     "CarryoverResult",
     "CausalForest",
     "CausalForestResult",
+    "CheckResult",
     "ClusterBootstrap",
     "ClusterBootstrapResult",
     "ClusterExperiment",
     "ClusterResult",
+    "ComparisonResult",
     "ConfidenceSequence",
     "ConflictDetector",
     "ConflictResult",
     "ContinuousTreatmentEffect",
     "CorrectionResult",
     "DiDResult",
+    "DiagnosisResult",
     "DifferenceInDifferences",
     "DilutionAnalysis",
     "DilutionResult",
@@ -298,12 +333,14 @@ __all__ = [
     "MarketplaceResult",
     "MediationAnalysis",
     "MediationResult",
+    "MetaAnalysisResult",
     "MetricDecompResult",
     "MetricDecomposition",
     "MetricSensitivity",
     "MetricSensitivityResult",
     "MixedEffectsExperiment",
     "MixedEffectsResult",
+    "MonitorResult",
     "MultiObjectiveExperiment",
     "MultiObjectiveResult",
     "MultipleCorrection",
@@ -358,6 +395,7 @@ __all__ = [
     "SampleSize",
     "SampleSizeReestimation",
     "SampleSizeResult",
+    "SimulationResult",
     "SplitaError",
     "StratifiedExperiment",
     "StratifiedResult",
@@ -381,12 +419,33 @@ __all__ = [
     "ValidationError",
     "VarianceEstimateResult",
     "VarianceEstimator",
+    "WhatIfResult",
     "YEASTResult",
     "YEASTSequentialTest",
     "YEASTState",
+    "audit_trail",
+    "auto",
+    "check",
+    "clear_methods",
+    "compare",
+    "diagnose",
     "explain",
-    "report",
+    "get_method",
+    "list_methods",
+    "load_log",
+    "log",
     "mSPRT",
     "mSPRTResult",
     "mSPRTState",
+    "meta_analysis",
+    "monitor",
+    "notify",
+    "power_report",
+    "register_method",
+    "report",
+    "serve",
+    "simulate",
+    "to_latex_table",
+    "unregister_method",
+    "what_if",
 ]

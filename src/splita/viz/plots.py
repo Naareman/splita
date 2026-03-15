@@ -192,8 +192,11 @@ def power_curve(
     # Vertical line at the middle MDE (target)
     target_mde = mde_arr[len(mde_arr) // 2]
     ax.axvline(
-        target_mde, color="orange", linestyle="--",
-        linewidth=0.8, label=f"Target MDE={target_mde:.4f}",
+        target_mde,
+        color="orange",
+        linestyle="--",
+        linewidth=0.8,
+        label=f"Target MDE={target_mde:.4f}",
     )
 
     ax.set_xlabel("Minimum Detectable Effect")
@@ -282,9 +285,7 @@ def metric_comparison(
     errors_upper = [ci_hi - lift for lift, ci_hi in zip(lifts, ci_uppers, strict=False)]
 
     x = np.arange(len(names))
-    colors = [
-        "steelblue" if results_dict[n].significant else "gray" for n in names
-    ]
+    colors = ["steelblue" if results_dict[n].significant else "gray" for n in names]
 
     ax.bar(
         x,

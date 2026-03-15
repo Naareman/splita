@@ -402,6 +402,35 @@ For full citations, see [REFERENCES.md](REFERENCES.md).
 
 All result types are frozen dataclasses with `.to_dict()` and pretty `__repr__`.
 
+## Why splita?
+
+| | splita | GrowthBook | Eppo | statsmodels |
+|---|---|---|---|---|
+| **Type** | Python library | SaaS + SDK | SaaS + SDK | Python library |
+| **Pricing** | Free (MIT) | Free tier / paid | Paid | Free (BSD) |
+| **Self-hosted** | Yes (it's a library) | Yes (complex) | No | Yes (it's a library) |
+| **Bayesian A/B** | Built-in | Built-in | Built-in | No |
+| **Sequential testing** | mSPRT, YEAST, e-values, group sequential | CUPED + sequential | Sequential | No |
+| **Variance reduction** | CUPED, CUPAC, Double ML, 14 methods | CUPED | CUPED | Manual |
+| **Causal inference** | DiD, Synthetic Control, TMLE, 19 classes | No | No | DiD (basic) |
+| **Bandits** | Thompson, LinUCB, LinTS | Multi-armed bandits | Bandits | No |
+| **Vendor lock-in** | None | Moderate | High | None |
+| **Data stays local** | Always | Self-hosted option | No | Always |
+| **Jupyter-native** | Yes (HTML repr, widgets) | No | No | Partial |
+| **Result format** | Frozen dataclasses, `.to_dict()` | JSON API | JSON API | Mixed |
+| **Dependencies** | numpy + scipy only | Node.js / Docker | SaaS | numpy + scipy + pandas |
+| **Lines for a z-test** | 3 | ~20 (SDK + config) | ~20 (SDK + config) | 8 |
+| **`explain()` in 4 languages** | Yes | No | No | No |
+| **LaTeX export** | Yes | No | No | Yes |
+
+**When to use splita**: You want a Python-native experimentation toolkit with correct statistical defaults, no vendor lock-in, and your data stays in your infrastructure. You need more than basic t-tests: causal inference, sequential testing, bandits, variance reduction.
+
+**When to use GrowthBook/Eppo**: You need a full-stack feature flagging + experimentation platform with a web UI, team collaboration, and you're okay with SaaS or self-hosted infrastructure.
+
+**When to use statsmodels**: You need general-purpose statistics (regression, time series, GLMs) beyond A/B testing. For pure experimentation, splita provides more features with fewer lines of code.
+
+See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
+
 ## Requirements
 
 - Python 3.10+

@@ -81,14 +81,12 @@ def load_ecommerce(*, seed: int = 42) -> dict:
     )
 
     # Pre-experiment covariate: page views (correlated with conversion)
-    pre_ctrl = (
-        rng.poisson(5, size=n).astype(float)
-        + np.where(ctrl_convert == 1, rng.poisson(3, size=n), 0).astype(float)
-    )
-    pre_trt = (
-        rng.poisson(5, size=n).astype(float)
-        + np.where(trt_convert == 1, rng.poisson(3, size=n), 0).astype(float)
-    )
+    pre_ctrl = rng.poisson(5, size=n).astype(float) + np.where(
+        ctrl_convert == 1, rng.poisson(3, size=n), 0
+    ).astype(float)
+    pre_trt = rng.poisson(5, size=n).astype(float) + np.where(
+        trt_convert == 1, rng.poisson(3, size=n), 0
+    ).astype(float)
 
     return {
         "control": ctrl_revenue,
@@ -168,7 +166,7 @@ def load_marketplace(*, seed: int = 123) -> dict:
 
     # Sellers: listing completions (count data)
     seller_sessions_ctrl = rng.poisson(5, n_sellers).astype(float) + 1
-    seller_sessions_trt = rng.poisson(5, n_sellers).astype(float) + 1
+    rng.poisson(5, n_sellers).astype(float) + 1
 
     seller_listings_ctrl = rng.poisson(2.0, n_sellers).astype(float)
     seller_listings_trt = rng.poisson(2.3, n_sellers).astype(float)  # 15% lift
@@ -324,11 +322,11 @@ def load_mobile_app(*, seed: int = 99) -> dict:
 
     # Sessions per 14-day window (negative binomial for overdispersion)
     base_sessions = 5 + 10 * tenure_factor
-    ctrl_sessions = rng.negative_binomial(
-        3, 3 / (3 + base_sessions), n
-    ).astype(float)
+    ctrl_sessions = rng.negative_binomial(3, 3 / (3 + base_sessions), n).astype(float)
     trt_sessions = rng.negative_binomial(
-        3, 3 / (3 + base_sessions * 1.08), n  # 8% session lift
+        3,
+        3 / (3 + base_sessions * 1.08),
+        n,  # 8% session lift
     ).astype(float)
 
     # Session duration: gamma distribution (right-skewed)
@@ -338,9 +336,7 @@ def load_mobile_app(*, seed: int = 99) -> dict:
     trt_total_mins = np.zeros(n)
     for i in range(n):
         if ctrl_sessions[i] > 0:
-            ctrl_total_mins[i] = rng.gamma(
-                2.0, avg_duration[i] / 2.0, int(ctrl_sessions[i])
-            ).sum()
+            ctrl_total_mins[i] = rng.gamma(2.0, avg_duration[i] / 2.0, int(ctrl_sessions[i])).sum()
         if trt_sessions[i] > 0:
             trt_total_mins[i] = rng.gamma(
                 2.0, avg_duration[i] * 1.05 / 2.0, int(trt_sessions[i])
@@ -353,12 +349,8 @@ def load_mobile_app(*, seed: int = 99) -> dict:
     trt_purchases = rng.poisson(purchase_rate_trt, n).astype(float)
 
     # Pre-experiment sessions (7-day window)
-    pre_ctrl = rng.negative_binomial(
-        2, 2 / (2 + base_sessions * 0.5), n
-    ).astype(float)
-    pre_trt = rng.negative_binomial(
-        2, 2 / (2 + base_sessions * 0.5), n
-    ).astype(float)
+    pre_ctrl = rng.negative_binomial(2, 2 / (2 + base_sessions * 0.5), n).astype(float)
+    pre_trt = rng.negative_binomial(2, 2 / (2 + base_sessions * 0.5), n).astype(float)
 
     return {
         "control": ctrl_total_mins,

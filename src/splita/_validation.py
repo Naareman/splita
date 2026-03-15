@@ -10,6 +10,7 @@ from splita.errors import ValidationError
 # ─── Lazy pandas detection (cached) ─────────────────────────────────
 
 _pandas_available: bool | None = None
+_polars_available: bool | None = None
 
 
 def _has_pandas() -> bool:
@@ -23,6 +24,19 @@ def _has_pandas() -> bool:
         except ImportError:
             _pandas_available = False
     return _pandas_available
+
+
+def _has_polars() -> bool:
+    """Return True if polars is installed, caching the result."""
+    global _polars_available
+    if _polars_available is None:
+        try:
+            import polars  # noqa: F401
+
+            _polars_available = True
+        except ImportError:
+            _polars_available = False
+    return _polars_available
 
 
 # ─── Internal helper ────────────────────────────────────────────────
@@ -290,13 +304,20 @@ def check_array_like(
         If the resulting array is shorter than *min_length*
         (also a ``ValueError``).
     """
-    # Fast path: skip pandas check for common types
+    # Fast path: skip pandas/polars check for common types
     if not isinstance(value, (list, tuple, np.ndarray)):
         # Handle pandas Series (lazy import, cached after first call)
         if _has_pandas():
             import pandas as pd
 
             if isinstance(value, pd.Series):
+                value = value.to_numpy()
+
+        # Handle polars Series (lazy import, cached after first call)
+        if not isinstance(value, (list, tuple, np.ndarray)) and _has_polars():
+            import polars as pl
+
+            if isinstance(value, pl.Series):
                 value = value.to_numpy()
 
         if not isinstance(value, (list, tuple, np.ndarray)):

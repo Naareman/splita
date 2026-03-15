@@ -64,19 +64,11 @@ class _DictMixin:
                     val_html = '<span style="color: #dc3545;">False &#10007;</span>'
             elif isinstance(val, float):
                 if abs(val) < 0.0001 and val != 0.0:
-                    val_html = (
-                        f'<span style="font-family: monospace;">'
-                        f"{val:.2e}</span>"
-                    )
+                    val_html = f'<span style="font-family: monospace;">{val:.2e}</span>'
                 else:
-                    val_html = (
-                        f'<span style="font-family: monospace;">'
-                        f"{val:.4f}</span>"
-                    )
+                    val_html = f'<span style="font-family: monospace;">{val:.4f}</span>'
             elif isinstance(val, int):
-                val_html = (
-                    f'<span style="font-family: monospace;">{val}</span>'
-                )
+                val_html = f'<span style="font-family: monospace;">{val}</span>'
             else:
                 from html import escape
 
@@ -94,9 +86,7 @@ class _DictMixin:
             f'  <h4 style="margin: 0 0 8px 0; color: #333;">'
             f"{class_name}</h4>\n"
             '  <table style="border-collapse: collapse; width: 100%;'
-            ' font-size: 13px;">\n'
-            + "\n".join(rows)
-            + "\n  </table>\n</div>"
+            ' font-size: 13px;">\n' + "\n".join(rows) + "\n  </table>\n</div>"
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -161,6 +151,34 @@ class _DictMixin:
         import json
 
         return json.dumps(self.to_dict(), indent=indent, default=str)
+
+    def to_latex(self) -> str:
+        r"""Generate a LaTeX ``tabular`` environment for this result.
+
+        Returns
+        -------
+        str
+            LaTeX source code with a ``tabular`` environment containing
+            all dataclass fields and their values.
+
+        Examples
+        --------
+        >>> from splita import ExperimentResult
+        >>> r = ExperimentResult(
+        ...     control_mean=0.10, treatment_mean=0.12,
+        ...     lift=0.02, relative_lift=0.2, pvalue=0.03,
+        ...     statistic=2.1, ci_lower=0.002, ci_upper=0.038,
+        ...     significant=True, alpha=0.05, method="ztest",
+        ...     metric="conversion", control_n=1000,
+        ...     treatment_n=1000, power=0.65, effect_size=0.06,
+        ... )
+        >>> tex = r.to_latex()
+        >>> r'\begin{tabular}' in tex
+        True
+        """
+        from splita.export.latex import to_latex_tabular
+
+        return to_latex_tabular(self)
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> Any:
@@ -4570,4 +4588,464 @@ class OfflineResult(_DictMixin):
             f"  {'n':<22}{self.n}",
             _line(w),
         ]
+        return "\n".join(lines)
+
+
+# ─── Monitor types ────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class MonitorResult(_DictMixin):
+    """Real-time monitoring snapshot for an experiment.
+
+    Attributes
+    ----------
+    current_lift : float
+        Current absolute lift (treatment - control).
+    current_pvalue : float
+        Current p-value of the test.
+    current_n : int
+        Current total sample size.
+    srm_passed : bool
+        Whether the sample ratio mismatch check passed.
+    guardrail_status : list[dict]
+        Per-guardrail status dicts with keys ``name``, ``passed``, ``value``.
+    days_remaining : int or None
+        Estimated days until required sample size is reached.
+    predicted_significant : bool
+        Whether the current effect would be significant at target sample size.
+    recommendation : str
+        One of ``'continue'``, ``'stop_winner'``, ``'stop_harm'``,
+        ``'investigate'``.
+    """
+
+    current_lift: float
+    current_pvalue: float
+    current_n: int
+    srm_passed: bool
+    guardrail_status: list[dict]
+    days_remaining: int | None
+    predicted_significant: bool
+    recommendation: str
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "MonitorResult",
+            _line(w),
+            f"  {'current_lift':<22}{_fmt(self.current_lift)}",
+            f"  {'current_pvalue':<22}{_fmt(self.current_pvalue)}",
+            f"  {'current_n':<22}{self.current_n}",
+            f"  {'srm_passed':<22}{_fmt(self.srm_passed)}",
+            f"  {'days_remaining':<22}{self.days_remaining}",
+            f"  {'recommendation':<22}{self.recommendation}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── Meta-analysis types ─────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class MetaAnalysisResult(_DictMixin):
+    """Result of combining multiple experiment results.
+
+    Attributes
+    ----------
+    combined_effect : float
+        Pooled effect estimate.
+    combined_se : float
+        Standard error of the pooled estimate.
+    pvalue : float
+        p-value for the pooled effect being zero.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    heterogeneity_pvalue : float
+        p-value from Cochran's Q test for heterogeneity.
+    i_squared : float
+        I-squared statistic (percentage of variance due to heterogeneity).
+    method : str
+        ``'fixed'`` or ``'random'``.
+    study_weights : list[float]
+        Per-study weights used in the pooling.
+    labels : list[str] or None
+        Study labels, if provided.
+    """
+
+    combined_effect: float
+    combined_se: float
+    pvalue: float
+    ci_lower: float
+    ci_upper: float
+    heterogeneity_pvalue: float
+    i_squared: float
+    method: str
+    study_weights: list[float]
+    labels: list[str] | None
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "MetaAnalysisResult",
+            _line(w),
+            f"  {'combined_effect':<22}{_fmt(self.combined_effect)}",
+            f"  {'combined_se':<22}{_fmt(self.combined_se)}",
+            f"  {'pvalue':<22}{_fmt(self.pvalue)}",
+            f"  {'ci':<22}[{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]",
+            f"  {'I²':<22}{_fmt(self.i_squared, as_pct=True)}",
+            f"  {'method':<22}{self.method}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── What-if types ───────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class WhatIfResult(_DictMixin):
+    """Counterfactual projection result.
+
+    Attributes
+    ----------
+    original_n : int
+        Original total sample size.
+    projected_n : int
+        Projected total sample size.
+    original_pvalue : float
+        p-value from the original analysis.
+    projected_pvalue : float
+        Projected p-value at the new sample size.
+    original_significant : bool
+        Whether the original result was significant.
+    projected_significant : bool
+        Whether the projected result would be significant.
+    projected_power : float
+        Statistical power at the projected sample size.
+    message : str
+        Human-readable summary of the projection.
+    """
+
+    original_n: int
+    projected_n: int
+    original_pvalue: float
+    projected_pvalue: float
+    original_significant: bool
+    projected_significant: bool
+    projected_power: float
+    message: str
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "WhatIfResult",
+            _line(w),
+            f"  {'original_n':<22}{self.original_n}",
+            f"  {'projected_n':<22}{self.projected_n}",
+            f"  {'original_pvalue':<22}{_fmt(self.original_pvalue)}",
+            f"  {'projected_pvalue':<22}{_fmt(self.projected_pvalue)}",
+            f"  {'projected_power':<22}{_fmt(self.projected_power, as_pct=True)}",
+            f"  {'projected_sig':<22}{_fmt(self.projected_significant)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── Audit trail types ───────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class AuditRecord(_DictMixin):
+    """Immutable, hashable record of an experiment analysis.
+
+    Attributes
+    ----------
+    result_hash : str
+        SHA-256 hex digest of the result's JSON serialization.
+    data_hash : str or None
+        SHA-256 hex digest of the input data, if provided.
+    parameters : dict
+        Analysis parameters used.
+    analyst : str or None
+        Name or identifier of the analyst.
+    timestamp : str
+        ISO-8601 formatted timestamp.
+    record_hash : str
+        SHA-256 hex digest of all other fields combined.
+    """
+
+    result_hash: str
+    data_hash: str | None
+    parameters: dict
+    analyst: str | None
+    timestamp: str
+    record_hash: str
+
+    def __repr__(self) -> str:
+        w = 44
+        lines = [
+            "AuditRecord",
+            _line(w),
+            f"  {'result_hash':<22}{self.result_hash[:16]}...",
+            f"  {'data_hash':<22}{(self.data_hash or 'N/A')[:16]}{'...' if self.data_hash else ''}",
+            f"  {'analyst':<22}{self.analyst or 'N/A'}",
+            f"  {'timestamp':<22}{self.timestamp}",
+            f"  {'record_hash':<22}{self.record_hash[:16]}...",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── CheckResult ─────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class CheckResult(_DictMixin):
+    """Result of pre-analysis health checks via :func:`~splita.check`.
+
+    Attributes
+    ----------
+    srm_passed : bool
+        Whether the Sample Ratio Mismatch check passed.
+    flicker_rate : float or None
+        Fraction of users who switched variants, if user_ids provided.
+    has_outliers : bool
+        Whether outliers were detected in the data.
+    is_powered : bool
+        Whether the experiment appears adequately powered.
+    all_passed : bool
+        ``True`` if every check passed without warnings.
+    checks : list[dict]
+        Detailed results for each individual check.
+    recommendations : list[str]
+        Actionable recommendations based on check results.
+    """
+
+    srm_passed: bool
+    flicker_rate: float | None
+    has_outliers: bool
+    is_powered: bool
+    all_passed: bool
+    checks: list[dict]
+    recommendations: list[str]
+
+    def __repr__(self) -> str:
+        w = 40
+        status = "HEALTHY" if self.all_passed else "ISSUES FOUND"
+        lines = [
+            f"CheckResult ({status})",
+            _line(w),
+            f"  {'srm_passed':<20}{_fmt(self.srm_passed)}",
+            f"  {'flicker_rate':<20}{_fmt(self.flicker_rate, as_pct=True) if self.flicker_rate is not None else 'N/A'}",
+            f"  {'has_outliers':<20}{_fmt(self.has_outliers)}",
+            f"  {'is_powered':<20}{_fmt(self.is_powered)}",
+            f"  {'all_passed':<20}{_fmt(self.all_passed)}",
+            _line(w),
+        ]
+        if self.recommendations:
+            lines.append("  Recommendations:")
+            for rec in self.recommendations:
+                lines.append(f"    - {rec}")
+        return "\n".join(lines)
+
+
+# ─── AutoResult ──────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class AutoResult(_DictMixin):
+    """Result of automatic A/B test analysis via :func:`~splita.auto`.
+
+    Attributes
+    ----------
+    primary_result : ExperimentResult
+        The main experiment result.
+    srm_result : SRMResult
+        Sample ratio mismatch check result.
+    variance_reduction : float or None
+        Fraction of variance reduced by CUPED, if applied.
+    corrected_pvalues : list[float] or None
+        Multiple-testing corrected p-values, if multiple metrics.
+    pipeline_steps : list[str]
+        Description of each step taken in the analysis.
+    recommendations : list[str]
+        Actionable recommendations based on the results.
+    """
+
+    primary_result: ExperimentResult
+    srm_result: SRMResult
+    variance_reduction: float | None
+    corrected_pvalues: list[float] | None
+    pipeline_steps: list[str]
+    recommendations: list[str]
+
+    def __repr__(self) -> str:
+        w = 40
+        sig = "SIGNIFICANT" if self.primary_result.significant else "NOT SIGNIFICANT"
+        lines = [
+            f"AutoResult ({sig})",
+            _line(w),
+            f"  {'lift':<20}{_fmt(self.primary_result.lift)}",
+            f"  {'pvalue':<20}{_fmt(self.primary_result.pvalue)}",
+            f"  {'method':<20}{self.primary_result.method}",
+            f"  {'srm_passed':<20}{_fmt(self.srm_result.passed)}",
+        ]
+        if self.variance_reduction is not None:
+            lines.append(f"  {'var_reduction':<20}{_fmt(self.variance_reduction, as_pct=True)}")
+        lines.append(_line(w))
+        if self.pipeline_steps:
+            lines.append("  Pipeline:")
+            for step in self.pipeline_steps:
+                lines.append(f"    {step}")
+        return "\n".join(lines)
+
+
+# ─── SimulationResult ────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class SimulationResult(_DictMixin):
+    """Result of A/B test simulation via :func:`~splita.simulate`.
+
+    Attributes
+    ----------
+    estimated_power : float
+        Fraction of simulations that reached significance.
+    median_pvalue : float
+        Median p-value across simulations.
+    median_lift : float
+        Median observed lift across simulations.
+    ci_width_median : float
+        Median confidence interval width across simulations.
+    significant_rate : float
+        Fraction of simulations that were significant.
+    false_negative_rate : float
+        Fraction of simulations that missed a true effect.
+    recommendation : str
+        Human-readable recommendation based on simulation results.
+    """
+
+    estimated_power: float
+    median_pvalue: float
+    median_lift: float
+    ci_width_median: float
+    significant_rate: float
+    false_negative_rate: float
+    recommendation: str
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "SimulationResult",
+            _line(w),
+            f"  {'estimated_power':<22}{_fmt(self.estimated_power, as_pct=True)}",
+            f"  {'median_pvalue':<22}{_fmt(self.median_pvalue)}",
+            f"  {'median_lift':<22}{_fmt(self.median_lift)}",
+            f"  {'ci_width_median':<22}{_fmt(self.ci_width_median)}",
+            f"  {'significant_rate':<22}{_fmt(self.significant_rate, as_pct=True)}",
+            f"  {'false_neg_rate':<22}{_fmt(self.false_negative_rate, as_pct=True)}",
+            _line(w),
+            f"  {self.recommendation}",
+        ]
+        return "\n".join(lines)
+
+
+# ─── ComparisonResult ────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class ComparisonResult(_DictMixin):
+    """Result of comparing two experiment effects via :func:`~splita.compare`.
+
+    Attributes
+    ----------
+    effect_a : float
+        Lift from experiment A.
+    effect_b : float
+        Lift from experiment B.
+    difference : float
+        Difference between the two effects (B - A).
+    se : float
+        Standard error of the difference.
+    pvalue : float
+        p-value of the z-test on the difference.
+    significant : bool
+        Whether the difference is statistically significant.
+    ci_lower : float
+        Lower bound of the CI for the difference.
+    ci_upper : float
+        Upper bound of the CI for the difference.
+    direction : str
+        One of ``'a_larger'``, ``'b_larger'``, or ``'equivalent'``.
+    """
+
+    effect_a: float
+    effect_b: float
+    difference: float
+    se: float
+    pvalue: float
+    significant: bool
+    ci_lower: float
+    ci_upper: float
+    direction: str
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            f"ComparisonResult ({self.direction})",
+            _line(w),
+            f"  {'effect_a':<20}{_fmt(self.effect_a)}",
+            f"  {'effect_b':<20}{_fmt(self.effect_b)}",
+            f"  {'difference':<20}{_fmt(self.difference)}",
+            f"  {'se':<20}{_fmt(self.se)}",
+            f"  {'pvalue':<20}{_fmt(self.pvalue)}",
+            f"  {'significant':<20}{_fmt(self.significant)}",
+            f"  {'ci':<20}[{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── DiagnosisResult ─────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class DiagnosisResult(_DictMixin):
+    """Result of experiment diagnosis via :func:`~splita.diagnose`.
+
+    Attributes
+    ----------
+    status : str
+        One of ``'healthy'``, ``'warning'``, or ``'critical'``.
+    action_items : list[str]
+        Numbered action items for the experimenter.
+    next_steps : list[str]
+        Recommended next steps.
+    confidence_level : str
+        One of ``'high'``, ``'medium'``, or ``'low'``.
+    """
+
+    status: str
+    action_items: list[str]
+    next_steps: list[str]
+    confidence_level: str
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            f"DiagnosisResult (status={self.status}, confidence={self.confidence_level})",
+            _line(w),
+        ]
+        if self.action_items:
+            lines.append("  Action items:")
+            for i, item in enumerate(self.action_items, 1):
+                lines.append(f"    {i}. {item}")
+        if self.next_steps:
+            lines.append("  Next steps:")
+            for step in self.next_steps:
+                lines.append(f"    - {step}")
+        lines.append(_line(w))
         return "\n".join(lines)

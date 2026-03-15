@@ -241,8 +241,7 @@ def _result_to_html_table(result: Any) -> str:
         bg = ' style="background: #f8f9fa;"' if i % 2 == 0 else ""
         val_str = html_mod.escape(_fmt_val(val))
         rows.append(
-            f"<tr{bg}><td>{html_mod.escape(f.name)}</td>"
-            f'<td class="mono">{val_str}</td></tr>'
+            f'<tr{bg}><td>{html_mod.escape(f.name)}</td><td class="mono">{val_str}</td></tr>'
         )
     return (
         f'<h3 style="font-size: 14px; margin-top: 16px; color: #555;">{type_name}</h3>'

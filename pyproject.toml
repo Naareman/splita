@@ -38,6 +38,13 @@ ml = [
 viz = [
     "matplotlib>=3.5",
 ]
+widget = [
+    "ipywidgets>=8.0",
+]
+api = [
+    "fastapi>=0.100",
+    "uvicorn>=0.20",
+]
 
 [project.urls]
 Homepage = "https://github.com/Naareman/splita"
@@ -74,3 +81,10 @@ python_version = "3.10"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
+
+[tool.ruff.lint.per-file-ignores]
+"src/splita/explain.py" = ["RUF001", "E501"]
+"src/splita/report.py" = ["E501"]
+"src/splita/_types.py" = ["E501"]
+"src/splita/serve.py" = ["B904"]
+"src/splita/what_if.py" = ["SIM108"]

@@ -398,7 +398,7 @@ print(corrected)
 
 **Type legend**: **Original** = algorithm from paper equations. **Wrapper** = delegates to scipy/sklearn. **Hybrid** = original algorithm + scipy/sklearn numerical primitives.
 
-For full citations, see [REFERENCES.md](REFERENCES.md).
+For full citations, see [References](docs/references.md).
 
 All result types are frozen dataclasses with `.to_dict()` and pretty `__repr__`.
 
@@ -429,7 +429,7 @@ All result types are frozen dataclasses with `.to_dict()` and pretty `__repr__`.
 
 **When to use statsmodels**: You need general-purpose statistics (regression, time series, GLMs) beyond A/B testing. For pure experimentation, splita provides more features with fewer lines of code.
 
-See [BENCHMARKS.md](BENCHMARKS.md) for detailed performance comparisons.
+See [Benchmarks](docs/benchmarks.md) for detailed performance comparisons.
 
 ## Requirements
 

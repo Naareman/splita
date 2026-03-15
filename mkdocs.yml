@@ -51,4 +51,6 @@ nav:
     - Mobile App: cookbook/mobile.md
   - API Reference: api/index.md
   - Comparison: comparison.md
+  - Benchmarks: benchmarks.md
+  - References: references.md
   - Contributing: contributing.md

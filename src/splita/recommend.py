@@ -84,9 +84,7 @@ def recommend(
 
         detected_metric = auto_detect_metric(combined)
         if detected_metric == "conversion":
-            reasoning.append(
-                "Detected metric type: conversion (all values are 0 or 1)"
-            )
+            reasoning.append("Detected metric type: conversion (all values are 0 or 1)")
         else:
             reasoning.append(
                 f"Detected metric type: continuous "
@@ -147,8 +145,7 @@ def recommend(
     elif detected_metric == "ratio":
         recommended_test = "Delta method (standard for ratio metrics)"
         reasoning.append(
-            "Ratio metric detected — delta method correctly handles the "
-            "variance of ratios."
+            "Ratio metric detected — delta method correctly handles the variance of ratios."
         )
     elif is_small_n:
         recommended_test = (

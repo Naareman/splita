@@ -57,8 +57,9 @@ def _load_dataset(name: str) -> dict:
     return _DATASET_LOADERS[name]()
 
 
-def _get_data_from_csv(uploaded_file, control_col: str, treatment_col: str,
-                       pre_col: str | None = None):
+def _get_data_from_csv(
+    uploaded_file, control_col: str, treatment_col: str, pre_col: str | None = None
+):
     """Extract arrays from uploaded CSV columns."""
     import pandas as pd
 
@@ -142,6 +143,7 @@ def _display_export(result):
 
 # ── A/B Test Mode ────────────────────────────────────────────────────
 
+
 def _ab_test_mode():
     st.title("A/B Test Analysis")
     st.markdown("Interactive frequentist A/B test analysis — no code required.")
@@ -159,9 +161,7 @@ def _ab_test_mode():
             st.dataframe(df.head())
             cols = list(df.columns)
             control_col = st.selectbox("Control column", cols, index=0)
-            treatment_col = st.selectbox(
-                "Treatment column", cols, index=min(1, len(cols) - 1)
-            )
+            treatment_col = st.selectbox("Treatment column", cols, index=min(1, len(cols) - 1))
             pre_options = ["None", *cols]
             pre_col = st.selectbox("Pre-experiment column (optional)", pre_options, index=0)
             ctrl = df[control_col].dropna().values.astype(float)
@@ -263,6 +263,7 @@ def _ab_test_mode():
 
 # ── Bayesian Mode ────────────────────────────────────────────────────
 
+
 def _bayesian_mode():
     st.title("Bayesian A/B Test")
     st.markdown("Bayesian analysis with posterior probabilities and credible intervals.")
@@ -350,6 +351,7 @@ def _bayesian_mode():
 
 
 # ── Power Planning Mode ──────────────────────────────────────────────
+
 
 def _power_planning_mode():
     st.title("Power Planning")
@@ -447,12 +449,10 @@ def _power_planning_mode():
 
 # ── Sequential Mode ──────────────────────────────────────────────────
 
+
 def _sequential_mode():
     st.title("Sequential Testing (mSPRT)")
-    st.markdown(
-        "Monitor your experiment with always-valid p-values. "
-        "No peeking penalty."
-    )
+    st.markdown("Monitor your experiment with always-valid p-values. No peeking penalty.")
 
     input_method = st.radio(
         "Data input",
@@ -484,12 +484,8 @@ def _sequential_mode():
         trt = _parse_csv_values(treatment_text) if treatment_text else None
 
     with st.expander("Advanced options"):
-        metric_type = st.selectbox(
-            "Metric type", ["conversion", "continuous"], key="seq_metric"
-        )
-        seq_alpha = st.slider(
-            "Significance level", 0.01, 0.20, 0.05, step=0.01, key="seq_alpha"
-        )
+        metric_type = st.selectbox("Metric type", ["conversion", "continuous"], key="seq_metric")
+        seq_alpha = st.slider("Significance level", 0.01, 0.20, 0.05, step=0.01, key="seq_alpha")
         n_batches = st.slider(
             "Number of batches (simulated peeks)",
             min_value=2,
@@ -580,6 +576,7 @@ def _sequential_mode():
 
 
 # ── Sample Data Mode ─────────────────────────────────────────────────
+
 
 def _sample_data_mode():
     st.title("Sample Data Explorer")

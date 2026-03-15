@@ -398,11 +398,7 @@ def _explain_msprt_result(result: Any, lang: str = "en") -> str:
 
 def _explain_quantile(result: Any, lang: str = "en") -> str:
     """Interpret a QuantileResult."""
-    sig_quantiles = [
-        f"{result.quantiles[i]:.0%}"
-        for i, s in enumerate(result.significant)
-        if s
-    ]
+    sig_quantiles = [f"{result.quantiles[i]:.0%}" for i, s in enumerate(result.significant) if s]
     if sig_quantiles:
         q_str = ", ".join(sig_quantiles)
         median_idx = len(result.quantiles) // 2
@@ -411,9 +407,7 @@ def _explain_quantile(result: Any, lang: str = "en") -> str:
             f"Treatment differs from control at the following quantiles: {q_str}. "
             f"The median difference is {diff:.4f}."
         )
-    return (
-        "No significant differences were found at any tested quantile."
-    )
+    return "No significant differences were found at any tested quantile."
 
 
 def _explain_cluster(result: Any, lang: str = "en") -> str:
@@ -513,10 +507,7 @@ def _explain_check(result: Any, lang: str = "en") -> str:
     n_passed = sum(1 for c in result.checks if c.get("passed", False))
     n_total = len(result.checks)
     recs = " ".join(result.recommendations) if result.recommendations else ""
-    base = (
-        f"Pre-analysis check: {status}. "
-        f"{n_passed}/{n_total} checks passed."
-    )
+    base = f"Pre-analysis check: {status}. {n_passed}/{n_total} checks passed."
     if recs:
         base += f" {recs}"
     return base
@@ -544,10 +535,7 @@ def _explain_whatif(result: Any, lang: str = "en") -> str:
 
 def _explain_power_simulation(result: Any, lang: str = "en") -> str:
     """Interpret a PowerSimulationResult."""
-    return (
-        f"Estimated power: {result.power:.0%} "
-        f"at n={result.n_per_variant} per variant."
-    )
+    return f"Estimated power: {result.power:.0%} at n={result.n_per_variant} per variant."
 
 
 def _explain_simulation(result: Any, lang: str = "en") -> str:
@@ -557,10 +545,7 @@ def _explain_simulation(result: Any, lang: str = "en") -> str:
 
 def _explain_comparison(result: Any, lang: str = "en") -> str:
     """Interpret a ComparisonResult."""
-    diff_word = (
-        "significantly different" if result.significant
-        else "not significantly different"
-    )
+    diff_word = "significantly different" if result.significant else "not significantly different"
     return (
         f"The two effects are {diff_word} "
         f"(p={_fmt_num(result.pvalue)}). "

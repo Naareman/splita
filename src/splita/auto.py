@@ -159,18 +159,14 @@ def auto(
             try:
                 min_len = min(len(ctrl), len(ctrl_pre))
                 corr = float(np.corrcoef(ctrl[:min_len], ctrl_pre[:min_len])[0, 1])
-                reasoning.append(
-                    f"CUPED skipped — correlation with pre-data too low ({corr:.2f})"
-                )
+                reasoning.append(f"CUPED skipped — correlation with pre-data too low ({corr:.2f})")
             except Exception:
                 reasoning.append("CUPED skipped — insufficient correlation with pre-data")
             variance_reduction = None
     else:
         pipeline_steps.append("3. No pre-experiment data provided (skipped CUPED)")
         if control_pre is not None or treatment_pre is not None:
-            reasoning.append(
-                "CUPED skipped — both control_pre and treatment_pre are required"
-            )
+            reasoning.append("CUPED skipped — both control_pre and treatment_pre are required")
         else:
             reasoning.append("No pre-experiment data provided (CUPED not applied)")
         if detected_metric == "continuous":
@@ -241,12 +237,8 @@ def auto(
         )
         reasoning.append("Recommendation: SHIP — effect is statistically significant")
     else:
-        reasoning.append(
-            f"Result: NOT significant (p={primary_result.pvalue:.3f})"
-        )
-        reasoning.append(
-            "Recommendation: DO NOT SHIP — insufficient evidence of an effect"
-        )
+        reasoning.append(f"Result: NOT significant (p={primary_result.pvalue:.3f})")
+        reasoning.append("Recommendation: DO NOT SHIP — insufficient evidence of an effect")
         recommendations.append(
             "Result is not statistically significant. Consider running "
             "longer or increasing sample size."

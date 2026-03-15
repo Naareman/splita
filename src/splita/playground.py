@@ -46,12 +46,10 @@ def playground(port: int = 8501) -> None:
         import streamlit  # noqa: F401
     except ImportError:
         raise ImportError(
-            "splita.playground requires streamlit. "
-            "Install with: pip install splita[playground]"
+            "splita.playground requires streamlit. Install with: pip install splita[playground]"
         ) from None
 
     app_path = os.path.join(os.path.dirname(__file__), "_playground_app.py")
     subprocess.run(
-        [sys.executable, "-m", "streamlit", "run", app_path,
-         "--server.port", str(port)],
+        [sys.executable, "-m", "streamlit", "run", app_path, "--server.port", str(port)],
     )

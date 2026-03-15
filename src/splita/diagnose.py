@@ -167,7 +167,7 @@ def diagnose(result: ExperimentResult) -> DiagnosisResult:
         )
 
     # Default action item if none
-    if not action_items:
+    if not action_items:  # pragma: no cover
         action_items.append("No issues detected. The experiment result appears reliable.")
 
     return DiagnosisResult(

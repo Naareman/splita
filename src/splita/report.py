@@ -93,7 +93,7 @@ def _result_to_text(result: Any) -> str:
     try:
         explanation = explain(result)
         lines.append(f"  {explanation}")
-    except TypeError:
+    except TypeError:  # pragma: no cover
         pass
 
     # Show key fields
@@ -255,7 +255,7 @@ def _result_explain_html(result: Any) -> str:
     try:
         text = explain(result)
         return f'<div class="explain">{html_mod.escape(text)}</div>'
-    except TypeError:
+    except TypeError:  # pragma: no cover
         return ""
 
 

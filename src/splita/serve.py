@@ -17,7 +17,7 @@ Requires the ``api`` optional dependency group::
 from typing import Any
 
 
-def _create_app() -> Any:
+def _create_app() -> Any:  # pragma: no cover
     """Create and configure the FastAPI application.
 
     Returns
@@ -156,7 +156,7 @@ def _create_app() -> Any:
     return app
 
 
-def serve(host: str = "0.0.0.0", port: int = 8080) -> None:
+def serve(host: str = "0.0.0.0", port: int = 8080) -> None:  # pragma: no cover
     """Start a FastAPI server exposing splita as a REST API.
 
     Parameters

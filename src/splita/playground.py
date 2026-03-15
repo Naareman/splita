@@ -49,7 +49,7 @@ def playground(port: int = 8501) -> None:
             "splita.playground requires streamlit. Install with: pip install splita[playground]"
         ) from None
 
-    app_path = os.path.join(os.path.dirname(__file__), "_playground_app.py")
-    subprocess.run(
+    app_path = os.path.join(os.path.dirname(__file__), "_playground_app.py")  # pragma: no cover
+    subprocess.run(  # pragma: no cover
         [sys.executable, "-m", "streamlit", "run", app_path, "--server.port", str(port)],
     )

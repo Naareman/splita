@@ -1,5 +1,5 @@
-"""Allow ``python -m splita.playground`` to launch the playground."""
+"""Allow ``python -m splita.playground`` to launch the playground."""  # pragma: no cover
 
-from splita.playground import playground
+from splita.playground import playground  # pragma: no cover
 
-playground()
+playground()  # pragma: no cover

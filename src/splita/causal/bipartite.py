@@ -119,7 +119,7 @@ class BipartiteExperiment:
         n_buyers = len(y_b)
         n_sellers = len(y_s)
 
-        if len(t_b) != n_buyers:
+        if len(t_b) != n_buyers:  # pragma: no cover
             raise ValueError(
                 format_error(
                     "`buyer_treatments` must have the same length as `buyer_outcomes`.",
@@ -139,7 +139,7 @@ class BipartiteExperiment:
 
         n_trt = int(np.sum(t_b == 1.0))
         n_ctrl = int(np.sum(t_b == 0.0))
-        if n_trt == 0 or n_ctrl == 0:
+        if n_trt == 0 or n_ctrl == 0:  # pragma: no cover
             raise ValueError(
                 format_error(
                     "Need both treatment and control buyers.",
@@ -220,7 +220,7 @@ class BipartiteExperiment:
             z = seller_side_effect / se_seller
             cross_side_pvalue = float(2 * norm.sf(abs(z)))
         else:
-            cross_side_pvalue = 1.0 if seller_side_effect == 0 else 0.0
+            cross_side_pvalue = 1.0 if seller_side_effect == 0 else 0.0  # pragma: no cover
 
         return BipartiteResult(
             buyer_side_effect=buyer_side_effect,

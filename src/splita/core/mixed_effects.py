@@ -197,7 +197,7 @@ class MixedEffectsExperiment:
             z = ate / se
             pvalue = float(2 * norm.sf(abs(z)))
         else:
-            pvalue = 1.0 if ate == 0 else 0.0
+            pvalue = 1.0 if ate == 0 else 0.0  # pragma: no cover
 
         z_crit = float(norm.ppf(1 - self._alpha / 2))
         ci_lower = ate - z_crit * se

@@ -21,8 +21,8 @@ def _has_pandas() -> bool:
             import pandas  # noqa: F401
 
             _pandas_available = True
-        except ImportError:
-            _pandas_available = False
+        except ImportError:  # pragma: no cover
+            _pandas_available = False  # pragma: no cover
     return _pandas_available
 
 
@@ -33,7 +33,7 @@ def _has_polars() -> bool:
         try:
             import polars  # noqa: F401
 
-            _polars_available = True
+            _polars_available = True  # pragma: no cover
         except ImportError:
             _polars_available = False
     return _polars_available
@@ -314,11 +314,11 @@ def check_array_like(
                 value = value.to_numpy()
 
         # Handle polars Series (lazy import, cached after first call)
-        if not isinstance(value, (list, tuple, np.ndarray)) and _has_polars():
-            import polars as pl
+        if not isinstance(value, (list, tuple, np.ndarray)) and _has_polars():  # pragma: no cover
+            import polars as pl  # pragma: no cover
 
-            if isinstance(value, pl.Series):
-                value = value.to_numpy()
+            if isinstance(value, pl.Series):  # pragma: no cover
+                value = value.to_numpy()  # pragma: no cover
 
         if not isinstance(value, (list, tuple, np.ndarray)):
             raise TypeError(

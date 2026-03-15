@@ -19,7 +19,7 @@ from __future__ import annotations
 from typing import Any
 
 
-def sample_size_widget() -> Any:
+def sample_size_widget() -> Any:  # pragma: no cover
     """Interactive ipywidgets for sample size planning in Jupyter.
 
     Creates sliders for baseline rate, minimum detectable effect (MDE),

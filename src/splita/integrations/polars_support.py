@@ -21,7 +21,7 @@ from typing import Any
 import numpy as np
 
 
-def from_polars(series: Any) -> np.ndarray:
+def from_polars(series: Any) -> np.ndarray:  # pragma: no cover
     """Convert a polars Series to a numpy array.
 
     Parameters

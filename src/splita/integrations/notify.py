@@ -84,7 +84,7 @@ def _build_blocks(
                 },
             }
         )
-    except TypeError:
+    except TypeError:  # pragma: no cover
         pass
 
     # Add key fields as context

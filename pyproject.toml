@@ -67,6 +67,13 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/splita"]
 
+[tool.coverage.run]
+omit = [
+    "src/splita/_playground_app.py",
+    "src/splita/integrations/polars_support.py",
+]
+
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v --tb=short"

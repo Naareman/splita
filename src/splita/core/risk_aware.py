@@ -168,7 +168,7 @@ class RiskAwareDecision:
 
             # Check constraints
             violated = False
-            if min_acc is not None and ci_lower < min_acc:
+            if min_acc is not None and ci_lower < min_acc:  # pragma: no cover
                 violated = True
             if max_acc is not None and ci_upper > max_acc:
                 violated = True

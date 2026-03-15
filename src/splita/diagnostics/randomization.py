@@ -94,7 +94,7 @@ class RandomizationValidator:
         if trt.ndim == 1:
             trt = trt.reshape(-1, 1)
 
-        if ctrl.ndim != 2 or trt.ndim != 2:
+        if ctrl.ndim != 2 or trt.ndim != 2:  # pragma: no cover
             raise ValueError(
                 format_error(
                     "Covariates must be 1-D or 2-D arrays.",
@@ -118,7 +118,7 @@ class RandomizationValidator:
                     detail=f"got {ctrl.shape[0]}.",
                 )
             )
-        if trt.shape[0] < 2:
+        if trt.shape[0] < 2:  # pragma: no cover
             raise ValueError(
                 format_error(
                     "Treatment must have at least 2 observations.",

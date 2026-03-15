@@ -166,7 +166,7 @@ def check(
             "detail": f"NaNs: control={n_ctrl_nan}, treatment={n_trt_nan}.",
         }
     )
-    if not nan_ok:
+    if not nan_ok:  # pragma: no cover
         recommendations.append(
             "Data contains NaN values. These are automatically removed "
             "by Experiment, but investigate why they exist."

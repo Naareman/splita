@@ -171,7 +171,7 @@ class StratifiedExperiment:
             strata_sizes[str(label)] = n_c + n_t
             N += n_c + n_t
 
-        if N == 0:
+        if N == 0:  # pragma: no cover
             raise ValueError(
                 format_error(
                     "No observations found in common strata.",

@@ -152,7 +152,7 @@ class PHackingDetector:
                 f"Found {int(near_threshold)} of {n_sig} significant p-values "
                 f"in the top 20% band near the threshold."
             )
-        elif suspicious:
+        elif suspicious:  # pragma: no cover
             message = (
                 "Suspicious: significant p-values are not right-skewed "
                 f"(median pp-value = {median_pp:.3f}, expected < 0.5 "

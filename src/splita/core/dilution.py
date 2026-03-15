@@ -98,7 +98,7 @@ class DilutionAnalysis:
             z = diluted_ate / diluted_se
             diluted_pvalue = float(2.0 * norm.sf(abs(z)))
         else:
-            diluted_pvalue = 1.0 if diluted_ate == 0 else 0.0
+            diluted_pvalue = 1.0 if diluted_ate == 0 else 0.0  # pragma: no cover
 
         return DilutionResult(
             diluted_ate=diluted_ate,

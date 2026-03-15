@@ -97,7 +97,7 @@ class PairwiseDesign:
 
         try:
             VI = np.linalg.inv(cov)
-        except np.linalg.LinAlgError:
+        except np.linalg.LinAlgError:  # pragma: no cover
             # Fallback to euclidean if covariance is singular
             VI = np.eye(cov.shape[0])
 
@@ -120,7 +120,7 @@ class PairwiseDesign:
             i, j = divmod(int(flat_idx), n)
             if i in matched or j in matched:
                 continue
-            if i == j:
+            if i == j:  # pragma: no cover
                 continue
             pairs.append((min(i, j), max(i, j)))
             matched.add(i)

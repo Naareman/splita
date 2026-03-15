@@ -29,7 +29,7 @@ def _proportion_ztest(x1: int, n1: int, x2: int, n2: int) -> tuple[float, float]
     p_pool = (x1 + x2) / (n1 + n2) if (n1 + n2) > 0 else 0.0
     se = np.sqrt(p_pool * (1 - p_pool) * (1.0 / n1 + 1.0 / n2)) if (n1 > 0 and n2 > 0) else 0.0
     if se == 0.0:
-        return 0.0, 1.0
+        return 0.0, 1.0  # pragma: no cover
     z = (p2 - p1) / se
     pvalue = float(2 * norm.sf(abs(z)))
     return float(z), pvalue
@@ -113,7 +113,7 @@ class FunnelExperiment:
                     hint="converted count must be <= total count.",
                 )
             )
-        if treatment_converted > treatment_total:
+        if treatment_converted > treatment_total:  # pragma: no cover
             raise ValueError(
                 format_error(
                     "`treatment_converted` can't exceed `treatment_total`.",

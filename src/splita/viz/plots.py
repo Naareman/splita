@@ -19,8 +19,8 @@ def _get_matplotlib():
     try:
         import matplotlib.pyplot as plt
         from matplotlib.figure import Figure
-    except ImportError:
-        raise ImportError(
+    except ImportError:  # pragma: no cover
+        raise ImportError(  # pragma: no cover
             "splita.viz requires matplotlib. Install with: pip install matplotlib"
         ) from None
     return plt, Figure

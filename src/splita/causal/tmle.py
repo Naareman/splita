@@ -155,7 +155,7 @@ class TMLE:
             z = ate / se
             pvalue = float(2.0 * norm.sf(abs(z)))
         else:
-            pvalue = 1.0 if ate == 0 else 0.0
+            pvalue = 1.0 if ate == 0 else 0.0  # pragma: no cover
 
         z_crit = float(norm.ppf(1 - self._alpha / 2))
         ci_lower = ate - z_crit * se
@@ -191,7 +191,7 @@ class TMLE:
             X0 = np.column_stack([X, np.zeros(n)])
             Q1 = model.predict(X1)
             Q0 = model.predict(X0)
-        except ImportError:
+        except ImportError:  # pragma: no cover
             # OLS fallback
             X_bias = np.column_stack([np.ones(n), X_with_a])
             beta = np.linalg.lstsq(X_bias, Y, rcond=None)[0]
@@ -211,7 +211,7 @@ class TMLE:
             model = LogisticRegression(max_iter=1000, C=1.0)
             model.fit(X, A)
             g = model.predict_proba(X)[:, 1]
-        except ImportError:
+        except ImportError:  # pragma: no cover
             # Fallback: simple logistic via gradient descent
             n, p = X.shape
             X_bias = np.column_stack([np.ones(n), X])

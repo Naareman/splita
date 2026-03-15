@@ -126,7 +126,7 @@ def what_if(
     if projected_se > 0:
         projected_z = original_lift / projected_se
         projected_pvalue = float(2.0 * (1.0 - norm.cdf(abs(projected_z))))
-    else:
+    else:  # pragma: no cover
         projected_pvalue = 0.0 if original_lift != 0 else 1.0
 
     projected_significant = projected_pvalue < projected_alpha

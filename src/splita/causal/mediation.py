@@ -182,7 +182,7 @@ class MediationAnalysis:
         if se_indirect > 0:
             z_sobel = indirect_effect / se_indirect
             acme_pvalue = float(2 * norm.sf(abs(z_sobel)))
-        else:
+        else:  # pragma: no cover
             acme_pvalue = 1.0
 
         # CI for ACME

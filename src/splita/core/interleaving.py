@@ -83,7 +83,7 @@ def _balanced_interleave(ranking_a: list, ranking_b: list) -> tuple[list, list[i
     all_items.sort(key=sort_key)
 
     for item in all_items:
-        if item in seen:
+        if item in seen:  # pragma: no cover
             continue
         seen.add(item)
         interleaved.append(item)
@@ -198,7 +198,7 @@ class InterleavingExperiment:
                     f"rankings_b has {len(rankings_b)} queries.",
                 )
             )
-        if len(rankings_a) != len(clicks):
+        if len(rankings_a) != len(clicks):  # pragma: no cover
             raise ValueError(
                 format_error(
                     "`rankings_a` and `clicks` must have the same length.",

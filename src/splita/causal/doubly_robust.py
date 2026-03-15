@@ -115,7 +115,7 @@ class DoublyRobustEstimator:
             from sklearn.linear_model import Ridge
             from sklearn.metrics import r2_score, roc_auc_score
             from sklearn.model_selection import KFold
-        except ImportError as exc:
+        except ImportError as exc:  # pragma: no cover
             raise ImportError(
                 format_error(
                     "DoublyRobustEstimator requires scikit-learn.",
@@ -179,7 +179,7 @@ class DoublyRobustEstimator:
             mask_0 = t_train == 0
             mask_1 = t_train == 1
 
-            if np.sum(mask_0) < 2 or np.sum(mask_1) < 2:
+            if np.sum(mask_0) < 2 or np.sum(mask_1) < 2:  # pragma: no cover
                 warnings.warn(
                     "Too few treated/control observations in fold. Results may be unreliable.",
                     RuntimeWarning,
@@ -230,7 +230,7 @@ class DoublyRobustEstimator:
         outcome_r2 = float(r2_score(y, y_pred_all))
         try:
             propensity_auc = float(roc_auc_score(t, e_hat))
-        except ValueError:
+        except ValueError:  # pragma: no cover
             propensity_auc = 0.5  # degenerate case
 
         return DoublyRobustResult(

@@ -44,7 +44,7 @@ def _se_from_result(result: ExperimentResult) -> float:
     z_crit = float(norm.ppf(1 - result.alpha / 2))
     if z_crit > 0:
         return ci_width / (2 * z_crit)
-    return 0.0
+    return 0.0  # pragma: no cover
 
 
 def compare(

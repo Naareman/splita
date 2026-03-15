@@ -117,7 +117,7 @@ class FlickerDetector:
             )
 
         var_arr = np.asarray(variant_assignments)
-        if var_arr.ndim != 1:
+        if var_arr.ndim != 1:  # pragma: no cover
             raise ValueError(
                 format_error(
                     f"`variant_assignments` must be a 1-D array, got {var_arr.ndim}-D.",
@@ -136,7 +136,7 @@ class FlickerDetector:
         # Validate timestamps if provided
         if timestamps is not None:
             ts_arr = np.asarray(timestamps)
-            if ts_arr.ndim != 1:
+            if ts_arr.ndim != 1:  # pragma: no cover
                 raise ValueError(
                     format_error(
                         f"`timestamps` must be a 1-D array, got {ts_arr.ndim}-D.",

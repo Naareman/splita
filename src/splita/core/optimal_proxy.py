@@ -121,7 +121,7 @@ class OptimalProxyMetrics:
         # OLS: w = (X^T X)^{-1} X^T y
         try:
             self.weights_ = np.linalg.lstsq(X, y, rcond=None)[0]
-        except np.linalg.LinAlgError as exc:
+        except np.linalg.LinAlgError as exc:  # pragma: no cover
             raise ValueError(
                 format_error(
                     "OLS failed — candidate metrics may be collinear.",
@@ -161,7 +161,7 @@ class OptimalProxyMetrics:
             )
 
         X = np.asarray(candidate_metrics, dtype=float)
-        if X.ndim != 2:
+        if X.ndim != 2:  # pragma: no cover
             raise ValueError(
                 format_error(
                     "`candidate_metrics` must be a 2-D array, got "

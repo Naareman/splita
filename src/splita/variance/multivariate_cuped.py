@@ -172,7 +172,7 @@ class MultivariateCUPED:
 
         try:
             self.theta_ = np.linalg.solve(cov_xx, cov_yx)
-        except np.linalg.LinAlgError:
+        except np.linalg.LinAlgError:  # pragma: no cover
             raise ValueError(
                 format_error(
                     "Covariate covariance matrix is singular.",

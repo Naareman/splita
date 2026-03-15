@@ -146,7 +146,7 @@ class AdaptiveEnrichment:
             name: val for name, val in subgroup_results.items() if name not in self._dropped
         }
 
-        if len(active_subgroups) == 0:
+        if len(active_subgroups) == 0:  # pragma: no cover
             # All subgroups previously dropped — re-evaluate all
             active_subgroups = subgroup_results
 

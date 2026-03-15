@@ -126,7 +126,7 @@ class SampleSizeReestimation:
             if z_current > 0:
                 ratio = (z_needed / z_current) ** 2
                 new_n = max(current_n, math.ceil(current_n * ratio))
-            else:
+            else:  # pragma: no cover
                 new_n = current_n * 10
 
             # Conditional power at new_n

@@ -12,7 +12,6 @@ from splita._types import (
     AuditRecord,
     AutoResult,
     BanditResult,
-    RecommendationResult,
     BayesianResult,
     BayesianStoppingResult,
     BayesOptResult,
@@ -80,6 +79,7 @@ from splita._types import (
     RandomizationResult,
     RARResult,
     RDDResult,
+    RecommendationResult,
     ReestimationResult,
     RegressionAdjustmentResult,
     RiskAwareResult,
@@ -201,6 +201,7 @@ from splita.integrations.notify import notify
 from splita.log import load_log, log
 from splita.meta_analysis import meta_analysis
 from splita.monitor import monitor
+from splita.playground import playground
 from splita.plugins import (
     clear_methods,
     get_method,
@@ -209,6 +210,7 @@ from splita.plugins import (
     unregister_method,
 )
 from splita.power_report import power_report
+from splita.recommend import recommend
 from splita.report import report
 from splita.sequential import (
     ConfidenceSequence,
@@ -237,8 +239,6 @@ from splita.variance import (
     RobustMeanEstimator,
     TrimmedMeanEstimator,
 )
-from splita.playground import playground
-from splita.recommend import recommend
 from splita.verbose import verbose
 from splita.what_if import what_if
 

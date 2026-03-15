@@ -7,7 +7,7 @@ under the hood — which tests it selects, why, and what it finds.
 from __future__ import annotations
 
 import contextlib
-from typing import Generator
+from collections.abc import Generator
 
 
 @contextlib.contextmanager

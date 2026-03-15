@@ -614,11 +614,7 @@ def _explain_generic(result: Any, lang: str = "en") -> str:
             val = getattr(result, f.name)
             if isinstance(val, float):
                 parts.append(f"{f.name}={_fmt_num(val)}")
-            elif isinstance(val, bool):
-                parts.append(f"{f.name}={val}")
-            elif isinstance(val, (int, str)):
-                parts.append(f"{f.name}={val}")
-            elif isinstance(val, list) and len(val) <= 5:
+            elif isinstance(val, (bool, int, str)) or (isinstance(val, list) and len(val) <= 5):
                 parts.append(f"{f.name}={val}")
             elif isinstance(val, list):
                 parts.append(f"{f.name}=[{len(val)} items]")

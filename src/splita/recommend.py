@@ -151,7 +151,9 @@ def recommend(
             "variance of ratios."
         )
     elif is_small_n:
-        recommended_test = "PermutationTest or bootstrap (small sample, no distributional assumptions)"
+        recommended_test = (
+            "PermutationTest or bootstrap (small sample, no distributional assumptions)"
+        )
         reasoning.append(
             "Small sample — permutation test or bootstrap avoid normality "
             "assumptions that may not hold."
@@ -275,14 +277,16 @@ def _build_code_example(
         steps.append(f"# Step {step_num}: CUPED variance reduction")
         steps.append("cuped = CUPED()")
         steps.append("ctrl, trt = cuped.fit_transform(ctrl, trt, ctrl_pre, trt_pre)")
-        steps.append(f'print(f"Variance reduced by {{cuped.variance_reduction_:.1%}}")')
+        steps.append('print(f"Variance reduced by {cuped.variance_reduction_:.1%}")')
         step_num += 1
 
     # Test selection
     if has_clusters:
         imports[0] = "from splita import ClusterExperiment"
         steps.append(f"# Step {step_num}: Run cluster-aware test")
-        steps.append("result = ClusterExperiment(ctrl, trt, cluster_ids_ctrl, cluster_ids_trt).run()")
+        steps.append(
+            "result = ClusterExperiment(ctrl, trt, cluster_ids_ctrl, cluster_ids_trt).run()"
+        )
     elif is_sequential:
         imports.append("from splita import mSPRT")
         steps.append(f"# Step {step_num}: Set up sequential monitoring")

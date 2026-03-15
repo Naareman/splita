@@ -5,10 +5,16 @@ from __future__ import annotations
 import pytest
 
 from splita._types import (
+    BanditResult,
     BayesianResult,
+    ClusterResult,
+    CorrectionResult,
+    DiDResult,
     ExperimentResult,
+    mSPRTState,
     SampleSizeResult,
     SRMResult,
+    SurvivalResult,
 )
 from splita.explain import explain
 
@@ -195,6 +201,102 @@ class TestChinese:
     def test_sample_size_chinese(self, sample_size_result):
         text = explain(sample_size_result, lang="zh")
         assert "用户" in text
+
+
+# ─── Advanced types use English fallback for non-en languages ────────
+
+
+class TestAdvancedTypesLangFallback:
+    """Advanced result types should work with any lang parameter.
+
+    They produce English output regardless of lang, since we haven't
+    translated their templates yet. The key requirement is that they
+    don't crash.
+    """
+
+    def test_bandit_all_langs(self):
+        result = BanditResult(
+            n_pulls_per_arm=[800, 200],
+            prob_best=[0.95, 0.05],
+            expected_loss=[0.0002, 0.015],
+            current_best_arm=0,
+            should_stop=True,
+            total_reward=85.0,
+            cumulative_regret=2.5,
+            arm_means=[0.12, 0.08],
+            arm_credible_intervals=[(0.10, 0.14), (0.06, 0.10)],
+        )
+        for lang in ("en", "ar", "es", "zh"):
+            text = explain(result, lang=lang)
+            assert "arm 0" in text
+            assert "1000 pulls" in text
+
+    def test_correction_all_langs(self):
+        result = CorrectionResult(
+            pvalues=[0.01, 0.04, 0.20],
+            adjusted_pvalues=[0.03, 0.06, 0.20],
+            rejected=[True, False, False],
+            alpha=0.05,
+            method="Holm",
+            n_rejected=1,
+            n_tests=3,
+            labels=["revenue", "clicks", "bounce"],
+        )
+        for lang in ("en", "ar", "es", "zh"):
+            text = explain(result, lang=lang)
+            assert "1 of 3" in text
+
+    def test_msprt_all_langs(self):
+        result = mSPRTState(
+            n_control=500,
+            n_treatment=500,
+            mixture_lr=25.0,
+            always_valid_pvalue=0.04,
+            always_valid_ci_lower=0.005,
+            always_valid_ci_upper=0.035,
+            should_stop=True,
+            current_effect_estimate=0.02,
+        )
+        for lang in ("en", "ar", "es", "zh"):
+            text = explain(result, lang=lang)
+            assert "1000 observations" in text
+
+    def test_cluster_all_langs(self):
+        result = ClusterResult(
+            lift=0.05, pvalue=0.02,
+            ci_lower=0.01, ci_upper=0.09,
+            significant=True,
+            n_clusters_control=20, n_clusters_treatment=20,
+            icc=0.05,
+        )
+        for lang in ("en", "ar", "es", "zh"):
+            text = explain(result, lang=lang)
+            assert "Cluster-robust" in text
+
+    def test_did_all_langs(self):
+        result = DiDResult(
+            att=0.05, se=0.02, pvalue=0.01,
+            ci_lower=0.01, ci_upper=0.09,
+            significant=True,
+            pre_trend_diff=0.001,
+            parallel_trends_pvalue=0.80,
+        )
+        for lang in ("en", "ar", "es", "zh"):
+            text = explain(result, lang=lang)
+            assert "ATT" in text
+
+    def test_survival_all_langs(self):
+        result = SurvivalResult(
+            hazard_ratio=0.75, logrank_pvalue=0.01,
+            significant=True,
+            median_survival_ctrl=30.0, median_survival_trt=40.0,
+            ci_lower=0.60, ci_upper=0.95,
+            alpha=0.05, n_ctrl=200, n_trt=200,
+            n_events_ctrl=50, n_events_trt=35,
+        )
+        for lang in ("en", "ar", "es", "zh"):
+            text = explain(result, lang=lang)
+            assert "Hazard ratio" in text
 
 
 # ─── Unsupported language ────────────────────────────────────────────

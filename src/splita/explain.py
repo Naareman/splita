@@ -18,6 +18,7 @@ Examples
 
 from __future__ import annotations
 
+from dataclasses import fields as dc_fields
 from typing import Any
 
 # ─── Multilingual templates ──────────────────────────────────────────
@@ -337,6 +338,296 @@ def _explain_sample_size(result: Any, lang: str = "en") -> str:
     return " ".join(lines)
 
 
+# ─── New explainer functions for all result types ────────────────────
+
+
+def _explain_bandit(result: Any, lang: str = "en") -> str:
+    """Interpret a BanditResult."""
+    total_pulls = sum(result.n_pulls_per_arm)
+    best = result.current_best_arm
+    prob = result.prob_best[best]
+    loss = result.expected_loss[best]
+    return (
+        f"After {total_pulls} pulls, arm {best} is the best "
+        f"with {prob:.0%} probability. "
+        f"Expected loss from choosing it: {loss:.4f}."
+    )
+
+
+def _explain_correction(result: Any, lang: str = "en") -> str:
+    """Interpret a CorrectionResult."""
+    sig_labels = []
+    nonsig_labels = []
+    for i, rej in enumerate(result.rejected):
+        label = result.labels[i] if result.labels else f"test_{i}"
+        if rej:
+            sig_labels.append(label)
+        else:
+            nonsig_labels.append(label)
+    sig_str = ", ".join(sig_labels) if sig_labels else "none"
+    nonsig_str = ", ".join(nonsig_labels) if nonsig_labels else "none"
+    return (
+        f"{result.n_rejected} of {result.n_tests} metrics are significant "
+        f"after {result.method} correction. "
+        f"Significant: {sig_str}. Not significant: {nonsig_str}."
+    )
+
+
+def _explain_msprt_state(result: Any, lang: str = "en") -> str:
+    """Interpret an mSPRTState."""
+    n = result.n_control + result.n_treatment
+    stop_word = "Should" if result.should_stop else "Should not"
+    detected = "has" if result.should_stop else "has not"
+    return (
+        f"After {n} observations, the always-valid p-value is "
+        f"{result.always_valid_pvalue:.4f}. {stop_word} stop. "
+        f"The test {detected} detected a significant effect."
+    )
+
+
+def _explain_msprt_result(result: Any, lang: str = "en") -> str:
+    """Interpret an mSPRTResult."""
+    stop_word = "Should" if result.should_stop else "Should not"
+    detected = "has" if result.should_stop else "has not"
+    return (
+        f"After {result.total_observations} observations, the always-valid p-value is "
+        f"{result.always_valid_pvalue:.4f}. {stop_word} stop. "
+        f"The test {detected} detected a significant effect."
+    )
+
+
+def _explain_quantile(result: Any, lang: str = "en") -> str:
+    """Interpret a QuantileResult."""
+    sig_quantiles = [
+        f"{result.quantiles[i]:.0%}"
+        for i, s in enumerate(result.significant)
+        if s
+    ]
+    if sig_quantiles:
+        q_str = ", ".join(sig_quantiles)
+        median_idx = len(result.quantiles) // 2
+        diff = result.differences[median_idx]
+        return (
+            f"Treatment differs from control at the following quantiles: {q_str}. "
+            f"The median difference is {diff:.4f}."
+        )
+    return (
+        "No significant differences were found at any tested quantile."
+    )
+
+
+def _explain_cluster(result: Any, lang: str = "en") -> str:
+    """Interpret a ClusterResult."""
+    de = 1.0 / (1.0 - result.icc) if result.icc < 1.0 else float("inf")
+    return (
+        f"Cluster-robust analysis: lift = {_fmt_num(result.lift)}, "
+        f"p = {_fmt_num(result.pvalue)}. "
+        f"The design effect is {de:.1f}, meaning cluster-robust SEs are "
+        f"{de:.1f}x wider than naive."
+    )
+
+
+def _explain_stratified(result: Any, lang: str = "en") -> str:
+    """Interpret a StratifiedResult."""
+    return (
+        f"Stratified analysis across {result.n_strata} strata: "
+        f"ATE = {_fmt_num(result.ate)}, p = {_fmt_num(result.pvalue)}."
+    )
+
+
+def _explain_hte(result: Any, lang: str = "en") -> str:
+    """Interpret an HTEResult."""
+    return (
+        f"Average treatment effect varies across subgroups "
+        f"(CATE std = {result.cate_std:.3f}). "
+        f"Mean CATE = {result.mean_cate:.3f}."
+    )
+
+
+def _explain_triggered(result: Any, lang: str = "en") -> str:
+    """Interpret a TriggeredResult."""
+    rate = (result.trigger_rate_control + result.trigger_rate_treatment) / 2
+    return (
+        f"ITT effect: {_fmt_num(result.itt_result.lift)} "
+        f"(p={_fmt_num(result.itt_result.pvalue)}). "
+        f"Per-protocol effect: {_fmt_num(result.per_protocol_result.lift)} "
+        f"(p={_fmt_num(result.per_protocol_result.pvalue)}). "
+        f"Trigger rate: {rate:.0%}."
+    )
+
+
+def _explain_interaction(result: Any, lang: str = "en") -> str:
+    """Interpret an InteractionResult."""
+    verb = "does" if result.has_interaction else "does not"
+    return (
+        f"Treatment effect {verb} differ across segments "
+        f"(interaction p={_fmt_num(result.interaction_pvalue)})."
+    )
+
+
+def _explain_multi_objective(result: Any, lang: str = "en") -> str:
+    """Interpret a MultiObjectiveResult."""
+    n = len(result.metric_results)
+    n_sig = sum(1 for p in result.corrected_pvalues if p < 0.05)
+    return (
+        f"Recommendation: {result.recommendation}. "
+        f"{n_sig} of {n} metrics are significant after correction."
+    )
+
+
+def _explain_did(result: Any, lang: str = "en") -> str:
+    """Interpret a DiDResult."""
+    trend = "pass" if result.parallel_trends_pvalue > 0.05 else "fail"
+    return (
+        f"Difference-in-differences: ATT = {_fmt_num(result.att)}, "
+        f"p = {_fmt_num(result.pvalue)}. "
+        f"Parallel trends {trend}."
+    )
+
+
+def _explain_synthetic_control(result: Any, lang: str = "en") -> str:
+    """Interpret a SyntheticControlResult."""
+    return (
+        f"Synthetic control effect: {_fmt_num(result.effect)}. "
+        f"Pre-treatment fit: RMSE = {_fmt_num(result.pre_treatment_rmse)}."
+    )
+
+
+def _explain_meta_analysis(result: Any, lang: str = "en") -> str:
+    """Interpret a MetaAnalysisResult."""
+    return (
+        f"Meta-analysis ({result.method}): combined effect = "
+        f"{_fmt_num(result.combined_effect)} (p={_fmt_num(result.pvalue)}). "
+        f"Heterogeneity: I² = {result.i_squared:.0%}."
+    )
+
+
+def _explain_auto(result: Any, lang: str = "en") -> str:
+    """Interpret an AutoResult."""
+    return "\n".join(result.reasoning)
+
+
+def _explain_check(result: Any, lang: str = "en") -> str:
+    """Interpret a CheckResult."""
+    status = "passed" if result.all_passed else "failed"
+    n_passed = sum(1 for c in result.checks if c.get("passed", False))
+    n_total = len(result.checks)
+    recs = " ".join(result.recommendations) if result.recommendations else ""
+    base = (
+        f"Pre-analysis check: {status}. "
+        f"{n_passed}/{n_total} checks passed."
+    )
+    if recs:
+        base += f" {recs}"
+    return base
+
+
+def _explain_monitor(result: Any, lang: str = "en") -> str:
+    """Interpret a MonitorResult."""
+    days_str = (
+        f"{result.days_remaining} days remaining"
+        if result.days_remaining is not None
+        else "days remaining unknown"
+    )
+    return (
+        f"Current status: {result.recommendation}. "
+        f"Lift = {_fmt_num(result.current_lift)}, "
+        f"p = {_fmt_num(result.current_pvalue)}. "
+        f"{days_str}."
+    )
+
+
+def _explain_whatif(result: Any, lang: str = "en") -> str:
+    """Interpret a WhatIfResult."""
+    return result.message
+
+
+def _explain_power_simulation(result: Any, lang: str = "en") -> str:
+    """Interpret a PowerSimulationResult."""
+    return (
+        f"Estimated power: {result.power:.0%} "
+        f"at n={result.n_per_variant} per variant."
+    )
+
+
+def _explain_simulation(result: Any, lang: str = "en") -> str:
+    """Interpret a SimulationResult."""
+    return result.recommendation
+
+
+def _explain_comparison(result: Any, lang: str = "en") -> str:
+    """Interpret a ComparisonResult."""
+    diff_word = (
+        "significantly different" if result.significant
+        else "not significantly different"
+    )
+    return (
+        f"The two effects are {diff_word} "
+        f"(p={_fmt_num(result.pvalue)}). "
+        f"Direction: {result.direction}."
+    )
+
+
+def _explain_survival(result: Any, lang: str = "en") -> str:
+    """Interpret a SurvivalResult."""
+    ctrl_str = (
+        _fmt_num(result.median_survival_ctrl)
+        if result.median_survival_ctrl is not None
+        else "not reached"
+    )
+    trt_str = (
+        _fmt_num(result.median_survival_trt)
+        if result.median_survival_trt is not None
+        else "not reached"
+    )
+    return (
+        f"Hazard ratio: {_fmt_num(result.hazard_ratio)}. "
+        f"Log-rank p = {_fmt_num(result.logrank_pvalue)}. "
+        f"Median survival: ctrl={ctrl_str}, trt={trt_str}."
+    )
+
+
+def _explain_diagnosis(result: Any, lang: str = "en") -> str:
+    """Interpret a DiagnosisResult."""
+    items = "; ".join(result.action_items) if result.action_items else "none"
+    return (
+        f"Diagnosis: status={result.status}, "
+        f"confidence={result.confidence_level}. "
+        f"Action items: {items}."
+    )
+
+
+def _explain_recommendation(result: Any, lang: str = "en") -> str:
+    """Interpret a RecommendationResult."""
+    return "\n".join(result.reasoning)
+
+
+def _explain_generic(result: Any, lang: str = "en") -> str:
+    """Generate a generic explanation from dataclass fields.
+
+    This is the fallback for any result type without a dedicated handler.
+    """
+    type_name = type(result).__name__
+    parts = [f"{type_name}:"]
+    try:
+        for f in dc_fields(result):
+            val = getattr(result, f.name)
+            if isinstance(val, float):
+                parts.append(f"{f.name}={_fmt_num(val)}")
+            elif isinstance(val, bool):
+                parts.append(f"{f.name}={val}")
+            elif isinstance(val, (int, str)):
+                parts.append(f"{f.name}={val}")
+            elif isinstance(val, list) and len(val) <= 5:
+                parts.append(f"{f.name}={val}")
+            elif isinstance(val, list):
+                parts.append(f"{f.name}=[{len(val)} items]")
+            # Skip complex nested objects
+    except TypeError:
+        parts.append("(could not introspect fields)")
+    return " ".join(parts)
+
+
 # ─── Registry of explainable types ──────────────────────────────────
 
 _EXPLAINERS: dict[str, Any] = {
@@ -344,6 +635,30 @@ _EXPLAINERS: dict[str, Any] = {
     "SRMResult": _explain_srm,
     "BayesianResult": _explain_bayesian,
     "SampleSizeResult": _explain_sample_size,
+    "BanditResult": _explain_bandit,
+    "CorrectionResult": _explain_correction,
+    "mSPRTState": _explain_msprt_state,
+    "mSPRTResult": _explain_msprt_result,
+    "QuantileResult": _explain_quantile,
+    "ClusterResult": _explain_cluster,
+    "StratifiedResult": _explain_stratified,
+    "HTEResult": _explain_hte,
+    "TriggeredResult": _explain_triggered,
+    "InteractionResult": _explain_interaction,
+    "MultiObjectiveResult": _explain_multi_objective,
+    "DiDResult": _explain_did,
+    "SyntheticControlResult": _explain_synthetic_control,
+    "MetaAnalysisResult": _explain_meta_analysis,
+    "AutoResult": _explain_auto,
+    "CheckResult": _explain_check,
+    "MonitorResult": _explain_monitor,
+    "WhatIfResult": _explain_whatif,
+    "PowerSimulationResult": _explain_power_simulation,
+    "SimulationResult": _explain_simulation,
+    "ComparisonResult": _explain_comparison,
+    "SurvivalResult": _explain_survival,
+    "DiagnosisResult": _explain_diagnosis,
+    "RecommendationResult": _explain_recommendation,
 }
 
 
@@ -353,11 +668,16 @@ def explain(result: Any, *, lang: str = "en") -> str:
     Parameters
     ----------
     result : dataclass
-        A splita result object (e.g. ``ExperimentResult``,
-        ``BayesianResult``, ``SRMResult``, ``SampleSizeResult``).
+        A splita result object.  All result types defined in
+        ``splita._types`` are supported.  Types with dedicated handlers
+        produce rich, contextual explanations; all others produce a
+        generic field-based summary.
     lang : str, default ``"en"``
         Language code.  Supported: ``"en"`` (English), ``"ar"`` (Arabic),
-        ``"es"`` (Spanish), ``"zh"`` (Chinese).
+        ``"es"`` (Spanish), ``"zh"`` (Chinese).  Advanced result types
+        (beyond ExperimentResult, SRMResult, BayesianResult,
+        SampleSizeResult) use English regardless of the ``lang``
+        parameter.
 
     Returns
     -------
@@ -366,8 +686,6 @@ def explain(result: Any, *, lang: str = "en") -> str:
 
     Raises
     ------
-    TypeError
-        If the result type is not supported.
     ValueError
         If ``lang`` is not one of the supported languages.
 
@@ -397,11 +715,7 @@ def explain(result: Any, *, lang: str = "en") -> str:
         )
     type_name = type(result).__name__
     explainer = _EXPLAINERS.get(type_name)
-    if explainer is None:
-        raise TypeError(
-            f"`explain()` does not support {type_name}.\n"
-            f"  Detail: supported types are {', '.join(sorted(_EXPLAINERS))}.\n"
-            f"  Hint: pass an ExperimentResult, BayesianResult, SRMResult, "
-            f"or SampleSizeResult."
-        )
-    return explainer(result, lang)
+    if explainer is not None:
+        return explainer(result, lang)
+    # Fallback: generic explanation from dataclass fields
+    return _explain_generic(result, lang)

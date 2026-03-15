@@ -62,6 +62,61 @@ print(result.prob_treatment_better)  # 0.97
 print(result.expected_loss)          # 0.001
 ```
 
+## Common result fields
+
+splita result dataclasses share common field names, but some types use domain-specific naming to reflect their statistical meaning.
+
+### Standard fields (most result types)
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `pvalue` | `float` | Fixed-horizon p-value from a frequentist test. |
+| `significant` | `bool` | Whether `pvalue < alpha`. |
+| `ci_lower` / `ci_upper` | `float` | Lower and upper bounds of the confidence interval. |
+| `lift` | `float` | Absolute difference (treatment - control). |
+| `alpha` | `float` | Significance level used. |
+
+### Sequential testing fields (mSPRTState, mSPRTResult)
+
+| Field | Standard equivalent | Why different |
+|-------|-------------------|---------------|
+| `always_valid_pvalue` | `pvalue` | This is an *always-valid* p-value, valid at any stopping time. A regular p-value assumes fixed sample size, so reusing the name would be misleading. |
+| `always_valid_ci_lower` / `always_valid_ci_upper` | `ci_lower` / `ci_upper` | Always-valid confidence intervals that remain valid under continuous monitoring. |
+| `should_stop` | `significant` | In sequential testing, "should stop" is the actionable decision, not just "significant". |
+
+### Bayesian fields (BayesianResult)
+
+| Field | Standard equivalent | Why different |
+|-------|-------------------|---------------|
+| `prob_b_beats_a` | (no direct equivalent) | Bayesian posterior probability, not a p-value. Values near 1.0 mean strong evidence for treatment. |
+| `expected_loss_a` / `expected_loss_b` | (no direct equivalent) | Expected loss from choosing each variant. A decision-theoretic quantity with no frequentist analog. |
+| `ci_lower` / `ci_upper` | same names | These are *credible* interval bounds (Bayesian), not confidence intervals, despite sharing the field names. |
+
+### Multiple testing correction fields (CorrectionResult)
+
+| Field | Standard equivalent | Why different |
+|-------|-------------------|---------------|
+| `rejected` | `significant` | After correction, "rejected" is the standard term for null hypotheses that were rejected. A metric can be "significant" in isolation but not "rejected" after correction. |
+| `adjusted_pvalues` | `pvalue` | These are corrected p-values, not raw p-values. |
+
+### Mapping guide
+
+If you are writing generic code that processes different result types, here is a quick reference for finding the "p-value-like" and "significant-like" fields:
+
+```python
+# Example: get the p-value from any result type
+def get_pvalue(result):
+    if hasattr(result, 'pvalue'):
+        return result.pvalue
+    if hasattr(result, 'always_valid_pvalue'):
+        return result.always_valid_pvalue
+    if hasattr(result, 'logrank_pvalue'):
+        return result.logrank_pvalue  # SurvivalResult
+    if hasattr(result, 'interaction_pvalue'):
+        return result.interaction_pvalue  # InteractionResult
+    return None
+```
+
 ### The experimentation lifecycle
 
 1. **Plan** -- Use `SampleSize` to determine how many users you need.

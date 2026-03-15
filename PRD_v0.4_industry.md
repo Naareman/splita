@@ -430,6 +430,118 @@ platforms (GrowthBook, Eppo, Statsig) that no open-source Python library has.
 - **Class**: `TrimmedMeanEstimator`
 - **Difficulty**: 3/10
 
+### Survival / Time-to-Event Analysis
+
+#### 33. SurvivalExperiment
+- **Paper**: Cox (1972) "Regression models and life tables", Kaplan & Meier (1958)
+- **Used by**: Subscription products, churn analysis
+- **What**: When the outcome is TIME to an event (time to churn, time to purchase,
+  time to upgrade). Standard A/B tests ignore censoring (users who haven't converted
+  yet). Survival analysis handles this correctly.
+- **Algorithm**: Kaplan-Meier curves per group, log-rank test for significance,
+  Cox proportional hazards for hazard ratio + covariates.
+- **Module**: `splita.core.survival`
+- **Class**: `SurvivalExperiment`
+- **Difficulty**: 6/10
+
+### Mediation Analysis
+
+#### 34. MediationAnalysis
+- **Paper**: Baron & Kenny (1986), Imai et al. (2010) "A general approach to causal
+  mediation analysis"
+- **Used by**: Product analytics (WHY does treatment work?)
+- **What**: Decomposes treatment effect into direct effect and indirect effect through
+  a mediator. E.g., new checkout flow → reduced friction (mediator) → more purchases.
+  Answers "why" not just "what".
+- **Algorithm**: Sequential regression approach or nonparametric mediation.
+  ACME (Average Causal Mediation Effect) via `scipy.stats`.
+- **Module**: `splita.causal.mediation`
+- **Class**: `MediationAnalysis`
+- **Difficulty**: 6/10
+
+### Exact / Permutation Tests
+
+#### 35. PermutationTest
+- **Paper**: Fisher (1935), Ernst (2004)
+- **Used by**: Small sample experiments
+- **What**: Exact test that makes no distributional assumptions. Permutes treatment
+  labels and computes test statistic for every permutation. Valid for any sample size.
+- **Algorithm**: Enumerate or sample permutations of treatment assignment, compute
+  test statistic for each, p-value = proportion of permutations as extreme as observed.
+- **Module**: `splita.core.permutation`
+- **Class**: `PermutationTest`
+- **Difficulty**: 3/10
+
+### Hierarchical / Mixed-Effects Experiments
+
+#### 36. MixedEffectsExperiment
+- **Paper**: Statsig (2025), Bates et al. (lme4)
+- **Used by**: Experiments with repeated measures per user, cross-device, multi-session
+- **What**: When users have multiple observations (sessions, purchases), standard tests
+  overstate significance by treating each observation as independent. Mixed-effects
+  models correctly account for within-user correlation.
+- **Algorithm**: Random intercept per user, fixed effect for treatment.
+  Equivalent to cluster-robust SE but more efficient.
+- **Module**: `splita.core.mixed_effects`
+- **Class**: `MixedEffectsExperiment`
+- **Difficulty**: 6/10
+
+### Multi-Factor Experiment Design
+
+#### 37. FractionalFactorialDesign
+- **Paper**: Box & Hunter (1961), MOST framework (Collins 2018)
+- **Used by**: Testing multiple factors simultaneously (feature flags, UI elements)
+- **What**: When you want to test N factors (e.g., button color, header text, layout)
+  with 2^N cells being infeasible. Fractional factorial designs test a strategically
+  chosen subset that can still estimate main effects and key interactions.
+- **Algorithm**: Generate design matrix, assign users, analyze main effects and
+  interactions via ANOVA or regression.
+- **Module**: `splita.design.factorial`
+- **Class**: `FractionalFactorialDesign`
+- **Difficulty**: 5/10
+
+### Continuous Treatment Effects
+
+#### 38. ContinuousTreatmentEffect
+- **Paper**: Hirano & Imbens (2004) "The propensity score with continuous treatments"
+- **Used by**: Pricing, dosage, ad frequency experiments
+- **What**: When treatment is not binary but continuous (e.g., discount percentage,
+  ad impressions, notification frequency). Estimates the dose-response curve.
+- **Algorithm**: Generalized propensity score, kernel-weighted regression,
+  or B-spline regression of outcome on treatment dose.
+- **Module**: `splita.causal.continuous_treatment`
+- **Class**: `ContinuousTreatmentEffect`
+- **Difficulty**: 6/10
+
+### Research Integrity
+
+#### 39. PHackingDetector
+- **Paper**: Simonsohn et al. (2014) "P-curve", Head et al. (2015)
+- **Used by**: Research teams, experiment review boards
+- **What**: Detects potential p-hacking in a collection of experiments.
+  Analyzes the distribution of p-values — if there's a suspicious spike
+  just below 0.05, it suggests selective reporting.
+- **Algorithm**: P-curve analysis (distribution of significant p-values should
+  be right-skewed under true effects), binomial test for p-value bunching,
+  Caliper test around 0.05.
+- **Module**: `splita.diagnostics.phacking`
+- **Class**: `PHackingDetector`
+- **Difficulty**: 4/10
+
+### Offline / Counterfactual Evaluation
+
+#### 40. OfflineEvaluator
+- **Paper**: Li et al. (2011) "Unbiased offline evaluation of contextual-bandit-based
+  news article recommendation", Gilotte et al. (2018)
+- **Used by**: Recommendation systems, ad platforms
+- **What**: Evaluate a new policy (ranking, recommendation) using historical logged data
+  without deploying it. Uses inverse propensity scoring to debias logged data.
+- **Algorithm**: IPS estimator: `V(pi) = 1/n * sum(r_i * pi(a_i|x_i) / mu(a_i|x_i))`
+  where mu is the logging policy. Doubly robust version for lower variance.
+- **Module**: `splita.bandits.offline_evaluation`
+- **Class**: `OfflineEvaluator`
+- **Difficulty**: 7/10
+
 ---
 
 ## Complete Build Backlog (all versions)
@@ -467,7 +579,15 @@ platforms (GrowthBook, Eppo, Statsig) that no open-source Python library has.
 | 29 | DynamicCausalEffect | v0.5 | 8/10 | Microsoft JASA'22 |
 | 30 | BayesianExperimentOptimizer | v0.5 | 8/10 | Meta 2025 |
 | 31 | AdaptiveEnrichment | v0.5 | 8/10 | Simon 2013 |
-| 32 | ExperimentationAccelerator | v0.6+ | 9/10 | arxiv 2026 |
+| 32 | SurvivalExperiment | v0.5 | 6/10 | Cox 1972 |
+| 33 | MediationAnalysis | v0.5 | 6/10 | Baron & Kenny 1986 |
+| 34 | PermutationTest | v0.4 | 3/10 | Fisher 1935 |
+| 35 | MixedEffectsExperiment | v0.5 | 6/10 | Statsig 2025 |
+| 36 | FractionalFactorialDesign | v0.5 | 5/10 | Box 1961 |
+| 37 | ContinuousTreatmentEffect | v0.5 | 6/10 | Hirano & Imbens 2004 |
+| 38 | PHackingDetector | v0.4 | 4/10 | Research integrity |
+| 39 | OfflineEvaluator | v0.5 | 7/10 | Li et al. 2011 |
+| 40 | ExperimentationAccelerator | v0.6+ | 9/10 | arxiv 2026 |
 
 ---
 

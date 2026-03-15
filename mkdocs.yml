@@ -1,0 +1,54 @@
+site_name: splita
+site_url: https://Naareman.github.io/splita
+site_description: "A/B test analysis — correct by default, informative by design"
+repo_url: https://github.com/Naareman/splita
+repo_name: Naareman/splita
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - search.suggest
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+    - Core Concepts: getting-started/concepts.md
+  - User Guide:
+    - Running an A/B Test: guide/experiment.md
+    - Planning (Sample Size): guide/planning.md
+    - Data Quality (SRM): guide/data-quality.md
+    - Variance Reduction: guide/variance-reduction.md
+    - Sequential Testing: guide/sequential.md
+    - Bayesian Analysis: guide/bayesian.md
+    - Bandits: guide/bandits.md
+    - Causal Inference: guide/causal.md
+  - Cookbook:
+    - E-commerce: cookbook/ecommerce.md
+    - Marketplace: cookbook/marketplace.md
+    - Subscription: cookbook/subscription.md
+    - Mobile App: cookbook/mobile.md
+  - API Reference: api/index.md
+  - Comparison: comparison.md
+  - Contributing: contributing.md

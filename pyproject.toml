@@ -45,10 +45,14 @@ api = [
     "fastapi>=0.100",
     "uvicorn>=0.20",
 ]
+playground = [
+    "streamlit>=1.30",
+    "matplotlib>=3.5",
+]
 
 [project.urls]
 Homepage = "https://github.com/Naareman/splita"
-Documentation = "https://github.com/Naareman/splita"
+Documentation = "https://Naareman.github.io/splita"
 Repository = "https://github.com/Naareman/splita"
 
 [dependency-groups]
@@ -57,6 +61,7 @@ dev = [
     "pytest-cov>=4.0",
     "ruff>=0.4",
     "mypy>=1.0",
+    "mkdocs-material>=9.0",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -84,6 +89,7 @@ warn_unused_configs = true
 
 [tool.ruff.lint.per-file-ignores]
 "src/splita/explain.py" = ["RUF001", "E501"]
+"src/splita/_playground_app.py" = ["E501"]
 "src/splita/report.py" = ["E501"]
 "src/splita/_types.py" = ["E501"]
 "src/splita/serve.py" = ["B904"]

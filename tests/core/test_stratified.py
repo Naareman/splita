@@ -347,3 +347,28 @@ class TestValidation:
                 control_strata=["A"],
                 treatment_strata=["A", "A"],
             )
+
+    def test_strata_not_1d(self):
+        """Multi-dimensional strata array raises ValueError."""
+        rng = np.random.default_rng(42)
+        ctrl = rng.normal(10, 1, 50)
+        trt = rng.normal(10.5, 1, 50)
+        with pytest.raises(ValueError, match="1-D"):
+            StratifiedExperiment(
+                ctrl,
+                trt,
+                control_strata=np.array([["A"] * 50]),
+                treatment_strata=np.array(["A"] * 50),
+            )
+
+    def test_stratum_too_few_treatment(self):
+        """Stratum with <2 treatment obs raises ValueError."""
+        rng = np.random.default_rng(42)
+        ctrl = np.concatenate([rng.normal(10, 1, 50), rng.normal(5, 1, 50)])
+        trt = np.concatenate([rng.normal(10, 1, 1), rng.normal(5, 1, 50)])
+        sc = np.array(["A"] * 50 + ["B"] * 50)
+        st = np.array(["A"] * 1 + ["B"] * 50)
+        with pytest.raises(ValueError, match="fewer than 2 treatment"):
+            StratifiedExperiment(
+                ctrl, trt, control_strata=sc, treatment_strata=st
+            ).run()

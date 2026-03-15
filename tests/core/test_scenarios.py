@@ -7,6 +7,8 @@ analysis, and result interpretation.
 
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import pytest
 
@@ -1650,3 +1652,911 @@ class TestThompsonVsFixedABTest:
             f"Thompson gave {thompson_pulls[loser_arm]} pulls to the loser "
             f"vs fixed {fixed_pulls[loser_arm]}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Scenario: Triggered experiment with 60% trigger rate
+# ---------------------------------------------------------------------------
+
+
+class TestTriggeredExperiment60Percent:
+    """A mobile app runs a triggered experiment where only ~60% of treatment
+    users actually see the new feature (e.g., they must visit a specific page).
+
+    The ITT effect should be diluted relative to the per-protocol effect.
+    """
+
+    def test_trigger_rate_approximately_60(self):
+        """Trigger rate should be close to 60%."""
+        rng = np.random.default_rng(42)
+        n = 1000
+        ctrl = rng.normal(10, 2, n)
+        trt_base = rng.normal(10, 2, n)
+        triggered = rng.random(n) < 0.6
+        trt_base[triggered] += 2.0  # only triggered users get effect
+
+        from splita import TriggeredExperiment
+
+        result = TriggeredExperiment(
+            ctrl, trt_base, treatment_triggered=triggered,
+        ).run()
+
+        assert 0.5 < result.trigger_rate_treatment < 0.7, (
+            f"Trigger rate {result.trigger_rate_treatment:.2f} not near 0.6"
+        )
+
+    def test_itt_effect_diluted(self):
+        """ITT lift should be smaller than per-protocol lift."""
+        rng = np.random.default_rng(42)
+        n = 1000
+        ctrl = rng.normal(10, 2, n)
+        trt = rng.normal(10, 2, n)
+        triggered = rng.random(n) < 0.6
+        trt[triggered] += 3.0
+
+        from splita import TriggeredExperiment
+
+        result = TriggeredExperiment(
+            ctrl, trt, treatment_triggered=triggered,
+        ).run()
+
+        assert abs(result.per_protocol_result.lift) > abs(result.itt_result.lift), (
+            f"PP lift ({result.per_protocol_result.lift:.4f}) should exceed "
+            f"ITT lift ({result.itt_result.lift:.4f})"
+        )
+
+    def test_per_protocol_detects_effect(self):
+        """Per-protocol analysis should detect the true effect."""
+        rng = np.random.default_rng(42)
+        n = 1000
+        ctrl = rng.normal(10, 2, n)
+        trt = rng.normal(10, 2, n)
+        triggered = rng.random(n) < 0.6
+        trt[triggered] += 3.0
+
+        from splita import TriggeredExperiment
+
+        result = TriggeredExperiment(
+            ctrl, trt, treatment_triggered=triggered,
+        ).run()
+
+        assert result.per_protocol_result.significant, (
+            "Per-protocol should detect the effect (p="
+            f"{result.per_protocol_result.pvalue:.4f})"
+        )
+
+    def test_full_pipeline_to_dict(self):
+        """Full pipeline result should serialise cleanly."""
+        rng = np.random.default_rng(42)
+        n = 500
+        ctrl = rng.normal(10, 2, n)
+        trt = rng.normal(10, 2, n)
+        triggered = rng.random(n) < 0.6
+        trt[triggered] += 2.0
+
+        from splita import TriggeredExperiment
+
+        result = TriggeredExperiment(
+            ctrl, trt, treatment_triggered=triggered,
+        ).run()
+
+        d = result.to_dict()
+        assert "trigger_rate_treatment" in d
+        assert "itt_result" in d
+        assert "per_protocol_result" in d
+
+
+# ---------------------------------------------------------------------------
+# Scenario: HTE identifies high-value user segment
+# ---------------------------------------------------------------------------
+
+
+class TestHTEHighValueSegment:
+    """A company suspects that premium users respond differently to a feature.
+
+    We generate data where the treatment effect is large for users with
+    high X0 (proxy for premium) and zero for low X0 users.  The HTE
+    estimator should surface this heterogeneity.
+    """
+
+    def test_cate_varies_across_segments(self):
+        """CATE should be higher for premium users (X0 > 1)."""
+        from splita import HTEEstimator
+
+        rng = np.random.default_rng(42)
+        n = 500
+        X_ctrl = rng.normal(size=(n, 3))
+        X_trt = rng.normal(size=(n, 3))
+        # Only users with X0 > 0 get the effect
+        y_ctrl = rng.normal(5, 1, n)
+        y_trt = rng.normal(5, 1, n)
+        premium_mask = X_trt[:, 0] > 0
+        y_trt[premium_mask] += 3.0
+
+        hte = HTEEstimator(method="t_learner").fit(
+            y_ctrl, y_trt, X_ctrl, X_trt,
+        )
+        result = hte.result()
+
+        # CATE std should indicate heterogeneity
+        assert result.cate_std > 0.3, (
+            f"CATE std {result.cate_std:.4f} too low, expected heterogeneity"
+        )
+
+    def test_predict_premium_vs_standard(self):
+        """Predict CATE for a premium user vs a standard user."""
+        from splita import HTEEstimator
+
+        rng = np.random.default_rng(42)
+        n = 500
+        X_ctrl = rng.normal(size=(n, 3))
+        X_trt = rng.normal(size=(n, 3))
+        y_ctrl = X_ctrl[:, 0] * 0.5 + rng.normal(0, 0.5, n)
+        y_trt = X_trt[:, 0] * 2.5 + rng.normal(0, 0.5, n)
+
+        hte = HTEEstimator(method="t_learner").fit(
+            y_ctrl, y_trt, X_ctrl, X_trt,
+        )
+
+        premium_user = np.array([[2.0, 0.0, 0.0]])
+        standard_user = np.array([[-1.0, 0.0, 0.0]])
+
+        cate_premium = hte.predict(premium_user)[0]
+        cate_standard = hte.predict(standard_user)[0]
+
+        assert cate_premium > cate_standard, (
+            f"Premium CATE ({cate_premium:.4f}) should exceed "
+            f"standard CATE ({cate_standard:.4f})"
+        )
+
+    def test_top_features_identifies_x0(self):
+        """The most important feature should be X0 (index 0)."""
+        from splita import HTEEstimator
+
+        rng = np.random.default_rng(42)
+        n = 500
+        X_ctrl = rng.normal(size=(n, 5))
+        X_trt = rng.normal(size=(n, 5))
+        # Only X0 drives the treatment effect
+        y_ctrl = rng.normal(0, 1, n)
+        y_trt = X_trt[:, 0] * 3.0 + rng.normal(0, 1, n)
+
+        hte = HTEEstimator(method="t_learner").fit(
+            y_ctrl, y_trt, X_ctrl, X_trt,
+        )
+        result = hte.result()
+
+        assert result.top_features is not None
+        assert result.top_features[0] == 0, (
+            f"Top feature should be index 0, got {result.top_features[0]}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Scenario: Confidence Sequence Monitoring Catches Effect Earlier
+# ---------------------------------------------------------------------------
+
+
+class TestCSMonitoringCatchesEarlier:
+    """A team monitors a running experiment with ConfidenceSequence.
+
+    Compared to a fixed-horizon test that must wait for all data,
+    the CS approach should detect a real effect earlier (with fewer
+    total observations) by peeking at each batch.
+    """
+
+    def test_cs_detects_before_full_sample(self):
+        """CS should stop before the full 2000-per-group sample is reached."""
+        from splita.sequential.confidence_sequence import ConfidenceSequence
+
+        rng = np.random.default_rng(9001)
+        true_effect = 0.4
+        sigma = 1.0
+        batch_size = 100
+        max_batches = 20  # max 2000 per group
+
+        cs = ConfidenceSequence(alpha=0.05, sigma=sigma)
+        stopped_at_batch = None
+
+        for batch_idx in range(1, max_batches + 1):
+            ctrl = rng.normal(0, sigma, size=batch_size)
+            trt = rng.normal(true_effect, sigma, size=batch_size)
+            state = cs.update(ctrl, trt)
+            if state.should_stop:
+                stopped_at_batch = batch_idx
+                break
+
+        assert stopped_at_batch is not None, (
+            "CS should have detected effect=0.4 within 20 batches"
+        )
+        # Should detect well before the full 20 batches
+        assert stopped_at_batch < max_batches, (
+            f"CS stopped at batch {stopped_at_batch}, should be earlier "
+            f"than the full {max_batches} batches"
+        )
+
+    def test_cs_stops_with_reasonable_sample(self):
+        """CS should stop with a reasonable total sample when the effect is real.
+
+        The CS trades off wider intervals (more data needed) for the ability
+        to peek anytime.  With a moderate effect, it should still stop well
+        before an unreasonable sample size.
+        """
+        from splita.sequential.confidence_sequence import ConfidenceSequence
+
+        rng = np.random.default_rng(9002)
+        sigma = 1.0
+        true_effect = 0.3
+        batch_size = 50
+        max_per_group = 5000
+
+        cs = ConfidenceSequence(alpha=0.05, sigma=sigma)
+        total_per_group = 0
+
+        for _ in range(max_per_group // batch_size):
+            ctrl = rng.normal(0, sigma, size=batch_size)
+            trt = rng.normal(true_effect, sigma, size=batch_size)
+            state = cs.update(ctrl, trt)
+            total_per_group += batch_size
+            if state.should_stop:
+                break
+
+        assert state.should_stop, (
+            "CS should have stopped with effect=0.3 within 5000 obs per group"
+        )
+        # Should stop in a reasonable amount (not use the full budget)
+        assert total_per_group < max_per_group, (
+            f"CS used {total_per_group} per group, should be << {max_per_group}"
+        )
+
+    def test_cs_result_after_monitoring(self):
+        """After monitoring stops, result() should have proper metadata."""
+        from splita.sequential.confidence_sequence import ConfidenceSequence
+
+        rng = np.random.default_rng(9003)
+        cs = ConfidenceSequence(alpha=0.05, sigma=1.0)
+
+        for _ in range(10):
+            ctrl = rng.normal(0, 1, size=200)
+            trt = rng.normal(0.5, 1, size=200)
+            state = cs.update(ctrl, trt)
+            if state.should_stop:
+                break
+
+        result = cs.result()
+        assert result.stopping_reason in ("ci_excludes_zero", "not_stopped")
+        assert result.total_observations == result.n_control + result.n_treatment
+        assert result.width > 0
+
+
+# ---------------------------------------------------------------------------
+# Scenario: Pre-experiment Validation Identifies Underpowered Metric
+# ---------------------------------------------------------------------------
+
+
+class TestPreExperimentIdentifiesUnderpowered:
+    """A data scientist validates a metric before launching an experiment.
+
+    The metric has very high variance relative to the expected effect.
+    MetricSensitivity should flag this as underpowered, and
+    VarianceEstimator should provide distributional diagnostics.
+    """
+
+    def test_high_variance_metric_low_power(self):
+        """Metric with std=50 should have low power for MDE=0.5."""
+        from splita.diagnostics.pre_experiment import MetricSensitivity
+
+        rng = np.random.default_rng(9010)
+        # Revenue metric: mean=100, std=50 (highly variable)
+        data = rng.normal(100, 50, size=200)
+
+        ms = MetricSensitivity(n_simulations=300, random_state=9010)
+        result = ms.run(data, mde=0.5)
+
+        # Power should be very low for such a small MDE vs large variance
+        assert result.estimated_power < 0.20, (
+            f"Power should be low for MDE=0.5 with std~50, got {result.estimated_power:.3f}"
+        )
+        # Recommended n should be very large
+        assert result.recommended_n > 50_000, (
+            f"Recommended n should be huge, got {result.recommended_n}"
+        )
+
+    def test_variance_estimator_flags_issues(self):
+        """VarianceEstimator should detect heavy tails in revenue data."""
+        from splita.diagnostics.pre_experiment import VarianceEstimator
+
+        rng = np.random.default_rng(9011)
+        # Simulate revenue with outliers (log-normal with extreme tail)
+        data = rng.lognormal(mean=3.0, sigma=2.0, size=1000)
+
+        ve = VarianceEstimator().fit(data)
+        result = ve.result()
+
+        # Log-normal with sigma=2.0 should be flagged as heavy-tailed and skewed
+        assert result.is_heavy_tailed or result.is_skewed, (
+            f"Should flag distributional issues: kurtosis={result.kurtosis:.1f}, "
+            f"skewness={result.skewness:.1f}"
+        )
+        assert any("outlier" in r.lower() or "mann-whitney" in r.lower()
+                    for r in result.recommendations), (
+            "Should recommend outlier handling or non-parametric tests"
+        )
+
+    def test_full_pre_experiment_pipeline(self):
+        """Full pipeline: check variance, then check sensitivity, then decide."""
+        from splita.diagnostics.pre_experiment import MetricSensitivity, VarianceEstimator
+
+        rng = np.random.default_rng(9012)
+
+        # Step 1: Gather historical data
+        historical = rng.normal(10, 2, size=500)
+
+        # Step 2: Variance diagnostics
+        ve_result = VarianceEstimator().fit(historical).result()
+        assert not ve_result.is_heavy_tailed, "Clean normal data should not be heavy-tailed"
+
+        # Step 3: Check if we can detect a 0.5-unit MDE
+        ms = MetricSensitivity(n_simulations=200, random_state=9012)
+        ms_result = ms.run(historical, mde=0.5)
+
+        # With std~2 and MDE=0.5, n=500 should have decent power
+        assert ms_result.estimated_power > 0.50, (
+            f"Expected reasonable power, got {ms_result.estimated_power:.3f}"
+        )
+        assert ms_result.is_sensitive, "Metric should be sensitive at n=500"
+
+    def test_underpowered_metric_needs_more_data(self):
+        """An underpowered metric should recommend more data than available."""
+        from splita.diagnostics.pre_experiment import MetricSensitivity
+
+        rng = np.random.default_rng(9013)
+        # Small dataset, high variance, tiny MDE
+        data = rng.normal(100, 30, size=50)
+
+        ms = MetricSensitivity(n_simulations=200, random_state=9013)
+        result = ms.run(data, mde=0.1)
+
+        # recommended_n should far exceed available data (50)
+        assert result.recommended_n > len(data) * 10, (
+            f"recommended_n={result.recommended_n} should be >> {len(data)}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Scenario: Bayesian A/B test with ROPE for "practically equivalent"
+# ---------------------------------------------------------------------------
+
+
+class TestBayesianROPEPracticalEquivalence:
+    """A product team runs a Bayesian A/B test to check if a feature
+    change has a practically meaningful effect on conversion rate.
+    They use a ROPE of +/-0.5pp to determine practical equivalence.
+    """
+
+    def test_no_real_effect_falls_in_rope(self):
+        """No real effect -> posterior mass concentrated in ROPE."""
+        from splita import BayesianExperiment
+
+        rng = np.random.default_rng(42)
+        n = 5000
+        ctrl = rng.binomial(1, 0.10, n)
+        trt = rng.binomial(1, 0.10, n)
+        result = BayesianExperiment(
+            ctrl, trt, rope=(-0.005, 0.005), random_state=0
+        ).run()
+        assert result.prob_in_rope is not None
+        assert result.prob_in_rope > 0.40
+        assert 0.3 < result.prob_b_beats_a < 0.7
+
+    def test_real_effect_escapes_rope(self):
+        """Real +5pp effect -> negligible posterior mass in ROPE."""
+        from splita import BayesianExperiment
+
+        rng = np.random.default_rng(42)
+        n = 5000
+        ctrl = rng.binomial(1, 0.10, n)
+        trt = rng.binomial(1, 0.15, n)
+        result = BayesianExperiment(
+            ctrl, trt, rope=(-0.005, 0.005), random_state=0
+        ).run()
+        assert result.prob_in_rope is not None
+        assert result.prob_in_rope < 0.01
+        assert result.prob_b_beats_a > 0.99
+
+    def test_borderline_effect_decision(self):
+        """Effect near ROPE boundary -> result is valid, decision uncertain."""
+        from splita import BayesianExperiment
+
+        rng = np.random.default_rng(42)
+        n = 5000
+        ctrl = rng.binomial(1, 0.100, n)
+        trt = rng.binomial(1, 0.105, n)
+        result = BayesianExperiment(
+            ctrl, trt, rope=(-0.005, 0.005), random_state=0
+        ).run()
+        assert result.prob_in_rope is not None
+        assert result.rope == (-0.005, 0.005)
+        assert 0.0 <= result.prob_in_rope <= 1.0
+        assert result.ci_lower < result.ci_upper
+
+
+# ---------------------------------------------------------------------------
+# Scenario: Multi-objective with 3 metrics -> tradeoff decision
+# ---------------------------------------------------------------------------
+
+
+class TestMultiObjectiveTradeoffDecision:
+    """A product team tests a new recommendation algorithm against 3 metrics:
+    CTR, revenue per user, and page load time.  The treatment improves
+    engagement but degrades performance, requiring a tradeoff decision.
+    """
+
+    def test_three_metric_tradeoff(self):
+        """Two positive, one negative lift metric -> 'tradeoff'.
+
+        Speed metric: treatment is *lower* (faster is better, but raw lift
+        is negative), so the multi-objective engine sees a sig negative lift.
+        """
+        from splita.core.multi_objective import MultiObjectiveExperiment
+
+        rng = np.random.default_rng(42)
+        n = 1000
+        exp = MultiObjectiveExperiment(
+            metric_names=["ctr", "revenue", "speed_score"]
+        )
+        # CTR: treatment better (positive lift)
+        exp.add_metric(
+            rng.binomial(1, 0.05, n).astype(float),
+            rng.binomial(1, 0.08, n).astype(float),
+        )
+        # Revenue: treatment better (positive lift)
+        exp.add_metric(rng.normal(10, 3, n), rng.normal(11, 3, n))
+        # Speed score: treatment *worse* (negative lift = treatment lower)
+        exp.add_metric(rng.normal(100, 10, n), rng.normal(85, 10, n))
+        result = exp.run()
+        assert len(result.metric_results) == 3
+        assert result.pareto_dominant is False
+        assert result.recommendation == "tradeoff"
+        assert len(result.tradeoffs) > 0
+
+    def test_all_three_positive_adopt(self):
+        """All 3 metrics improved -> 'adopt'."""
+        from splita.core.multi_objective import MultiObjectiveExperiment
+
+        rng = np.random.default_rng(42)
+        n = 1000
+        exp = MultiObjectiveExperiment(
+            metric_names=["ctr", "revenue", "speed"]
+        )
+        exp.add_metric(
+            rng.binomial(1, 0.05, n).astype(float),
+            rng.binomial(1, 0.10, n).astype(float),
+        )
+        exp.add_metric(rng.normal(10, 2, n), rng.normal(12, 2, n))
+        exp.add_metric(rng.normal(500, 50, n), rng.normal(520, 50, n))
+        result = exp.run()
+        assert result.recommendation == "adopt"
+        assert result.pareto_dominant is True
+        assert len(result.tradeoffs) == 0
+
+
+# ---------------------------------------------------------------------------
+# Scenario: DiD for policy change evaluation
+# ---------------------------------------------------------------------------
+
+
+class TestDiDPolicyChangeScenario:
+    """A company introduces a policy in a treated region and uses DiD to
+    estimate the causal effect by differencing out common time trends.
+    """
+
+    def test_did_detects_policy_effect(self):
+        from splita.causal.did import DifferenceInDifferences
+
+        rng = np.random.default_rng(10001)
+        n = 500
+        true_effect = 2.5
+
+        pre_control = rng.normal(50, 5, n)
+        pre_treatment = rng.normal(50, 5, n)
+        post_control = rng.normal(53, 5, n)
+        post_treatment = rng.normal(53 + true_effect, 5, n)
+
+        r = DifferenceInDifferences(alpha=0.05).fit(
+            pre_control, pre_treatment, post_control, post_treatment
+        ).result()
+
+        assert abs(r.att - true_effect) < 1.5
+        assert r.significant is True
+
+    def test_parallel_trends_holds(self):
+        from splita.causal.did import DifferenceInDifferences
+
+        rng = np.random.default_rng(10002)
+        n = 500
+        pre_control = rng.normal(50, 5, n)
+        pre_treatment = rng.normal(50, 5, n)
+        post_control = rng.normal(53, 5, n)
+        post_treatment = rng.normal(55, 5, n)
+
+        r = DifferenceInDifferences().fit(
+            pre_control, pre_treatment, post_control, post_treatment
+        ).result()
+        assert r.parallel_trends_pvalue > 0.05
+
+    def test_ci_covers_true_effect(self):
+        from splita.causal.did import DifferenceInDifferences
+
+        rng = np.random.default_rng(10003)
+        n = 1000
+        true_effect = 1.5
+        pre_control = rng.normal(100, 10, n)
+        pre_treatment = rng.normal(100, 10, n)
+        post_control = rng.normal(105, 10, n)
+        post_treatment = rng.normal(105 + true_effect, 10, n)
+
+        r = DifferenceInDifferences().fit(
+            pre_control, pre_treatment, post_control, post_treatment
+        ).result()
+        assert r.ci_lower <= true_effect <= r.ci_upper
+
+    def test_result_serializable(self):
+        from splita.causal.did import DifferenceInDifferences
+
+        rng = np.random.default_rng(10004)
+        n = 100
+        r = DifferenceInDifferences().fit(
+            rng.normal(0, 1, n), rng.normal(0, 1, n),
+            rng.normal(0, 1, n), rng.normal(2, 1, n),
+        ).result()
+        d = r.to_dict()
+        assert isinstance(d, dict)
+        assert set(d.keys()) >= {"att", "se", "pvalue", "ci_lower", "ci_upper"}
+
+
+# ---------------------------------------------------------------------------
+# Scenario: Synthetic control for market expansion
+# ---------------------------------------------------------------------------
+
+
+class TestSyntheticControlMarketExpansion:
+    """Company expands into a new market; donor markets serve as controls."""
+
+    def test_sc_detects_expansion_effect(self):
+        from splita.causal.synthetic_control import SyntheticControl
+
+        rng = np.random.default_rng(11001)
+        n_pre, n_post = 12, 6
+        expansion_effect = 10.0
+
+        treated_pre = np.arange(1, n_pre + 1, dtype=float) * 5 + rng.normal(0, 1, n_pre)
+        treated_post = (
+            np.arange(n_pre + 1, n_pre + n_post + 1, dtype=float) * 5
+            + expansion_effect + rng.normal(0, 1, n_post)
+        )
+
+        n_donors = 4
+        donors_pre = np.zeros((n_pre, n_donors))
+        donors_post = np.zeros((n_post, n_donors))
+        for d in range(n_donors):
+            scale = 0.8 + 0.4 * d / n_donors
+            offset = rng.normal(0, 2)
+            donors_pre[:, d] = (
+                np.arange(1, n_pre + 1, dtype=float) * 5 * scale
+                + offset + rng.normal(0, 1, n_pre)
+            )
+            donors_post[:, d] = (
+                np.arange(n_pre + 1, n_pre + n_post + 1, dtype=float) * 5 * scale
+                + offset + rng.normal(0, 1, n_post)
+            )
+
+        r = SyntheticControl().fit(
+            treated_pre, treated_post, donors_pre, donors_post
+        ).result()
+        assert r.effect > 0
+        assert abs(r.effect - expansion_effect) < 8.0
+
+    def test_good_pre_treatment_fit(self):
+        from splita.causal.synthetic_control import SyntheticControl
+
+        rng = np.random.default_rng(11002)
+        n_pre, n_post = 20, 5
+
+        treated_pre = np.arange(1, n_pre + 1, dtype=float) + rng.normal(0, 0.1, n_pre)
+        treated_post = np.arange(n_pre + 1, n_pre + n_post + 1, dtype=float) + 5.0
+        donors_pre = np.column_stack([
+            np.arange(1, n_pre + 1, dtype=float) + rng.normal(0, 0.1, n_pre),
+            np.arange(1, n_pre + 1, dtype=float) * 2,
+        ])
+        donors_post = np.column_stack([
+            np.arange(n_pre + 1, n_pre + n_post + 1, dtype=float),
+            np.arange(n_pre + 1, n_pre + n_post + 1, dtype=float) * 2,
+        ])
+
+        r = SyntheticControl().fit(
+            treated_pre, treated_post, donors_pre, donors_post
+        ).result()
+        assert r.pre_treatment_rmse < 1.0
+
+    def test_weight_constraints(self):
+        from splita.causal.synthetic_control import SyntheticControl
+
+        rng = np.random.default_rng(11003)
+        n_pre, n_post, n_donors = 10, 5, 3
+        r = SyntheticControl().fit(
+            rng.normal(10, 1, n_pre),
+            rng.normal(15, 1, n_post),
+            rng.normal(10, 1, (n_pre, n_donors)),
+            rng.normal(10, 1, (n_post, n_donors)),
+        ).result()
+        assert abs(sum(r.weights) - 1.0) < 1e-6
+        assert all(w >= -1e-10 for w in r.weights)
+        assert len(r.effect_series) == n_post
+
+
+# ---------------------------------------------------------------------------
+# Scenario 10: E-value monitoring with daily peeks
+# ---------------------------------------------------------------------------
+
+
+class TestEValueDailyMonitoring:
+    """A team monitors an experiment daily using E-values."""
+
+    def test_evalue_detects_real_effect_with_daily_peeks(self):
+        """With a real 5pp lift, E-value should stop within 14 days."""
+        from splita.sequential.evalue import EValue
+
+        rng = np.random.default_rng(10001)
+        ev = EValue(alpha=0.05, metric="conversion", tau=0.01)
+
+        stopped = False
+        for day in range(14):
+            ctrl = rng.binomial(1, 0.10, size=200).astype(float)
+            trt = rng.binomial(1, 0.15, size=200).astype(float)
+            state = ev.update(ctrl, trt)
+            if state.should_stop:
+                stopped = True
+                break
+
+        result = ev.result()
+        assert stopped, f"E-value did not stop. e_value={result.e_value:.4f}"
+        assert result.stopping_reason == "e_value_threshold_crossed"
+
+    def test_evalue_does_not_reject_under_null(self):
+        """Under H0, E-value should NOT reject with daily peeks."""
+        from splita.sequential.evalue import EValue
+
+        rng = np.random.default_rng(10002)
+        ev = EValue(alpha=0.05, metric="conversion", tau=0.01)
+
+        stopped = False
+        for day in range(30):
+            ctrl = rng.binomial(1, 0.10, size=200).astype(float)
+            trt = rng.binomial(1, 0.10, size=200).astype(float)
+            state = ev.update(ctrl, trt)
+            if state.should_stop:
+                stopped = True
+                break
+
+        assert not stopped, "E-value falsely rejected under H0"
+
+    def test_evalue_incremental_matches_batch(self):
+        """Incremental daily updates give the same result as batch."""
+        from splita.sequential.evalue import EValue
+
+        rng = np.random.default_rng(10003)
+        all_ctrl, all_trt = [], []
+        for _ in range(5):
+            all_ctrl.append(rng.normal(0, 1, size=100))
+            all_trt.append(rng.normal(0.2, 1, size=100))
+
+        ev_inc = EValue(alpha=0.05, metric="continuous", tau=0.1)
+        for c, t in zip(all_ctrl, all_trt):
+            state_inc = ev_inc.update(c, t)
+
+        ev_batch = EValue(alpha=0.05, metric="continuous", tau=0.1)
+        state_batch = ev_batch.update(
+            np.concatenate(all_ctrl), np.concatenate(all_trt)
+        )
+        assert abs(state_inc.e_value - state_batch.e_value) < 1e-10
+
+
+# ---------------------------------------------------------------------------
+# Scenario 11: LinUCB for personalized content recommendation
+# ---------------------------------------------------------------------------
+
+
+class TestLinUCBPersonalizedContent:
+    """A content platform uses LinUCB to personalize recommendations."""
+
+    def test_linucb_learns_user_preferences(self):
+        """LinUCB learns that different segments prefer different content."""
+        from splita.bandits.linucb import LinUCB
+
+        rng = np.random.default_rng(11001)
+        ucb = LinUCB(3, n_features=4, alpha=1.0, random_state=42)
+        theta = {
+            0: np.array([1.0, 0.0, 0.0, 0.0]),
+            1: np.array([0.0, 1.0, 0.0, 0.0]),
+            2: np.array([0.0, 0.0, 0.5, 0.5]),
+        }
+
+        for _ in range(300):
+            ctx = rng.standard_normal(4)
+            ctx = ctx / np.linalg.norm(ctx)
+            for arm in range(3):
+                reward = float(ctx @ theta[arm] + rng.normal(0, 0.2))
+                ucb.update(arm, ctx, reward)
+
+        assert ucb.recommend(np.array([1.0, 0.0, 0.0, 0.0])) == 0
+        assert ucb.recommend(np.array([0.0, 1.0, 0.0, 0.0])) == 1
+
+    def test_linucb_result_tracks_rewards(self):
+        """LinUCB result() tracks total reward and pulls accurately."""
+        from splita.bandits.linucb import LinUCB
+
+        ucb = LinUCB(2, n_features=2, random_state=42)
+        ctx = np.array([1.0, 0.5])
+        ucb.update(0, ctx, 1.0)
+        ucb.update(0, ctx, 0.5)
+        ucb.update(1, ctx, 0.3)
+        result = ucb.result()
+        assert result.n_pulls_per_arm == [2, 1]
+        assert result.total_reward == pytest.approx(1.8)
+        assert result.current_best_arm == 0
+
+    def test_linucb_exploitation_after_training(self):
+        """After training, LinUCB exploits consistently."""
+        from splita.bandits.linucb import LinUCB
+
+        rng = np.random.default_rng(11002)
+        ucb = LinUCB(2, n_features=2, alpha=1.0, random_state=42)
+        ctx = np.array([1.0, 0.0])
+        for _ in range(200):
+            ucb.update(0, ctx, 1.0 + rng.normal(0, 0.1))
+            ucb.update(1, ctx, 0.1 + rng.normal(0, 0.1))
+
+        recs = [ucb.recommend(ctx) for _ in range(20)]
+        assert recs.count(0) == 20
+
+
+# ---------------------------------------------------------------------------
+# Scenario: Revenue experiment - Lin's adjustment + CUPED comparison
+# ---------------------------------------------------------------------------
+
+
+class TestRevenueLinAdjustmentVsCUPED:
+    """Revenue A/B test comparing Lin's regression adjustment with CUPED."""
+
+    def test_both_methods_detect_true_effect(self):
+        """Both RA and CUPED detect a true +$0.50 revenue lift."""
+        from splita.variance.cuped import CUPED
+        from splita.variance.regression_adjustment import RegressionAdjustment
+
+        rng = np.random.default_rng(4201)
+        n = 2000
+        true_lift = 0.50
+        pre_ctrl = rng.lognormal(2, 0.5, n)
+        pre_trt = rng.lognormal(2, 0.5, n)
+        post_ctrl = 0.7 * pre_ctrl + rng.normal(0, 2, n)
+        post_trt = 0.7 * pre_trt + true_lift + rng.normal(0, 2, n)
+
+        cuped = CUPED()
+        ctrl_adj, trt_adj = cuped.fit_transform(
+            post_ctrl, post_trt, pre_ctrl, pre_trt
+        )
+        cuped_ate = float(np.mean(trt_adj) - np.mean(ctrl_adj))
+        ra = RegressionAdjustment()
+        ra_result = ra.fit_transform(post_ctrl, post_trt, pre_ctrl, pre_trt)
+        assert abs(cuped_ate - true_lift) < 0.5
+        assert abs(ra_result.ate - true_lift) < 0.5
+
+    def test_lin_se_not_worse_than_cuped(self):
+        """Lin's RA SE <= CUPED SE (single covariate)."""
+        from splita.variance.cuped import CUPED
+        from splita.variance.regression_adjustment import RegressionAdjustment
+
+        rng = np.random.default_rng(4202)
+        n = 2000
+        pre_ctrl = rng.lognormal(2, 0.5, n)
+        pre_trt = rng.lognormal(2, 0.5, n)
+        post_ctrl = 0.7 * pre_ctrl + rng.normal(0, 2, n)
+        post_trt = 0.7 * pre_trt + 0.5 + rng.normal(0, 2, n)
+        cuped = CUPED()
+        ctrl_adj, trt_adj = cuped.fit_transform(
+            post_ctrl, post_trt, pre_ctrl, pre_trt
+        )
+        cuped_se = float(
+            np.sqrt(np.var(ctrl_adj, ddof=1) / n + np.var(trt_adj, ddof=1) / n)
+        )
+        ra = RegressionAdjustment()
+        ra_result = ra.fit_transform(post_ctrl, post_trt, pre_ctrl, pre_trt)
+        assert ra_result.se <= cuped_se * 1.10
+
+    def test_full_pipeline_with_experiment(self):
+        """Full pipeline: sample size -> experiment -> RA adjustment."""
+        from splita.variance.regression_adjustment import RegressionAdjustment
+
+        rng = np.random.default_rng(4204)
+        n = min(
+            SampleSize.for_mean(
+                baseline_mean=10.0, baseline_std=5.0, mde=0.5
+            ).n_per_variant,
+            2000,
+        )
+        pre_ctrl = rng.lognormal(2, 0.3, n)
+        pre_trt = rng.lognormal(2, 0.3, n)
+        post_ctrl = 0.8 * pre_ctrl + rng.normal(0, 1, n)
+        post_trt = 0.8 * pre_trt + 0.5 + rng.normal(0, 1, n)
+        unadj = Experiment(post_ctrl, post_trt, method="ttest").run()
+        ra = RegressionAdjustment()
+        ra_result = ra.fit_transform(post_ctrl, post_trt, pre_ctrl, pre_trt)
+        assert unadj.lift > 0
+        assert ra_result.ate > 0
+
+
+# ---------------------------------------------------------------------------
+# Scenario: DoubleML removes confounding in observational-like data
+# ---------------------------------------------------------------------------
+
+
+class TestDoubleMLObservationalScenario:
+    """Observational-like experiment where treatment is confounded."""
+
+    def test_doubleml_reduces_bias_vs_naive(self):
+        """DoubleML estimate is closer to truth than naive difference."""
+        from splita.variance.double_ml import DoubleML
+
+        rng = np.random.default_rng(5001)
+        n = 3000
+        true_ate = 2.0
+        X = rng.normal(0, 1, size=(n, 5))
+        engagement = X[:, 0]
+        T_prob = 1.0 / (1.0 + np.exp(-(engagement + rng.normal(0, 0.3, n))))
+        T = rng.binomial(1, T_prob).astype(float)
+        Y = true_ate * T + 3.0 * engagement + X[:, 1] + rng.normal(0, 1, n)
+        naive_ate = float(np.mean(Y[T > 0.5]) - np.mean(Y[T <= 0.5]))
+        result = DoubleML(cv=5, random_state=42).fit_transform(Y, T, X)
+        naive_bias = abs(naive_ate - true_ate)
+        dml_bias = abs(result.ate - true_ate)
+        assert dml_bias < naive_bias
+        assert abs(result.ate - true_ate) < 1.5
+
+    def test_doubleml_ci_contains_true_effect(self):
+        """DoubleML 95% CI should contain the true ATE."""
+        from splita.variance.double_ml import DoubleML
+
+        rng = np.random.default_rng(5002)
+        n = 3000
+        true_ate = 1.5
+        X = rng.normal(0, 1, size=(n, 4))
+        T = (X[:, 0] > 0).astype(float) + rng.normal(0, 0.2, n)
+        T = np.clip(T, 0, None)
+        Y = true_ate * T + X @ [1.0, 0.5, -0.3, 0.2] + rng.normal(0, 1, n)
+        result = DoubleML(random_state=42).fit_transform(Y, T, X)
+        assert result.ci_lower < true_ate < result.ci_upper
+
+    def test_doubleml_with_custom_models(self):
+        """DoubleML works end-to-end with custom sklearn models."""
+        from sklearn.ensemble import GradientBoostingRegressor
+        from splita.variance.double_ml import DoubleML
+
+        rng = np.random.default_rng(5003)
+        n = 1000
+        X = rng.normal(0, 1, size=(n, 3))
+        T = rng.binomial(1, 0.5, n).astype(float)
+        Y = 1.0 * T + np.sin(X[:, 0]) + rng.normal(0, 0.5, n)
+        result = DoubleML(
+            outcome_model=GradientBoostingRegressor(
+                n_estimators=50, max_depth=3, random_state=42
+            ),
+            propensity_model=GradientBoostingRegressor(
+                n_estimators=50, max_depth=3, random_state=42
+            ),
+            cv=3,
+            random_state=42,
+        ).fit_transform(Y, T, X)
+        assert abs(result.ate - 1.0) < 0.5
+        assert result.se > 0
+        assert result.outcome_r2 > 0.0

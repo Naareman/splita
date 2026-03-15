@@ -164,3 +164,19 @@ class TestPairwiseDesignValidation:
         """3-D input should raise ValueError."""
         with pytest.raises(ValueError, match="1-D or 2-D"):
             PairwiseDesign().assign(np.ones((2, 3, 4)))
+
+    def test_singular_covariance_fallback(self):
+        """Lines 100-102: singular cov should fall back to euclidean."""
+        # All same feature values in one column -> singular covariance
+        X = np.zeros((10, 2))
+        X[:, 0] = 1.0  # constant column
+        X[:, 1] = np.arange(10, dtype=float)
+        result = PairwiseDesign(random_state=42).assign(X)
+        assert result.n_pairs == 5
+
+    def test_balance_empty_group_returns_zero(self):
+        """Line 178: balance with no ctrl or trt returns 0.0."""
+        X = np.random.default_rng(42).normal(size=(10, 2))
+        assignments = np.zeros(10, dtype=int)  # all control
+        score = PairwiseDesign._compute_balance(X, assignments)
+        assert score == 0.0

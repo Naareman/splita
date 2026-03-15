@@ -266,3 +266,30 @@ class TestValidation:
         winz = AdaptiveWinsorizer()
         with pytest.raises(ValueError, match="at least"):
             winz.fit([1.0], [1.0, 2.0])
+
+    def test_zero_variance_data(self):
+        """Constant data (zero variance) yields variance_reduction_ = 0."""
+        ctrl = np.array([5.0, 5.0, 5.0, 5.0, 5.0])
+        trt = np.array([5.0, 5.0, 5.0, 5.0, 5.0])
+        winz = AdaptiveWinsorizer()
+        winz.fit(ctrl, trt)
+        assert winz.variance_reduction_ == 0.0
+
+    def test_lower_threshold_above_upper_skipped(self):
+        """Grid points where lower threshold >= upper threshold are skipped.
+
+        This happens when lower_range percentiles produce values above
+        the upper_range percentiles (extreme data distribution).
+        """
+        # Data where many values are the same, making thresholds overlap
+        ctrl = np.array([1.0] * 50 + [100.0] * 50)
+        trt = np.array([1.0] * 50 + [100.0] * 50)
+        # Use ranges that are close enough that some grid points overlap
+        winz = AdaptiveWinsorizer(
+            n_grid=5,
+            lower_range=(0.001, 0.10),
+            upper_range=(0.90, 0.999),
+        )
+        winz.fit(ctrl, trt)
+        # Should still produce valid results
+        assert winz._is_fitted

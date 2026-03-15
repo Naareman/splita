@@ -355,3 +355,31 @@ class TestEdgeCases:
         result = ep.result()
         assert "EProcessState" in repr(state)
         assert "EProcessResult" in repr(result)
+
+    def test_universal_zero_variance(self):
+        """Line 290: universal method with V<=0 returns 0."""
+        ep = EProcess(alpha=0.05, method="universal")
+        ctrl = np.ones(100)
+        trt = np.ones(100)
+        state = ep.update(ctrl, trt)
+        # With zero variance, universal log_e should be 0 => e_value = 1
+        assert state.e_value == pytest.approx(1.0)
+
+    def test_safe_ci_only_control_data(self):
+        """Line 308: safe CI with n_t==0 returns (-inf, inf)."""
+        ep = EProcess(alpha=0.05)
+        ep.update([1.0, 2.0, 3.0], [])
+        result = ep.result()
+        assert result.safe_ci_lower == float("-inf")
+        assert result.safe_ci_upper == float("inf")
+
+    def test_safe_ci_zero_variance(self):
+        """Line 316: safe CI with V<=0 returns (delta_hat, delta_hat)."""
+        ep = EProcess(alpha=0.05)
+        # Constant but different values => V=0, delta_hat != 0
+        ctrl = np.full(100, 5.0)
+        trt = np.full(100, 7.0)
+        state = ep.update(ctrl, trt)
+        result = ep.result()
+        assert result.safe_ci_lower == result.safe_ci_upper
+        assert result.safe_ci_lower == pytest.approx(2.0)

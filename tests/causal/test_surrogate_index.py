@@ -203,3 +203,63 @@ class TestSurrogateIndexValidation:
         """CV < 2 should raise ValueError."""
         with pytest.raises(ValueError, match="cv"):
             SurrogateIndex(cv=1)
+
+    def test_3d_short_term_raises(self):
+        """Line 133: 3-D short_term_outcomes should raise ValueError."""
+        si = SurrogateIndex()
+        with pytest.raises(ValueError, match="1-D or 2-D"):
+            si.fit(
+                np.zeros((10, 2, 3)),
+                np.zeros(10),
+                np.array([0] * 5 + [1] * 5),
+            )
+
+    def test_mismatched_treatment_rows_raises(self):
+        """Line 154: mismatched treatment length should raise ValueError."""
+        si = SurrogateIndex()
+        with pytest.raises(ValueError, match="same number of rows"):
+            si.fit(
+                np.zeros((10, 2)),
+                np.zeros(10),
+                np.array([0, 1, 0]),  # length 3 != 10
+            )
+
+    def test_1d_predict_inputs_reshaped(self, rng):
+        """Lines 240, 242: 1-D predict inputs get reshaped."""
+        n = 100
+        X_short = rng.normal(0, 1, 2 * n)
+        y_long = X_short * 2 + rng.normal(0, 0.3, 2 * n)
+        treatment = np.array([0] * n + [1] * n)
+
+        si = SurrogateIndex(random_state=42)
+        si = si.fit(X_short, y_long, treatment)
+        # Pass 1-D arrays to predict (should auto-reshape)
+        result = si.predict(X_short[:n], X_short[n:])
+        assert result.n_surrogates == 1
+
+    def test_mismatched_trt_features_predict_raises(self, rng):
+        """Line 253: mismatched trt features at predict should raise ValueError."""
+        n = 50
+        X_short = rng.normal(0, 1, (2 * n, 2))
+        y_long = X_short[:, 0] + rng.normal(0, 0.5, 2 * n)
+        treatment = np.array([0] * n + [1] * n)
+
+        si = SurrogateIndex(random_state=42)
+        si = si.fit(X_short, y_long, treatment)
+        # ctrl has correct features but trt has wrong number
+        with pytest.raises(ValueError, match="same number of features"):
+            si.predict(rng.normal(0, 1, (n, 2)), rng.normal(0, 1, (n, 3)))
+
+    def test_custom_estimator(self, rng):
+        """Custom estimator passed via constructor should be cloned per fold."""
+        from sklearn.linear_model import LinearRegression
+
+        n = 100
+        X_short = rng.normal(0, 1, (2 * n, 2))
+        y_long = X_short[:, 0] * 2 + rng.normal(0, 0.5, 2 * n)
+        treatment = np.array([0] * n + [1] * n)
+
+        si = SurrogateIndex(estimator=LinearRegression(), random_state=42)
+        si = si.fit(X_short, y_long, treatment)
+        result = si.predict(X_short[:n], X_short[n:])
+        assert isinstance(result, SurrogateIndexResult)

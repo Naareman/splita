@@ -225,3 +225,49 @@ class TestCausalForestValidation:
         """n_estimators < 1 should raise ValueError."""
         with pytest.raises(ValueError, match="n_estimators"):
             CausalForest(n_estimators=0)
+
+    def test_invalid_max_depth_raises(self):
+        """max_depth < 1 should raise ValueError."""
+        with pytest.raises(ValueError, match="max_depth"):
+            CausalForest(max_depth=0)
+
+    def test_mismatched_treatment_rows_raises(self, rng):
+        """Mismatched treatment outcome and feature rows should raise."""
+        with pytest.raises(ValueError, match="same number of rows"):
+            cf = CausalForest(n_estimators=5, random_state=42)
+            cf.fit(
+                [1, 2, 3], [4, 5, 6],
+                np.array([[1, 2], [3, 4], [5, 6]]),
+                np.array([[1, 2], [3, 4]]),  # 2 rows vs 3 outcomes
+            )
+
+    def test_single_tree_jackknife_fallback(self, rng):
+        """With n_estimators=1, jackknife falls back to simple SE."""
+        n = 50
+        X_ctrl = rng.normal(size=(n, 2))
+        X_trt = rng.normal(size=(n, 2))
+        y_ctrl = rng.normal(0, 1, n)
+        y_trt = rng.normal(1, 1, n)
+
+        cf = CausalForest(n_estimators=1, random_state=42)
+        cf = cf.fit(y_ctrl, y_trt, X_ctrl, X_trt)
+        result = cf.result()
+
+        assert isinstance(result, CausalForestResult)
+        # CI should still be valid (non-zero width)
+        assert result.ci_upper > result.ci_lower
+
+    def test_predict_1d_reshape(self, rng):
+        """predict() with 1-D input should reshape and work."""
+        n = 50
+        X_ctrl = rng.normal(size=(n, 1))
+        X_trt = rng.normal(size=(n, 1))
+        y_ctrl = rng.normal(0, 1, n)
+        y_trt = rng.normal(1, 1, n)
+
+        cf = CausalForest(n_estimators=10, random_state=42)
+        cf = cf.fit(y_ctrl, y_trt, X_ctrl, X_trt)
+
+        X_new = rng.normal(size=5)  # 1-D
+        preds = cf.predict(X_new)
+        assert preds.shape == (5,)

@@ -8,6 +8,11 @@ import pytest
 from splita.sequential.evalue import EValue
 from splita._types import EValueResult, EValueState
 
+# Auto-tau warning is expected in tests that don't set tau explicitly
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:tau auto-set:RuntimeWarning"
+)
+
 
 # ─── Fixtures ────────────────────────────────────────────────────────
 

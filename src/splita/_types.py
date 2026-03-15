@@ -2417,3 +2417,2048 @@ class CausalForestResult(_DictMixin):
             _line(w),
         ]
         return "\n".join(lines)
+
+
+# ─── GuardrailResult ───────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class GuardrailResult(_DictMixin):
+    """Result of guardrail monitoring via :class:`~splita.GuardrailMonitor`.
+
+    Attributes
+    ----------
+    all_passed : bool
+        True if all guardrail checks passed (no significant degradation).
+    guardrail_results : list[dict]
+        Per-guardrail results. Each dict has keys: ``name``, ``passed``,
+        ``pvalue``, ``lift``, ``direction``.
+    message : str
+        Human-readable summary.
+    recommendation : str
+        One of ``'safe'``, ``'warning'``, or ``'stop'``.
+    """
+
+    all_passed: bool
+    guardrail_results: list
+    message: str
+    recommendation: str
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "GuardrailResult",
+            _line(w),
+            f"  {'all_passed':<22}{_fmt(self.all_passed)}",
+            f"  {'recommendation':<22}{self.recommendation}",
+            f"  {'n_guardrails':<22}{len(self.guardrail_results)}",
+            _line(w),
+            f"  {self.message}",
+        ]
+        return "\n".join(lines)
+
+
+# ─── FlickerResult ────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class FlickerResult(_DictMixin):
+    """Result of flicker detection via :class:`~splita.FlickerDetector`.
+
+    Attributes
+    ----------
+    flicker_rate : float
+        Fraction of users who switched variants.
+    n_flickers : int
+        Number of users who flickered.
+    n_users : int
+        Total number of unique users.
+    is_problematic : bool
+        True if the flicker rate exceeds the threshold.
+    flicker_users : list
+        List of user IDs that flickered.
+    message : str
+        Human-readable summary.
+    """
+
+    flicker_rate: float
+    n_flickers: int
+    n_users: int
+    is_problematic: bool
+    flicker_users: list
+    message: str
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "FlickerResult",
+            _line(w),
+            f"  {'flicker_rate':<20}{_fmt(self.flicker_rate, as_pct=True)}",
+            f"  {'n_flickers':<20}{self.n_flickers}",
+            f"  {'n_users':<20}{self.n_users}",
+            f"  {'is_problematic':<20}{_fmt(self.is_problematic)}",
+            _line(w),
+            f"  {self.message}",
+        ]
+        return "\n".join(lines)
+
+
+# ─── TrimmedMeanResult ────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class TrimmedMeanResult(_DictMixin):
+    """Result of trimmed-mean estimation via :class:`~splita.TrimmedMeanEstimator`.
+
+    Attributes
+    ----------
+    ate : float
+        Average treatment effect (trimmed treatment mean - trimmed control mean).
+    se : float
+        Standard error of the ATE.
+    pvalue : float
+        P-value from the t-test on trimmed data.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    significant : bool
+        True if pvalue < alpha.
+    n_trimmed_control : int
+        Number of observations remaining in control after trimming.
+    n_trimmed_treatment : int
+        Number of observations remaining in treatment after trimming.
+    trim_fraction : float
+        Fraction trimmed from each tail.
+    """
+
+    ate: float
+    se: float
+    pvalue: float
+    ci_lower: float
+    ci_upper: float
+    significant: bool
+    n_trimmed_control: int
+    n_trimmed_treatment: int
+    trim_fraction: float
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "TrimmedMeanResult",
+            _line(w),
+            f"  {'ate':<22}{_fmt(self.ate)}",
+            f"  {'se':<22}{_fmt(self.se)}",
+            f"  {'pvalue':<22}{_fmt(self.pvalue)}",
+            f"  {'ci':<22}[{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]",
+            f"  {'significant':<22}{_fmt(self.significant)}",
+            f"  {'trim_fraction':<22}{_fmt(self.trim_fraction)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── PermutationResult ────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class PermutationResult(_DictMixin):
+    """Result of a permutation test via :class:`~splita.PermutationTest`.
+
+    Attributes
+    ----------
+    observed_statistic : float
+        The observed test statistic.
+    pvalue : float
+        Permutation-based p-value.
+    significant : bool
+        True if pvalue < alpha.
+    n_permutations : int
+        Number of permutations performed.
+    alpha : float
+        Significance level used.
+    null_distribution_mean : float
+        Mean of the null distribution.
+    null_distribution_std : float
+        Standard deviation of the null distribution.
+    """
+
+    observed_statistic: float
+    pvalue: float
+    significant: bool
+    n_permutations: int
+    alpha: float
+    null_distribution_mean: float
+    null_distribution_std: float
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "PermutationResult",
+            _line(w),
+            f"  {'observed_statistic':<22}{_fmt(self.observed_statistic)}",
+            f"  {'pvalue':<22}{_fmt(self.pvalue)}",
+            f"  {'significant':<22}{_fmt(self.significant)}",
+            f"  {'n_permutations':<22}{self.n_permutations}",
+            f"  {'alpha':<22}{_fmt(self.alpha)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── OECResult ─────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class OECResult(_DictMixin):
+    """Result of an Overall Evaluation Criterion analysis via :class:`~splita.OECBuilder`.
+
+    Attributes
+    ----------
+    oec_lift : float
+        Weighted sum of (optionally normalised) metric lifts.
+    pvalue : float
+        Two-sided p-value from a t-test on the OEC scores.
+    significant : bool
+        Whether ``pvalue < alpha``.
+    ci_lower : float
+        Lower bound of the confidence interval for the OEC lift.
+    ci_upper : float
+        Upper bound of the confidence interval for the OEC lift.
+    metric_contributions : list[float]
+        Weighted contribution of each metric to the OEC lift.
+    weights : list[float]
+        Normalised weights used for each metric.
+    """
+
+    oec_lift: float
+    pvalue: float
+    significant: bool
+    ci_lower: float
+    ci_upper: float
+    metric_contributions: list
+    weights: list
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "OECResult",
+            _line(w),
+            f"  {'oec_lift':<20}{_fmt(self.oec_lift)}",
+            f"  {'pvalue':<20}{_fmt(self.pvalue)}",
+            f"  {'ci':<20}[{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]",
+            f"  {'significant':<20}{_fmt(self.significant)}",
+            f"  {'n_metrics':<20}{len(self.weights)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── FunnelResult ──────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class FunnelResult(_DictMixin):
+    """Result of a funnel experiment via :class:`~splita.FunnelExperiment`.
+
+    Attributes
+    ----------
+    step_results : list[dict]
+        Per-step results with keys ``name``, ``control_rate``, ``treatment_rate``,
+        ``lift``, ``pvalue``, ``significant``, ``conditional_lift``, ``conditional_pvalue``.
+    bottleneck_step : str
+        Name of the step with the biggest negative lift (or smallest lift).
+    overall_lift : float
+        Overall conversion lift from first step to last step.
+    """
+
+    step_results: list
+    bottleneck_step: str
+    overall_lift: float
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "FunnelResult",
+            _line(w),
+            f"  {'n_steps':<20}{len(self.step_results)}",
+            f"  {'overall_lift':<20}{_fmt(self.overall_lift)}",
+            f"  {'bottleneck':<20}{self.bottleneck_step}",
+            _line(w),
+        ]
+        for s in self.step_results:
+            sig = "sig" if s.get("significant") else "ns"
+            lines.append(
+                f"  {s['name']:<16} lift={_fmt(s['lift'])}  p={_fmt(s['pvalue'])}  [{sig}]"
+            )
+        return "\n".join(lines)
+
+
+# ─── PostStratResult ───────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class PostStratResult(_DictMixin):
+    """Result of post-stratification variance reduction via :class:`~splita.PostStratification`.
+
+    Attributes
+    ----------
+    ate : float
+        Average treatment effect (variance-optimally weighted across strata).
+    se : float
+        Standard error of the ATE estimate.
+    pvalue : float
+        Two-sided p-value for H0: ATE = 0.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    significant : bool
+        Whether ``pvalue < alpha``.
+    variance_reduction : float
+        Fraction of variance reduced compared to a naive (unstratified) estimate.
+    n_strata : int
+        Number of strata used.
+    """
+
+    ate: float
+    se: float
+    pvalue: float
+    ci_lower: float
+    ci_upper: float
+    significant: bool
+    variance_reduction: float
+    n_strata: int
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "PostStratResult",
+            _line(w),
+            f"  {'ate':<20}{_fmt(self.ate)}",
+            f"  {'se':<20}{_fmt(self.se)}",
+            f"  {'pvalue':<20}{_fmt(self.pvalue)}",
+            f"  {'ci':<20}[{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]",
+            f"  {'significant':<20}{_fmt(self.significant)}",
+            f"  {'variance_reduction':<20}{_fmt(self.variance_reduction, as_pct=True)}",
+            f"  {'n_strata':<20}{self.n_strata}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── ClusterBootstrapResult ────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class ClusterBootstrapResult(_DictMixin):
+    """Result of cluster bootstrap inference via :class:`~splita.ClusterBootstrap`.
+
+    Attributes
+    ----------
+    ate : float
+        Average treatment effect (difference of cluster-level means).
+    se : float
+        Bootstrap standard error.
+    pvalue : float
+        Two-sided p-value from the bootstrap distribution.
+    ci_lower : float
+        Lower bound of the bootstrap percentile confidence interval.
+    ci_upper : float
+        Upper bound of the bootstrap percentile confidence interval.
+    significant : bool
+        Whether ``pvalue < alpha``.
+    n_clusters : int
+        Total number of clusters across both groups.
+    """
+
+    ate: float
+    se: float
+    pvalue: float
+    ci_lower: float
+    ci_upper: float
+    significant: bool
+    n_clusters: int
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "ClusterBootstrapResult",
+            _line(w),
+            f"  {'ate':<20}{_fmt(self.ate)}",
+            f"  {'se':<20}{_fmt(self.se)}",
+            f"  {'pvalue':<20}{_fmt(self.pvalue)}",
+            f"  {'ci':<20}[{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]",
+            f"  {'significant':<20}{_fmt(self.significant)}",
+            f"  {'n_clusters':<20}{self.n_clusters}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── RandomizationResult ──────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class RandomizationResult(_DictMixin):
+    """Result of randomization balance check via :class:`~splita.RandomizationValidator`.
+
+    Attributes
+    ----------
+    balanced : bool
+        True if all covariates are balanced (no SMD exceeds threshold).
+    smd_per_covariate : list[dict]
+        Per-covariate standardised mean difference with keys ``name`` and ``smd``.
+    max_smd : float
+        Maximum absolute standardised mean difference across all covariates.
+    omnibus_pvalue : float
+        p-value from a chi-squared omnibus test for overall balance.
+    imbalanced_covariates : list[str]
+        Names of covariates with SMD exceeding the threshold (0.1).
+    """
+
+    balanced: bool
+    smd_per_covariate: list
+    max_smd: float
+    omnibus_pvalue: float
+    imbalanced_covariates: list
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "RandomizationResult",
+            _line(w),
+            f"  {'balanced':<20}{_fmt(self.balanced)}",
+            f"  {'max_smd':<20}{_fmt(self.max_smd)}",
+            f"  {'omnibus_pvalue':<20}{_fmt(self.omnibus_pvalue)}",
+            f"  {'n_covariates':<20}{len(self.smd_per_covariate)}",
+            f"  {'n_imbalanced':<20}{len(self.imbalanced_covariates)}",
+            _line(w),
+        ]
+        if self.imbalanced_covariates:
+            lines.append(f"  {'imbalanced':<20}{self.imbalanced_covariates}")
+        return "\n".join(lines)
+
+
+# ─── InterleavingResult ───────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class InterleavingResult(_DictMixin):
+    """Result of an interleaving experiment for ranking comparison.
+
+    Attributes
+    ----------
+    preference_a : float
+        Fraction of queries where ranking A was preferred.
+    preference_b : float
+        Fraction of queries where ranking B was preferred.
+    pvalue : float
+        p-value from a binomial test of preference.
+    significant : bool
+        Whether the result is significant at the given alpha.
+    winner : str
+        ``"A"``, ``"B"``, or ``"tie"``.
+    n_queries : int
+        Number of queries evaluated.
+    delta : float
+        Effect size (preference_a - preference_b).
+    """
+
+    preference_a: float
+    preference_b: float
+    pvalue: float
+    significant: bool
+    winner: str
+    n_queries: int
+    delta: float
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "InterleavingResult",
+            _line(w),
+            f"  {'preference_a':<22}{_fmt(self.preference_a)}",
+            f"  {'preference_b':<22}{_fmt(self.preference_b)}",
+            f"  {'pvalue':<22}{_fmt(self.pvalue)}",
+            f"  {'significant':<22}{_fmt(self.significant)}",
+            f"  {'winner':<22}{self.winner}",
+            f"  {'n_queries':<22}{self.n_queries}",
+            f"  {'delta':<22}{_fmt(self.delta)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── CarryoverResult ──────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class CarryoverResult(_DictMixin):
+    """Result of a carryover effect detection.
+
+    Attributes
+    ----------
+    has_carryover : bool
+        Whether carryover contamination was detected.
+    control_change_pvalue : float
+        p-value for the control group pre/post difference.
+    control_pre_mean : float
+        Mean of control group pre-experiment.
+    control_post_mean : float
+        Mean of control group post-experiment.
+    message : str
+        Human-readable summary.
+    """
+
+    has_carryover: bool
+    control_change_pvalue: float
+    control_pre_mean: float
+    control_post_mean: float
+    message: str
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "CarryoverResult",
+            _line(w),
+            f"  {'has_carryover':<22}{_fmt(self.has_carryover)}",
+            f"  {'control_change_pvalue':<22}{_fmt(self.control_change_pvalue)}",
+            f"  {'control_pre_mean':<22}{_fmt(self.control_pre_mean)}",
+            f"  {'control_post_mean':<22}{_fmt(self.control_post_mean)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── RobustMeanResult ─────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class RobustMeanResult(_DictMixin):
+    """Result of a robust mean estimation.
+
+    Attributes
+    ----------
+    ate : float
+        Average treatment effect (robust).
+    se : float
+        Standard error of the ATE estimate.
+    pvalue : float
+        p-value for the ATE.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    significant : bool
+        Whether the result is significant at the given alpha.
+    method : str
+        Estimation method used.
+    """
+
+    ate: float
+    se: float
+    pvalue: float
+    ci_lower: float
+    ci_upper: float
+    significant: bool
+    method: str
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "RobustMeanResult",
+            _line(w),
+            f"  {'ate':<22}{_fmt(self.ate)}",
+            f"  {'se':<22}{_fmt(self.se)}",
+            f"  {'pvalue':<22}{_fmt(self.pvalue)}",
+            f"  {'ci_lower':<22}{_fmt(self.ci_lower)}",
+            f"  {'ci_upper':<22}{_fmt(self.ci_upper)}",
+            f"  {'significant':<22}{_fmt(self.significant)}",
+            f"  {'method':<22}{self.method}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── IVResult ─────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class IVResult(_DictMixin):
+    """Result of an instrumental variables (2SLS) estimation.
+
+    Attributes
+    ----------
+    late : float
+        Local Average Treatment Effect.
+    se : float
+        Standard error of the LATE estimate.
+    pvalue : float
+        p-value for the LATE.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    significant : bool
+        Whether the result is significant at the given alpha.
+    first_stage_f : float
+        F-statistic from the first stage regression.
+    weak_instrument : bool
+        Whether the instrument is weak (F < 10).
+    """
+
+    late: float
+    se: float
+    pvalue: float
+    ci_lower: float
+    ci_upper: float
+    significant: bool
+    first_stage_f: float
+    weak_instrument: bool
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "IVResult",
+            _line(w),
+            f"  {'late':<22}{_fmt(self.late)}",
+            f"  {'se':<22}{_fmt(self.se)}",
+            f"  {'pvalue':<22}{_fmt(self.pvalue)}",
+            f"  {'ci_lower':<22}{_fmt(self.ci_lower)}",
+            f"  {'ci_upper':<22}{_fmt(self.ci_upper)}",
+            f"  {'significant':<22}{_fmt(self.significant)}",
+            f"  {'first_stage_f':<22}{_fmt(self.first_stage_f)}",
+            f"  {'weak_instrument':<22}{_fmt(self.weak_instrument)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── PSMResult ────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class PSMResult(_DictMixin):
+    """Result of propensity score matching.
+
+    Attributes
+    ----------
+    att : float
+        Average treatment effect on the treated.
+    se : float
+        Standard error of the ATT estimate.
+    pvalue : float
+        p-value for the ATT.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    significant : bool
+        Whether the result is significant at the given alpha.
+    n_matched : int
+        Number of matched treatment units.
+    n_unmatched : int
+        Number of unmatched treatment units (dropped by caliper).
+    balance_before : dict
+        Standardised mean differences before matching per covariate.
+    balance_after : dict
+        Standardised mean differences after matching per covariate.
+    """
+
+    att: float
+    se: float
+    pvalue: float
+    ci_lower: float
+    ci_upper: float
+    significant: bool
+    n_matched: int
+    n_unmatched: int
+    balance_before: dict
+    balance_after: dict
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "PSMResult",
+            _line(w),
+            f"  {'att':<22}{_fmt(self.att)}",
+            f"  {'se':<22}{_fmt(self.se)}",
+            f"  {'pvalue':<22}{_fmt(self.pvalue)}",
+            f"  {'ci_lower':<22}{_fmt(self.ci_lower)}",
+            f"  {'ci_upper':<22}{_fmt(self.ci_upper)}",
+            f"  {'significant':<22}{_fmt(self.significant)}",
+            f"  {'n_matched':<22}{self.n_matched}",
+            f"  {'n_unmatched':<22}{self.n_unmatched}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── RARResult ────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class RARResult(_DictMixin):
+    """Result of response-adaptive randomization.
+
+    Attributes
+    ----------
+    allocations : list[float]
+        Current allocation probabilities per arm.
+    n_per_arm : list[int]
+        Number of observations per arm.
+    best_arm : int
+        Index of the arm with the highest allocation.
+    total_observations : int
+        Total number of observations across all arms.
+    """
+
+    allocations: list
+    n_per_arm: list
+    best_arm: int
+    total_observations: int
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "RARResult",
+            _line(w),
+            f"  {'allocations':<22}{self.allocations}",
+            f"  {'n_per_arm':<22}{self.n_per_arm}",
+            f"  {'best_arm':<22}{self.best_arm}",
+            f"  {'total_observations':<22}{self.total_observations}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── InExperimentVRResult ─────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class InExperimentVRResult(_DictMixin):
+    """Result of in-experiment variance reduction.
+
+    Attributes
+    ----------
+    theta : float
+        Fitted adjustment coefficient.
+    variance_reduction : float
+        Fraction of variance explained (R-squared) by the covariate.
+    control_adjusted : list[float]
+        Adjusted control observations.
+    treatment_adjusted : list[float]
+        Adjusted treatment observations.
+    """
+
+    theta: float
+    variance_reduction: float
+    control_adjusted: list[float]
+    treatment_adjusted: list[float]
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "InExperimentVRResult",
+            _line(w),
+            f"  {'theta':<20}{_fmt(self.theta)}",
+            f"  {'variance_reduction':<20}{_fmt(self.variance_reduction, as_pct=True)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── MetricDecompResult ──────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class MetricDecompResult(_DictMixin):
+    """Result of metric decomposition analysis.
+
+    Attributes
+    ----------
+    total_lift : float
+        Absolute lift on the total metric.
+    total_pvalue : float
+        p-value for the total metric test.
+    component_results : dict
+        Per-component results with keys: lift, pvalue, significant, contribution.
+    dominant_component : str or None
+        Name of the component driving the overall effect, or None.
+    """
+
+    total_lift: float
+    total_pvalue: float
+    component_results: dict
+    dominant_component: str | None
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "MetricDecompResult",
+            _line(w),
+            f"  {'total_lift':<22}{_fmt(self.total_lift)}",
+            f"  {'total_pvalue':<22}{_fmt(self.total_pvalue)}",
+            f"  {'dominant_component':<22}{self.dominant_component or 'none'}",
+            _line(w),
+        ]
+        for name, info in self.component_results.items():
+            lines.append(
+                f"  {name:<16} lift={_fmt(info['lift'])}  "
+                f"p={_fmt(info['pvalue'])}"
+            )
+        return "\n".join(lines)
+
+
+# ─── ObjectiveBayesianResult ─────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class ObjectiveBayesianResult(_DictMixin):
+    """Result of an objective Bayesian experiment.
+
+    Attributes
+    ----------
+    prior_mean : float
+        Mean of the learned (or specified) prior.
+    prior_std : float
+        Standard deviation of the learned (or specified) prior.
+    posterior_mean : float
+        Mean of the posterior distribution for the treatment effect.
+    posterior_std : float
+        Standard deviation of the posterior.
+    prob_positive : float
+        Posterior probability that the effect is positive.
+    ci_lower : float
+        Lower bound of the 95% credible interval.
+    ci_upper : float
+        Upper bound of the 95% credible interval.
+    shrinkage : float
+        Fraction by which the posterior is shrunk toward the prior mean.
+    """
+
+    prior_mean: float
+    prior_std: float
+    posterior_mean: float
+    posterior_std: float
+    prob_positive: float
+    ci_lower: float
+    ci_upper: float
+    shrinkage: float
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "ObjectiveBayesianResult",
+            _line(w),
+            f"  {'prior_mean':<20}{_fmt(self.prior_mean)}",
+            f"  {'prior_std':<20}{_fmt(self.prior_std)}",
+            f"  {'posterior_mean':<20}{_fmt(self.posterior_mean)}",
+            f"  {'posterior_std':<20}{_fmt(self.posterior_std)}",
+            f"  {'prob_positive':<20}{_fmt(self.prob_positive, as_pct=True)}",
+            f"  {'ci_lower':<20}{_fmt(self.ci_lower)}",
+            f"  {'ci_upper':<20}{_fmt(self.ci_upper)}",
+            f"  {'shrinkage':<20}{_fmt(self.shrinkage, as_pct=True)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── RiskAwareResult ─────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class RiskAwareResult(_DictMixin):
+    """Result of a risk-aware decision.
+
+    Attributes
+    ----------
+    decision : str
+        One of ``'ship'``, ``'hold'``, or ``'investigate'``.
+    constraints_met : bool
+        Whether all metric constraints are satisfied.
+    violations : list[str]
+        Names of metrics that violated their constraints.
+    metric_details : dict
+        Per-metric analysis: lift, pvalue, ci_lower, ci_upper, significant.
+    """
+
+    decision: str
+    constraints_met: bool
+    violations: list[str]
+    metric_details: dict
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "RiskAwareResult",
+            _line(w),
+            f"  {'decision':<20}{self.decision}",
+            f"  {'constraints_met':<20}{_fmt(self.constraints_met)}",
+            f"  {'n_violations':<20}{len(self.violations)}",
+            _line(w),
+        ]
+        if self.violations:
+            lines.append(f"  {'violations':<20}{self.violations}")
+        return "\n".join(lines)
+
+
+# ─── ProxyResult ─────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class ProxyResult(_DictMixin):
+    """Result of optimal proxy metric learning.
+
+    Attributes
+    ----------
+    weights : list[float]
+        Learned weights for each candidate metric.
+    correlation_with_north_star : float
+        Pearson correlation of the optimal proxy with the north star metric.
+    optimal_proxy_values : list[float]
+        The composite proxy metric values.
+    """
+
+    weights: list[float]
+    correlation_with_north_star: float
+    optimal_proxy_values: list[float]
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "ProxyResult",
+            _line(w),
+            f"  {'correlation':<20}{_fmt(self.correlation_with_north_star)}",
+            f"  {'n_metrics':<20}{len(self.weights)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── DoublyRobustResult ─────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class DoublyRobustResult(_DictMixin):
+    """Result of doubly robust (AIPW) estimation.
+
+    Attributes
+    ----------
+    ate : float
+        Average treatment effect estimate.
+    se : float
+        Standard error of the ATE.
+    pvalue : float
+        Two-sided p-value for the null H0: ATE = 0.
+    ci_lower : float
+        Lower bound of the 95% confidence interval.
+    ci_upper : float
+        Upper bound of the 95% confidence interval.
+    outcome_r2 : float
+        R-squared of the outcome model.
+    propensity_auc : float
+        AUC of the propensity score model.
+    """
+
+    ate: float
+    se: float
+    pvalue: float
+    ci_lower: float
+    ci_upper: float
+    outcome_r2: float
+    propensity_auc: float
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "DoublyRobustResult",
+            _line(w),
+            f"  {'ate':<20}{_fmt(self.ate)}",
+            f"  {'se':<20}{_fmt(self.se)}",
+            f"  {'pvalue':<20}{_fmt(self.pvalue)}",
+            f"  {'ci_lower':<20}{_fmt(self.ci_lower)}",
+            f"  {'ci_upper':<20}{_fmt(self.ci_upper)}",
+            f"  {'outcome_r2':<20}{_fmt(self.outcome_r2)}",
+            f"  {'propensity_auc':<20}{_fmt(self.propensity_auc)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── ReestimationResult ─────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class ReestimationResult(_DictMixin):
+    """Result of sample size re-estimation.
+
+    Attributes
+    ----------
+    new_n_per_variant : int
+        Updated sample size per variant.
+    conditional_power_current : float
+        Conditional power at the current sample size.
+    conditional_power_new : float
+        Conditional power at the updated sample size.
+    increase_ratio : float
+        Ratio of new sample size to current sample size.
+    """
+
+    new_n_per_variant: int
+    conditional_power_current: float
+    conditional_power_new: float
+    increase_ratio: float
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "ReestimationResult",
+            _line(w),
+            f"  {'new_n_per_variant':<22}{self.new_n_per_variant}",
+            f"  {'cond_power_current':<22}{_fmt(self.conditional_power_current, as_pct=True)}",
+            f"  {'cond_power_new':<22}{_fmt(self.conditional_power_new, as_pct=True)}",
+            f"  {'increase_ratio':<22}{_fmt(self.increase_ratio)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── YEASTState / YEASTResult ────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class YEASTState(_DictMixin):
+    """Intermediate state of a YEAST sequential test.
+
+    Attributes
+    ----------
+    n_control : int
+        Cumulative control observations.
+    n_treatment : int
+        Cumulative treatment observations.
+    z_statistic : float
+        Current z-score test statistic.
+    boundary : float
+        Current significance boundary from Levy's inequality.
+    pvalue : float
+        Current sequential p-value.
+    should_stop : bool
+        Whether the boundary has been crossed.
+    current_effect_estimate : float
+        Current estimate of the treatment effect.
+    """
+
+    n_control: int
+    n_treatment: int
+    z_statistic: float
+    boundary: float
+    pvalue: float
+    should_stop: bool
+    current_effect_estimate: float
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "YEASTState",
+            _line(w),
+            f"  {'n_control':<22}{self.n_control}",
+            f"  {'n_treatment':<22}{self.n_treatment}",
+            f"  {'z_statistic':<22}{_fmt(self.z_statistic)}",
+            f"  {'boundary':<22}{_fmt(self.boundary)}",
+            f"  {'should_stop':<22}{_fmt(self.should_stop)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+@dataclass(frozen=True)
+class YEASTResult(_DictMixin):
+    """Final result of a YEAST sequential test.
+
+    Attributes
+    ----------
+    n_control : int
+        Total control observations.
+    n_treatment : int
+        Total treatment observations.
+    z_statistic : float
+        Final z-score test statistic.
+    boundary : float
+        Significance boundary used.
+    pvalue : float
+        Sequential p-value.
+    should_stop : bool
+        Whether the test concluded.
+    current_effect_estimate : float
+        Final treatment effect estimate.
+    stopping_reason : str
+        One of ``'boundary_crossed'``, ``'not_stopped'``.
+    total_observations : int
+        Total observations across both groups.
+    """
+
+    n_control: int
+    n_treatment: int
+    z_statistic: float
+    boundary: float
+    pvalue: float
+    should_stop: bool
+    current_effect_estimate: float
+    stopping_reason: str
+    total_observations: int
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "YEASTResult",
+            _line(w),
+            f"  {'n_control':<22}{self.n_control}",
+            f"  {'n_treatment':<22}{self.n_treatment}",
+            f"  {'z_statistic':<22}{_fmt(self.z_statistic)}",
+            f"  {'pvalue':<22}{_fmt(self.pvalue)}",
+            f"  {'should_stop':<22}{_fmt(self.should_stop)}",
+            f"  {'stopping_reason':<22}{self.stopping_reason}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── RDDResult ─────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class RDDResult(_DictMixin):
+    """Result of a regression discontinuity design analysis.
+
+    Attributes
+    ----------
+    late : float
+        Local average treatment effect at the cutoff.
+    se : float
+        Standard error of the LATE estimate.
+    pvalue : float
+        Two-sided p-value.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    bandwidth_used : float
+        Bandwidth used for local linear regression.
+    n_left : int
+        Number of observations to the left of the cutoff.
+    n_right : int
+        Number of observations to the right of the cutoff.
+    """
+
+    late: float
+    se: float
+    pvalue: float
+    ci_lower: float
+    ci_upper: float
+    bandwidth_used: float
+    n_left: int
+    n_right: int
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "RDDResult",
+            _line(w),
+            f"  {'late':<20}{_fmt(self.late)}",
+            f"  {'se':<20}{_fmt(self.se)}",
+            f"  {'pvalue':<20}{_fmt(self.pvalue)}",
+            f"  {'ci':<20}[{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]",
+            f"  {'bandwidth_used':<20}{_fmt(self.bandwidth_used)}",
+            f"  {'n_left':<20}{self.n_left}",
+            f"  {'n_right':<20}{self.n_right}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── NonstationaryAdjResult ──────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class NonstationaryAdjResult(_DictMixin):
+    """Result of nonstationary adjustment (Chen et al. 2024).
+
+    Attributes
+    ----------
+    ate_corrected : float
+        Bias-corrected average treatment effect.
+    ate_naive : float
+        Naive (unadjusted) average treatment effect.
+    bias : float
+        Estimated bias from nonstationarity.
+    se : float
+        Standard error of the corrected estimator.
+    pvalue : float
+        Two-sided p-value for the corrected estimator.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    """
+
+    ate_corrected: float
+    ate_naive: float
+    bias: float
+    se: float
+    pvalue: float
+    ci_lower: float
+    ci_upper: float
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "NonstationaryAdjResult",
+            _line(w),
+            f"  {'ate_corrected':<20}{_fmt(self.ate_corrected)}",
+            f"  {'ate_naive':<20}{_fmt(self.ate_naive)}",
+            f"  {'bias':<20}{_fmt(self.bias)}",
+            f"  {'se':<20}{_fmt(self.se)}",
+            f"  {'pvalue':<20}{_fmt(self.pvalue)}",
+            f"  {'ci':<20}[{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── GeoResult ─────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class GeoResult(_DictMixin):
+    """Result of a geo experiment analysis.
+
+    Attributes
+    ----------
+    incremental_effect : float
+        Estimated incremental treatment effect.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    pre_rmse : float
+        Root-mean-square error of the synthetic control in the pre-period.
+    n_treated_regions : int
+        Number of treated regions.
+    n_control_regions : int
+        Number of control regions.
+    """
+
+    incremental_effect: float
+    ci_lower: float
+    ci_upper: float
+    pre_rmse: float
+    n_treated_regions: int
+    n_control_regions: int
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "GeoResult",
+            _line(w),
+            f"  {'incremental_effect':<20}{_fmt(self.incremental_effect)}",
+            f"  {'ci':<20}[{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]",
+            f"  {'pre_rmse':<20}{_fmt(self.pre_rmse)}",
+            f"  {'n_treated_regions':<20}{self.n_treated_regions}",
+            f"  {'n_control_regions':<20}{self.n_control_regions}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── PPIResult ─────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class PPIResult(_DictMixin):
+    """Result of prediction-powered inference (Angelopoulos et al. 2023).
+
+    Attributes
+    ----------
+    mean_estimate : float
+        PPI mean estimate.
+    se : float
+        Standard error.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    n_labeled : int
+        Number of labeled observations.
+    n_unlabeled : int
+        Number of unlabeled observations.
+    """
+
+    mean_estimate: float
+    se: float
+    ci_lower: float
+    ci_upper: float
+    n_labeled: int
+    n_unlabeled: int
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "PPIResult",
+            _line(w),
+            f"  {'mean_estimate':<20}{_fmt(self.mean_estimate)}",
+            f"  {'se':<20}{_fmt(self.se)}",
+            f"  {'ci':<20}[{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]",
+            f"  {'n_labeled':<20}{self.n_labeled}",
+            f"  {'n_unlabeled':<20}{self.n_unlabeled}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── TransportResult ──────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class TransportResult(_DictMixin):
+    """Result of effect transportability (Rosenman et al. 2025).
+
+    Attributes
+    ----------
+    transported_ate : float
+        Transported average treatment effect in target population.
+    se : float
+        Standard error of the transported estimate.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    weight_diagnostics : dict
+        Diagnostics about the importance weights (max, mean, effective_n).
+    """
+
+    transported_ate: float
+    se: float
+    ci_lower: float
+    ci_upper: float
+    weight_diagnostics: dict
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "TransportResult",
+            _line(w),
+            f"  {'transported_ate':<20}{_fmt(self.transported_ate)}",
+            f"  {'se':<20}{_fmt(self.se)}",
+            f"  {'ci':<20}[{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── TMLEResult ────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class TMLEResult(_DictMixin):
+    """Result of Targeted Maximum Likelihood Estimation.
+
+    Attributes
+    ----------
+    ate : float
+        Average treatment effect estimate.
+    se : float
+        Standard error of the ATE estimate.
+    pvalue : float
+        Two-sided p-value.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    initial_estimate : float
+        Initial (plug-in) ATE estimate before targeting.
+    targeted_estimate : float
+        ATE estimate after the targeting step.
+    """
+
+    ate: float
+    se: float
+    pvalue: float
+    ci_lower: float
+    ci_upper: float
+    initial_estimate: float
+    targeted_estimate: float
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "TMLEResult",
+            _line(w),
+            f"  {'ate':<20}{_fmt(self.ate)}",
+            f"  {'se':<20}{_fmt(self.se)}",
+            f"  {'pvalue':<20}{_fmt(self.pvalue)}",
+            f"  {'ci':<20}[{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]",
+            f"  {'initial_estimate':<20}{_fmt(self.initial_estimate)}",
+            f"  {'targeted_estimate':<20}{_fmt(self.targeted_estimate)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── DilutionResult ───────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class DilutionResult(_DictMixin):
+    """Result of dilution analysis (Deng et al. 2015).
+
+    Attributes
+    ----------
+    diluted_ate : float
+        Intent-to-treat effect (diluted back to full population).
+    diluted_se : float
+        Standard error of the diluted estimate.
+    diluted_pvalue : float
+        Two-sided p-value for the diluted estimate.
+    trigger_rate : float
+        Fraction of users who were triggered.
+    triggered_ate : float
+        Treatment effect among triggered users.
+    """
+
+    diluted_ate: float
+    diluted_se: float
+    diluted_pvalue: float
+    trigger_rate: float
+    triggered_ate: float
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "DilutionResult",
+            _line(w),
+            f"  {'diluted_ate':<20}{_fmt(self.diluted_ate)}",
+            f"  {'diluted_se':<20}{_fmt(self.diluted_se)}",
+            f"  {'diluted_pvalue':<20}{_fmt(self.diluted_pvalue)}",
+            f"  {'trigger_rate':<20}{_fmt(self.trigger_rate, as_pct=True)}",
+            f"  {'triggered_ate':<20}{_fmt(self.triggered_ate)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── PHackingResult ───────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class PHackingResult(_DictMixin):
+    """Result of p-hacking detection via p-curve (Simonsohn et al. 2014).
+
+    Attributes
+    ----------
+    suspicious : bool
+        True if the p-value distribution is suspicious.
+    p_curve_test_pvalue : float
+        p-value of the right-skewness test on significant p-values.
+    bunching_near_05 : bool
+        True if there is excess bunching of p-values just below 0.05.
+    n_experiments : int
+        Number of experiments (p-values) analysed.
+    message : str
+        Human-readable summary of the finding.
+    """
+
+    suspicious: bool
+    p_curve_test_pvalue: float
+    bunching_near_05: bool
+    n_experiments: int
+    message: str
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "PHackingResult",
+            _line(w),
+            f"  {'suspicious':<20}{_fmt(self.suspicious)}",
+            f"  {'p_curve_test_pvalue':<20}{_fmt(self.p_curve_test_pvalue)}",
+            f"  {'bunching_near_05':<20}{_fmt(self.bunching_near_05)}",
+            f"  {'n_experiments':<20}{self.n_experiments}",
+            _line(w),
+            f"  {self.message}",
+        ]
+        return "\n".join(lines)
+
+
+# ─── DynamicResult ──────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class DynamicResult(_DictMixin):
+    """Result of dynamic causal effect estimation (Shi, Deng et al. JASA 2022).
+
+    Attributes
+    ----------
+    effects_over_time : list[dict]
+        Per-period effect estimates with keys ``period``, ``effect``,
+        ``se``, and ``pvalue``.
+    cumulative_effect : float
+        Cumulative treatment effect across all periods.
+    pvalue : float
+        Overall p-value for the null of no cumulative effect.
+    trend : str
+        One of ``'stable'``, ``'increasing'``, or ``'decreasing'``.
+    """
+
+    effects_over_time: list[dict]
+    cumulative_effect: float
+    pvalue: float
+    trend: str
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "DynamicResult",
+            _line(w),
+            f"  {'n_periods':<20}{len(self.effects_over_time)}",
+            f"  {'cumulative_effect':<20}{_fmt(self.cumulative_effect)}",
+            f"  {'pvalue':<20}{_fmt(self.pvalue)}",
+            f"  {'trend':<20}{self.trend}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── BayesOptResult ─────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class BayesOptResult(_DictMixin):
+    """Result of Bayesian experiment optimization (Meta 2025).
+
+    Attributes
+    ----------
+    best_params : dict
+        Treatment parameters with the best predicted long-term outcome.
+    predicted_long_term : float
+        Predicted long-term outcome for the best parameters.
+    n_experiments : int
+        Number of experiments run so far.
+    surrogate_r2 : float
+        R-squared of the surrogate model mapping short-term to long-term.
+    """
+
+    best_params: dict
+    predicted_long_term: float
+    n_experiments: int
+    surrogate_r2: float
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "BayesOptResult",
+            _line(w),
+            f"  {'best_params':<20}{self.best_params}",
+            f"  {'predicted_long':<20}{_fmt(self.predicted_long_term)}",
+            f"  {'n_experiments':<20}{self.n_experiments}",
+            f"  {'surrogate_r2':<20}{_fmt(self.surrogate_r2)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── EnrichmentResult ───────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class EnrichmentResult(_DictMixin):
+    """Result of adaptive enrichment analysis (Simon & Simon 2013).
+
+    Attributes
+    ----------
+    selected_subgroups : list[str]
+        Subgroups selected to continue enrollment.
+    dropped_subgroups : list[str]
+        Subgroups dropped due to lack of treatment effect.
+    enrichment_ratios : dict[str, float]
+        Ratio of treatment effect to SE for each subgroup.
+    stage : int
+        Current stage of the adaptive enrichment design.
+    """
+
+    selected_subgroups: list[str]
+    dropped_subgroups: list[str]
+    enrichment_ratios: dict[str, float]
+    stage: int
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "EnrichmentResult",
+            _line(w),
+            f"  {'stage':<20}{self.stage}",
+            f"  {'selected':<20}{self.selected_subgroups}",
+            f"  {'dropped':<20}{self.dropped_subgroups}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── MarketplaceResult ──────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class MarketplaceResult(_DictMixin):
+    """Result of a marketplace experiment analysis (Bajari et al. 2023).
+
+    Attributes
+    ----------
+    ate : float
+        Average treatment effect.
+    se : float
+        Standard error of the ATE estimate.
+    pvalue : float
+        Two-sided p-value for H0: ATE = 0.
+    estimated_bias : float
+        Estimated bias from marketplace interference.
+    design_effect : float
+        Variance inflation factor due to clustering.
+    recommended_side : str
+        Recommended randomization side (``'buyer'`` or ``'seller'``).
+    """
+
+    ate: float
+    se: float
+    pvalue: float
+    estimated_bias: float
+    design_effect: float
+    recommended_side: str
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "MarketplaceResult",
+            _line(w),
+            f"  {'ate':<20}{_fmt(self.ate)}",
+            f"  {'se':<20}{_fmt(self.se)}",
+            f"  {'pvalue':<20}{_fmt(self.pvalue)}",
+            f"  {'estimated_bias':<20}{_fmt(self.estimated_bias)}",
+            f"  {'design_effect':<20}{_fmt(self.design_effect)}",
+            f"  {'recommended_side':<20}{self.recommended_side}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── BudgetSplitResult ──────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class BudgetSplitResult(_DictMixin):
+    """Result of a budget-split experiment (Liu et al. KDD 2021).
+
+    Attributes
+    ----------
+    ate : float
+        Average treatment effect.
+    pvalue : float
+        Two-sided p-value for H0: ATE = 0.
+    significant : bool
+        Whether ``pvalue < alpha``.
+    treatment_budget : float
+        Total budget allocated to the treatment market.
+    control_budget : float
+        Total budget allocated to the control market.
+    cannibalization_free : bool
+        Whether the design eliminates cannibalization bias.
+    """
+
+    ate: float
+    pvalue: float
+    significant: bool
+    treatment_budget: float
+    control_budget: float
+    cannibalization_free: bool
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "BudgetSplitResult",
+            _line(w),
+            f"  {'ate':<22}{_fmt(self.ate)}",
+            f"  {'pvalue':<22}{_fmt(self.pvalue)}",
+            f"  {'significant':<22}{_fmt(self.significant)}",
+            f"  {'treatment_budget':<22}{_fmt(self.treatment_budget)}",
+            f"  {'control_budget':<22}{_fmt(self.control_budget)}",
+            f"  {'cannibalization_free':<22}{_fmt(self.cannibalization_free)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── BipartiteResult ────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class BipartiteResult(_DictMixin):
+    """Result of a bipartite experiment analysis (Harshaw et al. 2023).
+
+    Attributes
+    ----------
+    buyer_side_effect : float
+        Estimated treatment effect on buyer outcomes.
+    seller_side_effect : float
+        Estimated treatment effect on seller outcomes (via exposure mapping).
+    cross_side_pvalue : float
+        p-value for the seller-side (cross-side) treatment effect.
+    n_exposed_sellers : int
+        Number of sellers classified as exposed to treatment.
+    """
+
+    buyer_side_effect: float
+    seller_side_effect: float
+    cross_side_pvalue: float
+    n_exposed_sellers: int
+
+    def __repr__(self) -> str:
+        w = 36
+        lines = [
+            "BipartiteResult",
+            _line(w),
+            f"  {'buyer_side_effect':<22}{_fmt(self.buyer_side_effect)}",
+            f"  {'seller_side_effect':<22}{_fmt(self.seller_side_effect)}",
+            f"  {'cross_side_pvalue':<22}{_fmt(self.cross_side_pvalue)}",
+            f"  {'n_exposed_sellers':<22}{self.n_exposed_sellers}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── SurvivalResult ──────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class SurvivalResult(_DictMixin):
+    """Result of a survival / time-to-event experiment.
+
+    Attributes
+    ----------
+    hazard_ratio : float
+        Estimated hazard ratio (treatment / control).
+    logrank_pvalue : float
+        p-value from the log-rank test.
+    significant : bool
+        Whether ``logrank_pvalue < alpha``.
+    median_survival_ctrl : float | None
+        Median survival time for the control group, or None if not reached.
+    median_survival_trt : float | None
+        Median survival time for the treatment group, or None if not reached.
+    ci_lower : float
+        Lower bound of the 95% CI for the hazard ratio.
+    ci_upper : float
+        Upper bound of the 95% CI for the hazard ratio.
+    alpha : float
+        Significance level used.
+    n_ctrl : int
+        Number of subjects in the control group.
+    n_trt : int
+        Number of subjects in the treatment group.
+    n_events_ctrl : int
+        Number of events observed in the control group.
+    n_events_trt : int
+        Number of events observed in the treatment group.
+    """
+
+    hazard_ratio: float
+    logrank_pvalue: float
+    significant: bool
+    median_survival_ctrl: float | None
+    median_survival_trt: float | None
+    ci_lower: float
+    ci_upper: float
+    alpha: float
+    n_ctrl: int
+    n_trt: int
+    n_events_ctrl: int
+    n_events_trt: int
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "SurvivalResult",
+            _line(w),
+            f"  {'hazard_ratio':<22}{_fmt(self.hazard_ratio)}",
+            f"  {'logrank_pvalue':<22}{_fmt(self.logrank_pvalue)}",
+            f"  {'significant':<22}{_fmt(self.significant)}",
+            f"  {'median_ctrl':<22}{self.median_survival_ctrl}",
+            f"  {'median_trt':<22}{self.median_survival_trt}",
+            f"  {'ci':<22}[{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]",
+            _line(w),
+            f"  {'n_ctrl':<22}{self.n_ctrl}",
+            f"  {'n_trt':<22}{self.n_trt}",
+            f"  {'events_ctrl':<22}{self.n_events_ctrl}",
+            f"  {'events_trt':<22}{self.n_events_trt}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── MediationResult ─────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class MediationResult(_DictMixin):
+    """Result of a causal mediation analysis.
+
+    Attributes
+    ----------
+    total_effect : float
+        Total effect of treatment on outcome (c path).
+    direct_effect : float
+        Direct effect of treatment on outcome controlling for mediator (c').
+    indirect_effect : float
+        Indirect effect (ACME = a * b).
+    proportion_mediated : float
+        Fraction of total effect explained by the mediator.
+    acme_pvalue : float
+        p-value for the indirect (ACME) effect via Sobel test.
+    acme_ci : tuple[float, float]
+        Confidence interval for the ACME.
+    a_path : float
+        Coefficient of treatment on mediator.
+    b_path : float
+        Coefficient of mediator on outcome (controlling for treatment).
+    n : int
+        Number of observations.
+    """
+
+    total_effect: float
+    direct_effect: float
+    indirect_effect: float
+    proportion_mediated: float
+    acme_pvalue: float
+    acme_ci: tuple[float, float]
+    a_path: float
+    b_path: float
+    n: int
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "MediationResult",
+            _line(w),
+            f"  {'total_effect':<22}{_fmt(self.total_effect)}",
+            f"  {'direct_effect':<22}{_fmt(self.direct_effect)}",
+            f"  {'indirect_effect':<22}{_fmt(self.indirect_effect)}",
+            f"  {'proportion_mediated':<22}{_fmt(self.proportion_mediated, as_pct=True)}",
+            _line(w),
+            f"  {'acme_pvalue':<22}{_fmt(self.acme_pvalue)}",
+            f"  {'acme_ci':<22}[{_fmt(self.acme_ci[0])}, {_fmt(self.acme_ci[1])}]",
+            f"  {'a_path':<22}{_fmt(self.a_path)}",
+            f"  {'b_path':<22}{_fmt(self.b_path)}",
+            f"  {'n':<22}{self.n}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── MixedEffectsResult ──────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class MixedEffectsResult(_DictMixin):
+    """Result of a mixed-effects experiment with repeated measures.
+
+    Attributes
+    ----------
+    ate : float
+        Average treatment effect (fixed effect for treatment).
+    se : float
+        Standard error of the treatment effect.
+    pvalue : float
+        p-value for the treatment effect.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    significant : bool
+        Whether ``pvalue < alpha``.
+    icc : float
+        Intraclass correlation coefficient.
+    n_users : int
+        Number of unique users/clusters.
+    n_observations : int
+        Total number of observations.
+    alpha : float
+        Significance level used.
+    """
+
+    ate: float
+    se: float
+    pvalue: float
+    ci_lower: float
+    ci_upper: float
+    significant: bool
+    icc: float
+    n_users: int
+    n_observations: int
+    alpha: float
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "MixedEffectsResult",
+            _line(w),
+            f"  {'ate':<22}{_fmt(self.ate)}",
+            f"  {'se':<22}{_fmt(self.se)}",
+            f"  {'pvalue':<22}{_fmt(self.pvalue)}",
+            f"  {'ci':<22}[{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]",
+            f"  {'significant':<22}{_fmt(self.significant)}",
+            _line(w),
+            f"  {'icc':<22}{_fmt(self.icc)}",
+            f"  {'n_users':<22}{self.n_users}",
+            f"  {'n_observations':<22}{self.n_observations}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── FactorialResult ─────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class FactorialResult(_DictMixin):
+    """Result of a fractional factorial experiment analysis.
+
+    Attributes
+    ----------
+    main_effects : dict[str, float]
+        Estimated main effect for each factor.
+    interactions : dict[str, float]
+        Estimated two-factor interaction effects.
+    significant_factors : list[str]
+        Factors with statistically significant main effects.
+    effect_sizes : dict[str, float]
+        Standardised effect sizes for each factor.
+    n_runs : int
+        Number of experimental runs in the design.
+    n_factors : int
+        Number of factors.
+    resolution : int
+        Design resolution.
+    """
+
+    main_effects: dict
+    interactions: dict
+    significant_factors: list
+    effect_sizes: dict
+    n_runs: int
+    n_factors: int
+    resolution: int
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "FactorialResult",
+            _line(w),
+            f"  {'n_factors':<22}{self.n_factors}",
+            f"  {'n_runs':<22}{self.n_runs}",
+            f"  {'resolution':<22}{self.resolution}",
+            _line(w),
+            f"  significant factors: {self.significant_factors}",
+        ]
+        for name, eff in self.main_effects.items():
+            lines.append(f"  {name:<22}{_fmt(eff)}")
+        lines.append(_line(w))
+        return "\n".join(lines)
+
+
+# ─── DoseResponseResult ──────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class DoseResponseResult(_DictMixin):
+    """Result of a continuous treatment effect (dose-response) analysis.
+
+    Attributes
+    ----------
+    dose_response_curve : list[tuple[float, float]]
+        List of (dose, estimated_effect) tuples along the dose range.
+    optimal_dose : float
+        Dose level that maximises the estimated effect.
+    slope_at_mean : float
+        Estimated slope of the dose-response curve at the mean dose.
+    r_squared : float
+        R-squared of the fitted model.
+    n : int
+        Number of observations.
+    """
+
+    dose_response_curve: list
+    optimal_dose: float
+    slope_at_mean: float
+    r_squared: float
+    n: int
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "DoseResponseResult",
+            _line(w),
+            f"  {'optimal_dose':<22}{_fmt(self.optimal_dose)}",
+            f"  {'slope_at_mean':<22}{_fmt(self.slope_at_mean)}",
+            f"  {'r_squared':<22}{_fmt(self.r_squared)}",
+            f"  {'n':<22}{self.n}",
+            f"  {'curve_points':<22}{len(self.dose_response_curve)}",
+            _line(w),
+        ]
+        return "\n".join(lines)
+
+
+# ─── OfflineResult ────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class OfflineResult(_DictMixin):
+    """Result of an offline policy evaluation.
+
+    Attributes
+    ----------
+    estimated_value : float
+        Estimated value of the target policy.
+    se : float
+        Standard error of the estimate.
+    ci_lower : float
+        Lower bound of the confidence interval.
+    ci_upper : float
+        Upper bound of the confidence interval.
+    effective_sample_size : float
+        Effective sample size after importance weighting.
+    method : str
+        Estimation method used (``'ips'`` or ``'doubly_robust'``).
+    n : int
+        Number of logged observations used.
+    """
+
+    estimated_value: float
+    se: float
+    ci_lower: float
+    ci_upper: float
+    effective_sample_size: float
+    method: str
+    n: int
+
+    def __repr__(self) -> str:
+        w = 40
+        lines = [
+            "OfflineResult",
+            _line(w),
+            f"  {'estimated_value':<22}{_fmt(self.estimated_value)}",
+            f"  {'se':<22}{_fmt(self.se)}",
+            f"  {'ci':<22}[{_fmt(self.ci_lower)}, {_fmt(self.ci_upper)}]",
+            f"  {'ess':<22}{_fmt(self.effective_sample_size)}",
+            f"  {'method':<22}{self.method}",
+            f"  {'n':<22}{self.n}",
+            _line(w),
+        ]
+        return "\n".join(lines)

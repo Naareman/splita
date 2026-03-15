@@ -108,6 +108,26 @@ class TestRecommendation:
         result = exp.run()
         assert result.recommendation == "reject"
 
+    def test_sig_positive_plus_nonsig_negative_lift_tradeoff(self):
+        """Sig positive on one metric, non-sig slightly negative lift on another -> 'tradeoff'.
+
+        Covers line 193 in multi_objective.py: sig_positive > 0, sig_negative == 0,
+        but not all lifts are positive, so recommendation = 'tradeoff'.
+        """
+        exp = MultiObjectiveExperiment()
+        # Strong positive effect on metric 1
+        exp.add_metric(*_positive_metric(n=1000, effect=2.0, seed=10), name="good")
+        # Tiny negative lift (not statistically significant) on metric 2
+        rng = np.random.default_rng(1)
+        ctrl_neg = rng.normal(10, 5, 30)
+        trt_neg = rng.normal(9.5, 5, 30)  # slight negative, but huge noise -> not sig
+        exp.add_metric(ctrl_neg, trt_neg, name="neutral")
+        result = exp.run()
+        # Verify the setup conditions: sig_positive > 0, sig_negative == 0, not all lifts > 0
+        lifts = [r.lift for r in result.metric_results]
+        assert any(l > 0 for l in lifts), "Need at least one positive lift"
+        assert result.recommendation == "tradeoff"
+
 
 # ── Pareto dominance ─────────────────────────────────────────────────
 

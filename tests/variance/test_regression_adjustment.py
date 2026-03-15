@@ -343,6 +343,42 @@ class TestValidation:
         with pytest.raises(ValueError, match=r"1-D or 2-D"):
             ra.fit_transform(ctrl, trt, Xc, Xt)
 
+    def test_non_array_covariate_raises_typeerror(self):
+        """Non-array covariate (e.g. int) raises TypeError."""
+        ctrl = np.array([1.0, 2.0, 3.0])
+        trt = np.array([2.0, 3.0, 4.0])
+
+        ra = RegressionAdjustment()
+        with pytest.raises(TypeError, match=r"array-like"):
+            ra.fit_transform(ctrl, trt, 42, np.array([1.0, 2.0, 3.0]))
+
+    def test_singular_design_matrix_raises(self):
+        """Singular design matrix from perfectly collinear covariates raises."""
+        # Create a situation where Z'Z is singular by making covariates
+        # that are exact linear combinations (intercept is already in Z)
+        ctrl = np.array([1.0, 2.0])
+        trt = np.array([3.0, 4.0])
+        # Constant covariates -> collinear with intercept
+        Xc = np.array([[1.0, 1.0], [1.0, 1.0]])
+        Xt = np.array([[1.0, 1.0], [1.0, 1.0]])
+
+        ra = RegressionAdjustment()
+        with pytest.raises(ValueError, match=r"singular"):
+            ra.fit_transform(ctrl, trt, Xc, Xt)
+
+    def test_too_many_covariates_raises(self):
+        """More covariates than observations yields df < 1 error."""
+        ctrl = np.array([1.0, 2.0])
+        trt = np.array([3.0, 4.0])
+        # 10 covariates for 4 observations -> Z has 1+1+10+10=22 cols, n=4, df<1
+        rng = np.random.default_rng(42)
+        Xc = rng.normal(0, 1, (2, 10))
+        Xt = rng.normal(0, 1, (2, 10))
+
+        ra = RegressionAdjustment()
+        with pytest.raises(ValueError, match=r"Not enough observations|singular"):
+            ra.fit_transform(ctrl, trt, Xc, Xt)
+
 
 # ── Multi-covariate tests ───────────────────────────────────────────
 

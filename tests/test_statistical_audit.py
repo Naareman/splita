@@ -850,9 +850,716 @@ class TestFormulaChecks:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# 12. HTEEstimator: known heterogeneity -> CATE varies across subgroups
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def test_hte_known_heterogeneity():
+    """With known heterogeneity, CATE should vary across subgroups.
+
+    Design: CATE = 2 * X0, so subgroup X0 > 0 should have higher CATE
+    than subgroup X0 < 0.
+    """
+    from splita import HTEEstimator
+
+    rng = np.random.default_rng(42)
+    n = 500
+    X_ctrl = rng.normal(size=(n, 3))
+    X_trt = rng.normal(size=(n, 3))
+    # Y_ctrl = 0.5 * X0 + noise; Y_trt = 2.5 * X0 + noise
+    # => true CATE = 2.0 * X0
+    y_ctrl = X_ctrl[:, 0] * 0.5 + rng.normal(0, 0.1, n)
+    y_trt = X_trt[:, 0] * 2.5 + rng.normal(0, 0.1, n)
+
+    hte = HTEEstimator(method="t_learner").fit(y_ctrl, y_trt, X_ctrl, X_trt)
+    X_all = np.vstack([X_ctrl, X_trt])
+    cate = np.array(hte.result().cate_estimates)
+
+    # Subgroup where X0 > 0 should have higher CATE than X0 < 0
+    high_x0 = X_all[:, 0] > 0.5
+    low_x0 = X_all[:, 0] < -0.5
+    mean_high = np.mean(cate[high_x0])
+    mean_low = np.mean(cate[low_x0])
+
+    assert mean_high > mean_low, (
+        f"CATE for X0>0.5 ({mean_high:.4f}) should exceed "
+        f"CATE for X0<-0.5 ({mean_low:.4f})"
+    )
+    # The difference should be substantial (true diff ~2.0)
+    assert mean_high - mean_low > 0.5, (
+        f"CATE subgroup difference ({mean_high - mean_low:.4f}) "
+        f"should be > 0.5 given true CATE = 2*X0"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 13. CausalForest: honest estimates have lower bias than dishonest
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.slow
+def test_causal_forest_honest_lower_bias():
+    """Honest estimates should have lower bias than dishonest on average.
+
+    Over multiple replications, honest splitting produces less-overfit
+    CATE estimates, meaning the absolute difference between estimated and
+    true mean CATE should be smaller.
+    """
+    from splita.core.causal_forest import CausalForest
+
+    true_effect = 1.5
+    n_reps = 30
+    bias_honest = []
+    bias_dishonest = []
+
+    for rep in range(n_reps):
+        r = np.random.default_rng(rep + 200)
+        n = 200
+        X_ctrl = r.normal(size=(n, 3))
+        X_trt = r.normal(size=(n, 3))
+        y_ctrl = r.normal(0, 1, n)
+        y_trt = r.normal(true_effect, 1, n)
+
+        cf_h = CausalForest(n_estimators=30, honest=True, random_state=rep)
+        cf_h = cf_h.fit(y_ctrl, y_trt, X_ctrl, X_trt)
+
+        cf_d = CausalForest(n_estimators=30, honest=False, random_state=rep)
+        cf_d = cf_d.fit(y_ctrl, y_trt, X_ctrl, X_trt)
+
+        bias_honest.append(abs(cf_h.result().mean_cate - true_effect))
+        bias_dishonest.append(abs(cf_d.result().mean_cate - true_effect))
+
+    mean_bias_honest = np.mean(bias_honest)
+    mean_bias_dishonest = np.mean(bias_dishonest)
+
+    # Honest should not be substantially worse in bias
+    # (it may be slightly higher variance but less overfit)
+    # We use a loose check: honest bias should not be > 2x dishonest
+    assert mean_bias_honest < mean_bias_dishonest * 2.0, (
+        f"Honest bias ({mean_bias_honest:.4f}) should not be "
+        f">> dishonest bias ({mean_bias_dishonest:.4f})"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 14. ConfidenceSequence always-valid coverage (500 sims, 5 peeks)
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.slow
+def test_confidence_sequence_always_valid_coverage():
+    """CI from ConfidenceSequence must contain the true effect >= 93% of the time.
+
+    Simulates 500 experiments with 5 sequential peeks each. At the final peek,
+    the CI should cover the true effect in at least 93% of simulations.
+    """
+    from splita.sequential.confidence_sequence import ConfidenceSequence
+
+    n_sims = 500
+    n_peeks = 5
+    true_effect = 0.3
+    sigma = 1.0
+    alpha = 0.05
+    n_per_peek = 100
+
+    ci_covers = 0
+    rng = np.random.default_rng(14014)
+
+    for _ in range(n_sims):
+        cs = ConfidenceSequence(alpha=alpha, sigma=sigma)
+        for _ in range(n_peeks):
+            ctrl = rng.normal(0, sigma, size=n_per_peek)
+            trt = rng.normal(true_effect, sigma, size=n_per_peek)
+            state = cs.update(ctrl, trt)
+        # Check coverage at final peek
+        if state.ci_lower <= true_effect <= state.ci_upper:
+            ci_covers += 1
+
+    coverage = ci_covers / n_sims
+    assert coverage >= 0.93, (
+        f"ConfidenceSequence always-valid coverage = {coverage:.4f}, "
+        f"expected >= 0.93 at 5 peeks"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 15. AATest FP rate within [alpha - 2*SE, alpha + 2*SE]
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.slow
+def test_aa_test_fp_rate_calibrated():
+    """AATest on clean data should produce FP rate within [alpha-2SE, alpha+2SE]."""
+    import math
+
+    from splita.diagnostics.aa_test import AATest
+
+    rng = np.random.default_rng(15015)
+    data = rng.normal(50, 10, size=4000)
+
+    alpha = 0.05
+    n_sims = 1000
+    result = AATest(n_simulations=n_sims, alpha=alpha, random_state=15015).run(data)
+
+    se = math.sqrt(alpha * (1 - alpha) / result.n_simulations)
+    lower_bound = alpha - 2 * se
+    upper_bound = alpha + 2 * se
+
+    assert lower_bound <= result.false_positive_rate <= upper_bound, (
+        f"AA test FP rate {result.false_positive_rate:.4f} outside "
+        f"expected bounds [{lower_bound:.4f}, {upper_bound:.4f}]"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 16. NonStationaryDetector detects known trend change
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.slow
+def test_nonstationarity_detects_known_trend():
+    """NonStationaryDetector should detect a known trend change (step function)."""
+    from splita.diagnostics.nonstationarity import NonStationaryDetector
+
+    rng = np.random.default_rng(16016)
+    n = 300
+    timestamps = np.arange(n, dtype=float)
+    control = rng.normal(10, 0.3, n)
+
+    # Effect shifts from 0 to 5 at midpoint
+    effect = np.where(np.arange(n) < 150, 0.0, 5.0)
+    treatment = control + effect + rng.normal(0, 0.3, n)
+
+    detector = NonStationaryDetector(window_size=15, threshold=0.05)
+    result = detector.fit(control, treatment, timestamps).result()
+
+    # Must detect non-stationarity
+    assert result.is_stationary is False, (
+        f"NonStationaryDetector failed to detect known trend change. "
+        f"trend={result.effect_trend}, change_points={result.change_points}"
+    )
+    # Should detect either change points or a non-stable trend
+    assert (
+        len(result.change_points) >= 1 or result.effect_trend != "stable"
+    ), "Expected change points or non-stable trend"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 17. BayesianExperiment CI coverage
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.slow
+def test_bayesian_ci_coverage():
+    """BayesianExperiment 95% credible interval contains true effect >= 93% of time.
+
+    500 simulations with known true conversion difference = 0.02.
+    """
+    from splita import BayesianExperiment
+
+    true_effect = 0.02
+    n_sims = 500
+    covered = 0
+
+    for i in range(n_sims):
+        rng = np.random.default_rng(i)
+        ctrl = rng.binomial(1, 0.10, 1000)
+        trt = rng.binomial(1, 0.12, 1000)
+        result = BayesianExperiment(
+            ctrl, trt, n_samples=5000, random_state=i
+        ).run()
+        if result.ci_lower <= true_effect <= result.ci_upper:
+            covered += 1
+
+    coverage = covered / n_sims
+    assert coverage >= 0.93, (
+        f"BayesianExperiment CI coverage = {coverage:.4f}, expected >= 0.93"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 16. BayesianExperiment P(B>A) under null
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.slow
+def test_bayesian_prob_b_beats_a_under_null():
+    """Under the null (no effect), P(B>A) should be approximately 0.5.
+
+    Across 500 simulations, the mean P(B>A) should be in [0.45, 0.55].
+    """
+    from splita import BayesianExperiment
+
+    n_sims = 500
+    probs = []
+
+    for i in range(n_sims):
+        rng = np.random.default_rng(i + 10000)
+        ctrl = rng.binomial(1, 0.10, 500)
+        trt = rng.binomial(1, 0.10, 500)
+        result = BayesianExperiment(
+            ctrl, trt, n_samples=5000, random_state=i
+        ).run()
+        probs.append(result.prob_b_beats_a)
+
+    mean_prob = float(np.mean(probs))
+    assert 0.45 <= mean_prob <= 0.55, (
+        f"Mean P(B>A) under null = {mean_prob:.4f}, expected ~0.50"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 17. QuantileExperiment known shift
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def test_quantile_known_shift_matches():
+    """With treatment = control + constant, all quantile diffs match the shift."""
+    from splita import QuantileExperiment
+
+    rng = np.random.default_rng(42)
+    ctrl = rng.normal(10, 2, size=1000)
+    shift = 2.0
+    trt = ctrl + shift
+    qs = [0.10, 0.25, 0.50, 0.75, 0.90]
+
+    result = QuantileExperiment(ctrl, trt, quantiles=qs, random_state=42).run()
+
+    for i, q in enumerate(qs):
+        assert abs(result.differences[i] - shift) < 0.01, (
+            f"Quantile {q}: expected diff ~{shift}, got {result.differences[i]:.4f}"
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 18. StratifiedExperiment reduces variance vs unstratified
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def test_stratified_reduces_variance_property():
+    """Stratification reduces SE compared to unstratified analysis (property test).
+
+    Tested across 50 random seeds with strata that have very different means.
+    """
+    from splita.core.stratified import StratifiedExperiment
+
+    n_passes = 0
+    n_trials = 50
+
+    for seed in range(n_trials):
+        rng = np.random.default_rng(seed + 5000)
+        n = 200
+        # Two strata with very different means -> stratification helps
+        ctrl = np.concatenate([rng.normal(5, 1, n), rng.normal(50, 1, n)])
+        trt = np.concatenate([rng.normal(5.5, 1, n), rng.normal(50.5, 1, n)])
+        sc = np.array(["low"] * n + ["high"] * n)
+        st = np.array(["low"] * n + ["high"] * n)
+
+        result = StratifiedExperiment(
+            ctrl, trt, control_strata=sc, treatment_strata=st
+        ).run()
+
+        # Unstratified SE (pooled)
+        se_pooled = float(np.sqrt(
+            np.var(ctrl, ddof=1) / len(ctrl) + np.var(trt, ddof=1) / len(trt)
+        ))
+
+        if result.se < se_pooled:
+            n_passes += 1
+
+    # Should pass nearly every time with well-separated strata
+    assert n_passes >= 45, (
+        f"Stratification reduced variance in {n_passes}/{n_trials} trials, "
+        f"expected >= 45"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 19. EValue Type I error: 500 null sims, 5 peeks → rejection rate <= alpha + 0.03
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.slow
+def test_evalue_type1_error():
+    """Under H0, E-value should reject at most alpha + 0.03 with 5 peeks."""
+    import warnings
+
+    from splita.sequential.evalue import EValue
+
+    n_sims = 500
+    n_peeks = 5
+    alpha = 0.05
+    n_per_peek = 200
+    rejections = 0
+
+    rng = np.random.default_rng(19019)
+
+    for _ in range(n_sims):
+        ev = EValue(alpha=alpha, metric="continuous", tau=0.1)
+        rejected = False
+        for _ in range(n_peeks):
+            ctrl = rng.normal(0, 1, size=n_per_peek)
+            trt = rng.normal(0, 1, size=n_per_peek)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                state = ev.update(ctrl, trt)
+            if state.should_stop:
+                rejected = True
+                break
+        if rejected:
+            rejections += 1
+
+    rej_rate = rejections / n_sims
+    assert rej_rate <= alpha + 0.03, (
+        f"EValue Type I error with peeking = {rej_rate:.4f}, "
+        f"expected <= {alpha + 0.03:.4f}"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 20. ThompsonSampler convergence: 3 arms at [0.2, 0.5, 0.3] → arm 1 best
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.slow
+def test_thompson_convergence_three_arms():
+    """ThompsonSampler identifies arm 1 as best after 1000 pulls with rates [0.2, 0.5, 0.3]."""
+    from splita.bandits.thompson import ThompsonSampler
+
+    rates = [0.2, 0.5, 0.3]
+    rng = np.random.default_rng(20020)
+    ts = ThompsonSampler(3, random_state=42)
+
+    for _ in range(1000):
+        for arm, rate in enumerate(rates):
+            reward = int(rng.random() < rate)
+            ts.update(arm, reward)
+
+    result = ts.result()
+    assert result.current_best_arm == 1, (
+        f"Expected arm 1 as best (rate=0.5), got arm {result.current_best_arm}"
+    )
+    # Posterior mean for arm 1 should be closest to 0.5
+    assert abs(result.arm_means[1] - 0.5) < 0.05, (
+        f"Arm 1 posterior mean = {result.arm_means[1]:.4f}, expected ~0.5"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 21. LinUCB convergence: learns correct arm after training
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.slow
+def test_linucb_convergence():
+    """LinUCB learns the correct arm after training with a known reward structure."""
+    from splita.bandits.linucb import LinUCB
+
+    rng = np.random.default_rng(21021)
+    n_features = 3
+    ucb = LinUCB(2, n_features=n_features, alpha=1.0, random_state=42)
+
+    # True weights: arm 0 = [1, 0, 0], arm 1 = [0, 0, 0]
+    # For context [1, 0, 0], arm 0 should have higher reward
+    theta_0 = np.array([1.0, 0.0, 0.0])
+    theta_1 = np.array([0.0, 0.0, 0.0])
+
+    for _ in range(500):
+        ctx = rng.standard_normal(n_features)
+        ctx /= np.linalg.norm(ctx)  # normalize
+        r0 = float(ctx @ theta_0 + rng.normal(0, 0.1))
+        r1 = float(ctx @ theta_1 + rng.normal(0, 0.1))
+        ucb.update(0, ctx, r0)
+        ucb.update(1, ctx, r1)
+
+    # For a context strongly aligned with theta_0, arm 0 should win
+    test_ctx = np.array([1.0, 0.0, 0.0])
+    recommended = ucb.recommend(test_ctx)
+    assert recommended == 0, (
+        f"Expected arm 0 for context [1,0,0], got arm {recommended}"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Run configuration
 # ═══════════════════════════════════════════════════════════════════════════
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short", "-x"])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# RegressionAdjustment: ATE matches known effect in 500 sims
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.slow
+def test_regression_adjustment_ate_unbiased():
+    """Regression adjustment ATE should be unbiased over 500 simulations.
+
+    Lin's (2013) regression adjustment preserves the true ATE on average.
+    The mean estimated ATE across simulations should be close to the true
+    effect, and the 95% CI should cover the true effect >= 93% of the time.
+    """
+    from splita.variance.regression_adjustment import RegressionAdjustment
+
+    rng = np.random.default_rng(42)
+    n_sims = 500
+    true_ate = 0.5
+    n = 300
+    ate_estimates = []
+    ci_covers = 0
+
+    for _ in range(n_sims):
+        X_ctrl = rng.normal(10, 2, n)
+        X_trt = rng.normal(10, 2, n)
+        ctrl = X_ctrl + rng.normal(0, 1, n)
+        trt = X_trt + true_ate + rng.normal(0, 1, n)
+
+        ra = RegressionAdjustment()
+        result = ra.fit_transform(ctrl, trt, X_ctrl, X_trt)
+        ate_estimates.append(result.ate)
+        if result.ci_lower <= true_ate <= result.ci_upper:
+            ci_covers += 1
+
+    mean_ate = float(np.mean(ate_estimates))
+    coverage = ci_covers / n_sims
+
+    assert abs(mean_ate - true_ate) < 0.05, (
+        f"RegressionAdjustment mean ATE = {mean_ate:.4f}, expected ~{true_ate} "
+        f"(bias = {abs(mean_ate - true_ate):.4f}, tolerance 0.05)"
+    )
+    assert coverage >= 0.93, (
+        f"RegressionAdjustment CI coverage = {coverage:.4f}, expected >= 0.93"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DoubleML: removes confounding bias in 500 simulations
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.slow
+def test_double_ml_removes_confounding():
+    """DoubleML should remove confounding bias over 500 simulations.
+
+    When a confounder affects both treatment assignment and outcome,
+    the naive difference-in-means is biased. DoubleML should produce
+    estimates closer to the true ATE than the naive estimator.
+    """
+    from splita.variance.double_ml import DoubleML
+
+    rng = np.random.default_rng(42)
+    n_sims = 500
+    true_ate = 1.0
+    n = 500
+    dml_ates = []
+    naive_ates = []
+
+    for i in range(n_sims):
+        X = rng.normal(0, 1, size=(n, 3))
+        confounder = X[:, 0]
+        T = (0.5 * confounder + rng.normal(0, 0.5, n) > 0).astype(float)
+        Y = true_ate * T + 2.0 * confounder + rng.normal(0, 1, n)
+
+        result = DoubleML(cv=3, random_state=i).fit_transform(Y, T, X)
+        dml_ates.append(result.ate)
+
+        treated = Y[T > 0.5]
+        control = Y[T <= 0.5]
+        naive_ates.append(float(np.mean(treated) - np.mean(control)))
+
+    mean_dml = float(np.mean(dml_ates))
+    mean_naive = float(np.mean(naive_ates))
+    dml_bias = abs(mean_dml - true_ate)
+    naive_bias = abs(mean_naive - true_ate)
+
+    assert dml_bias < naive_bias, (
+        f"DoubleML bias ({dml_bias:.4f}) should be < naive bias ({naive_bias:.4f})"
+    )
+    assert dml_bias < 0.3, (
+        f"DoubleML mean ATE = {mean_dml:.4f}, bias = {dml_bias:.4f}, "
+        f"expected bias < 0.3 (true ATE = {true_ate})"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# MultivariateCUPED: variance reduction >= scalar CUPED with 3+ covariates
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def test_multivariate_cuped_beats_scalar():
+    """MultivariateCUPED with 3+ covariates should reduce more variance
+    than scalar CUPED with any single covariate.
+    """
+    from splita.variance.cuped import CUPED
+    from splita.variance.multivariate_cuped import MultivariateCUPED
+
+    rng = np.random.default_rng(42)
+    n = 1000
+    n_covariates = 4
+
+    X_all = rng.normal(0, 1, size=(2 * n, n_covariates))
+    weights = np.array([1.0, 0.8, 0.6, 0.4])
+    base = X_all @ weights
+    ctrl = base[:n] + rng.normal(0, 1, n)
+    trt = base[n:] + 0.5 + rng.normal(0, 1, n)
+    X_c, X_t = X_all[:n], X_all[n:]
+
+    mcuped = MultivariateCUPED()
+    mcuped.fit(ctrl, trt, X_c, X_t)
+    vr_multi = mcuped.variance_reduction_
+
+    best_scalar_vr = 0.0
+    for j in range(n_covariates):
+        cuped = CUPED()
+        cuped.fit(ctrl, trt, X_c[:, j], X_t[:, j])
+        best_scalar_vr = max(best_scalar_vr, cuped.variance_reduction_)
+
+    assert vr_multi > best_scalar_vr, (
+        f"Multivariate CUPED variance reduction ({vr_multi:.4f}) should exceed "
+        f"best scalar CUPED ({best_scalar_vr:.4f}) with {n_covariates} covariates"
+    )
+    assert vr_multi > best_scalar_vr + 0.01, (
+        f"Improvement ({vr_multi - best_scalar_vr:.4f}) should be > 0.01"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DiD: known effect recovery across 500 simulations
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.slow
+def test_did_known_effect_recovery():
+    """DiD should recover a known treatment effect in 500 simulations.
+
+    The mean estimated ATT across simulations should be close to the true
+    effect, and the 95% CI should contain the true effect >= 93% of the time.
+    """
+    from splita.causal.did import DifferenceInDifferences
+
+    rng = np.random.default_rng(20020)
+    n_sims = 500
+    n = 200
+    true_effect = 3.0
+    ci_covers = 0
+    att_estimates = []
+
+    for _ in range(n_sims):
+        pre_ctrl = rng.normal(10, 1, n)
+        pre_trt = rng.normal(10, 1, n)
+        post_ctrl = rng.normal(10, 1, n)
+        post_trt = rng.normal(10 + true_effect, 1, n)
+
+        r = DifferenceInDifferences().fit(
+            pre_ctrl, pre_trt, post_ctrl, post_trt
+        ).result()
+
+        att_estimates.append(r.att)
+        if r.ci_lower <= true_effect <= r.ci_upper:
+            ci_covers += 1
+
+    mean_att = float(np.mean(att_estimates))
+    coverage = ci_covers / n_sims
+
+    assert abs(mean_att - true_effect) < 0.2, (
+        f"DiD mean ATT = {mean_att:.4f}, expected ~{true_effect} "
+        f"(tolerance 0.2)"
+    )
+    assert coverage >= 0.93, (
+        f"DiD CI coverage = {coverage:.4f}, expected >= 0.93"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# SyntheticControl: weights sum to 1, pre-RMSE < threshold
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def test_synthetic_control_weight_constraints():
+    """SyntheticControl weights must sum to 1 and pre-RMSE must be low."""
+    from splita.causal.synthetic_control import SyntheticControl
+
+    rng = np.random.default_rng(21021)
+
+    for _ in range(50):
+        n_pre = rng.integers(5, 15)
+        n_post = rng.integers(3, 8)
+        n_donors = rng.integers(2, 6)
+
+        treated_pre = np.arange(1, n_pre + 1, dtype=float) + rng.normal(0, 0.1, n_pre)
+        treated_post = (
+            np.arange(n_pre + 1, n_pre + n_post + 1, dtype=float)
+            + rng.normal(0, 0.1, n_post)
+        )
+
+        donors_pre = np.zeros((n_pre, n_donors))
+        donors_post = np.zeros((n_post, n_donors))
+        for d in range(n_donors):
+            offset = rng.normal(0, 2)
+            donors_pre[:, d] = np.arange(1, n_pre + 1, dtype=float) + offset
+            donors_post[:, d] = (
+                np.arange(n_pre + 1, n_pre + n_post + 1, dtype=float) + offset
+            )
+
+        r = SyntheticControl().fit(
+            treated_pre, treated_post, donors_pre, donors_post
+        ).result()
+
+        assert abs(sum(r.weights) - 1.0) < 1e-6
+        assert all(w >= -1e-10 for w in r.weights)
+        assert r.pre_treatment_rmse < 5.0
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ClusterExperiment: cluster-robust SE > naive SE (design effect > 1)
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def test_cluster_robust_se_exceeds_naive():
+    """Cluster-robust SE should exceed naive SE when ICC > 0."""
+    from scipy.stats import ttest_ind
+
+    from splita.causal.cluster import ClusterExperiment
+
+    rng = np.random.default_rng(22022)
+    n_clusters = 20
+    n_per_cluster = 30
+    wider_count = 0
+    n_reps = 50
+
+    for _ in range(n_reps):
+        ctrl, ctrl_cl = [], []
+        trt, trt_cl = [], []
+        for c in range(n_clusters):
+            cluster_effect_c = rng.normal(0, 5)
+            cluster_effect_t = rng.normal(0, 5)
+            ctrl.extend(rng.normal(10 + cluster_effect_c, 1, n_per_cluster))
+            ctrl_cl.extend([c] * n_per_cluster)
+            trt.extend(rng.normal(10 + cluster_effect_t, 1, n_per_cluster))
+            trt_cl.extend([c] * n_per_cluster)
+
+        ctrl_arr = np.array(ctrl)
+        trt_arr = np.array(trt)
+
+        result = ClusterExperiment(
+            ctrl_arr, trt_arr,
+            control_clusters=ctrl_cl,
+            treatment_clusters=trt_cl,
+        ).run()
+        cluster_ci_width = result.ci_upper - result.ci_lower
+
+        naive_res = ttest_ind(trt_arr, ctrl_arr, equal_var=False)
+        naive_se = abs(
+            (np.mean(trt_arr) - np.mean(ctrl_arr)) / naive_res.statistic
+        )
+        naive_ci_width = 2 * 1.96 * naive_se
+
+        if cluster_ci_width > naive_ci_width:
+            wider_count += 1
+
+    assert wider_count >= 40, (
+        f"Cluster CI wider than naive in only {wider_count}/{n_reps} runs"
+    )

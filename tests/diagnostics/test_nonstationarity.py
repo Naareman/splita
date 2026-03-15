@@ -196,3 +196,83 @@ class TestNonStationaryValidation:
         """Calling result() before fit() should raise RuntimeError."""
         with pytest.raises(RuntimeError, match="fitted"):
             NonStationaryDetector().result()
+
+
+class TestNonStationaryCoverage:
+    """Tests targeting uncovered lines for 100% coverage."""
+
+    def test_fewer_than_two_windows(self, rng):
+        """Lines 137-144: data just barely fits one window returns stationary."""
+        # window_size=5, only 5 observations => 1 window => <2 windows branch
+        n = 5
+        timestamps = np.arange(n)
+        control = rng.normal(10, 1, n)
+        treatment = rng.normal(11, 1, n)
+
+        detector = NonStationaryDetector(window_size=5)
+        result = detector.fit(control, treatment, timestamps).result()
+
+        assert result.is_stationary is True
+        assert result.effect_trend == "stable"
+        assert result.change_points == []
+
+    def test_cusum_constant_effects(self, rng):
+        """Line 181: std_effect < 1e-12 returns no change points."""
+        # Use paired data to get identical per-window effects
+        n = 50
+        timestamps = np.arange(n)
+        base = np.ones(n) * 10.0
+        control = base.copy()
+        treatment = base + 1.0  # exact constant offset
+
+        detector = NonStationaryDetector(window_size=10)
+        result = detector.fit(control, treatment, timestamps).result()
+
+        assert result.change_points == []
+
+    def test_detect_trend_single_effect(self):
+        """Line 231: n < 2 effects returns 'stable'."""
+        detector = NonStationaryDetector(window_size=2)
+        result = detector._detect_trend(np.array([1.0]), [])
+        assert result == "stable"
+
+    def test_volatile_high_cv_and_change_points(self, rng):
+        """Line 241: cv > 1.0 and >= 2 change points returns 'volatile'."""
+        detector = NonStationaryDetector(window_size=2)
+        # Effects with high CV and we pass fake change_points
+        effects = np.array([10.0, -10.0, 10.0, -10.0, 10.0])
+        result = detector._detect_trend(effects, [1, 3])
+        assert result == "volatile"
+
+    def test_volatile_high_cv_no_change_points(self, rng):
+        """Lines 267-268: cv > 1.5 without change points returns 'volatile'."""
+        detector = NonStationaryDetector(window_size=2)
+        # Effects near-zero mean but high std => high cv
+        effects = np.array([100.0, -100.0, 50.0, -50.0, 80.0])
+        result = detector._detect_trend(effects, [])
+        assert result == "volatile"
+
+    def test_volatile_two_change_points_low_r(self, rng):
+        """Line 263: |r| <= 0.5 but >= 2 change points returns 'volatile'."""
+        detector = NonStationaryDetector(window_size=2)
+        # Non-monotonic pattern with moderate CV but 2+ change points
+        effects = np.array([5.0, 3.0, 5.0, 3.0, 5.0, 3.0])
+        result = detector._detect_trend(effects, [1, 3])
+        assert result == "volatile"
+
+    def test_cusum_fewer_than_three_effects(self):
+        """Line 181: _cusum_detect with n < 3 returns empty list."""
+        detector = NonStationaryDetector(window_size=2)
+        result = detector._cusum_detect(np.array([1.0, 2.0]))
+        assert result == []
+
+    def test_cusum_detects_change_point(self, rng):
+        """Line 209: CUSUM should append change point indices."""
+        # Use a high threshold (0.99) so the boundary h is very low,
+        # making it easy for the CUSUM to cross
+        detector = NonStationaryDetector(window_size=2, threshold=0.99)
+        # Clear step change with many points
+        effects = np.concatenate([np.zeros(20), np.full(20, 10.0)])
+        result = detector._cusum_detect(effects)
+        # Should detect at least one change point near the step
+        assert len(result) >= 1

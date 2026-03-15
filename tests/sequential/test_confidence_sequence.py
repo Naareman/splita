@@ -402,3 +402,24 @@ class TestEdgeCases:
         result = cs.result()
         assert "CSState" in repr(state)
         assert "CSResult" in repr(result)
+
+    def test_zero_sigma_auto_estimated(self):
+        """Lines 182-191: zero sigma from constant data triggers zero-width CI."""
+        cs = ConfidenceSequence(alpha=0.05)
+        ctrl = np.ones(100)
+        trt = np.ones(100)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            state = cs.update(ctrl, trt)
+        assert state.width == 0.0
+        assert state.ci_lower == state.ci_upper
+
+    def test_sigma_auto_single_obs_branches(self):
+        """Lines 265, 270, 279: n_c=1 and n_t=1 branches in _estimate_pooled_sigma."""
+        cs = ConfidenceSequence(alpha=0.05)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            state = cs.update([5.0], [6.0])
+        # With single obs each, var_c=0, var_t=0, denom=0 => pooled = avg
+        assert state.n_control == 1
+        assert state.n_treatment == 1

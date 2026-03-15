@@ -270,3 +270,54 @@ class TestValidation:
         mcuped = MultivariateCUPED()
         ctrl_adj, trt_adj = mcuped.fit_transform(ctrl, trt, pre[:n], pre[n:])
         assert len(mcuped.theta_) == 1
+
+    def test_3d_covariate_raises(self):
+        """3-D covariate array raises ValueError."""
+        ctrl = np.array([1.0, 2.0, 3.0])
+        trt = np.array([4.0, 5.0, 6.0])
+        X_3d = np.ones((3, 2, 2))
+        mcuped = MultivariateCUPED()
+        with pytest.raises(ValueError, match="1-D or 2-D"):
+            mcuped.fit(ctrl, trt, X_3d, np.array([[1], [2], [3]]))
+
+    def test_near_singular_warning(self):
+        """Near-singular covariance matrix emits RuntimeWarning.
+
+        The code warns when condition number > 1e10 and errors at > 1e12.
+        We need noise that puts the condition number between these bounds.
+        """
+        rng = np.random.default_rng(42)
+        n = 500
+        ctrl = rng.normal(10, 1, n)
+        trt = rng.normal(10.5, 1, n)
+        X1_c = rng.normal(0, 1, n)
+        X1_t = rng.normal(0, 1, n)
+        # Target: cond(cov_xx) between 1e10 and 1e12
+        # With noise scale eps, condition ~ var(X1) / var(noise) ~ 1/eps^2
+        # Need 1/eps^2 ~ 1e11 -> eps ~ 3e-6
+        eps = 3e-6
+        X_c = np.column_stack([X1_c, X1_c + rng.normal(0, eps, n)])
+        X_t = np.column_stack([X1_t, X1_t + rng.normal(0, eps, n)])
+        mcuped = MultivariateCUPED()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            mcuped.fit(ctrl, trt, X_c, X_t)
+        runtime_warnings = [x for x in w if issubclass(x.category, RuntimeWarning)]
+        # Should get at least the near-singular warning
+        assert any("near-singular" in str(x.message) for x in runtime_warnings)
+
+    def test_low_correlation_warning(self):
+        """Low correlation between covariates and outcome emits warning."""
+        rng = np.random.default_rng(42)
+        n = 200
+        # Covariates uncorrelated with outcome
+        ctrl = rng.normal(10, 1, n)
+        trt = rng.normal(10.5, 1, n)
+        X_c = rng.normal(0, 1, (n, 2))
+        X_t = rng.normal(0, 1, (n, 2))
+        mcuped = MultivariateCUPED()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            mcuped.fit(ctrl, trt, X_c, X_t)
+        runtime_warnings = [x for x in w if issubclass(x.category, RuntimeWarning)]
+        assert any("Low multiple correlation" in str(x.message) for x in runtime_warnings)

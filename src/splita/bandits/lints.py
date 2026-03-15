@@ -127,7 +127,8 @@ class LinTS:
 
         self._B[arm] += np.outer(x, x)
         self._f[arm] += reward * x
-        self._mu_hat[arm] = np.linalg.solve(self._B[arm], self._f[arm])
+        cf = cho_factor(self._B[arm])
+        self._mu_hat[arm] = cho_solve(cf, self._f[arm])
 
         self._n_pulls[arm] += 1
         self._total_reward += reward

@@ -208,3 +208,44 @@ class TestInterferenceValidation:
         ).run()
 
         assert isinstance(result, InterferenceResult)
+
+    def test_2d_clusters_rejected(self):
+        """Line 90: 2-D clusters array should raise ValueError."""
+        with pytest.raises(ValueError, match="1-D"):
+            InterferenceExperiment(
+                [1, 2, 3, 4], [0, 1, 0, 1],
+                np.zeros((4, 2)),
+            )
+
+    def test_icc_single_cluster_returns_zero(self, rng):
+        """Line 135: ICC with <2 clusters returns 0.0."""
+        values = rng.normal(0, 1, 20)
+        clusters = np.zeros(20, dtype=int)
+        icc = InterferenceExperiment._compute_icc(values, clusters)
+        assert icc == 0.0
+
+    def test_icc_zero_variance_returns_zero(self):
+        """Line 166: ICC denom<=0 when all values identical across clusters."""
+        values = np.array([5.0, 5.0, 5.0, 5.0])
+        clusters = np.array([0, 0, 1, 1])
+        icc = InterferenceExperiment._compute_icc(values, clusters)
+        assert icc == 0.0
+
+    def test_too_few_valid_clusters_raises(self):
+        """Line 216: <2 clusters with both arms raises ValueError."""
+        # Only cluster 0 has both arms, clusters 1 and 2 are single-arm
+        outcomes = [10, 11, 10, 10, 11, 11]
+        treatments = [0, 1, 0, 0, 1, 1]
+        clusters = [0, 0, 1, 1, 2, 2]
+        with pytest.raises(ValueError, match="at least 2 clusters"):
+            InterferenceExperiment(outcomes, treatments, clusters).run()
+
+    def test_zero_se_branch(self):
+        """Lines 250-252: when all cluster effects identical, se==0."""
+        # Create clusters where each has identical trt-ctrl diff
+        outcomes = [5.0, 7.0, 5.0, 7.0, 5.0, 7.0, 5.0, 7.0]
+        treatments = [0, 1, 0, 1, 0, 1, 0, 1]
+        clusters = [0, 0, 1, 1, 2, 2, 3, 3]
+        result = InterferenceExperiment(outcomes, treatments, clusters).run()
+        # All cluster effects are 2.0, so se==0
+        assert result.pvalue == 0.0 or result.se == 0.0

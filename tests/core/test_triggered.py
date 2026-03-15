@@ -122,12 +122,20 @@ class TestTriggeredExperiment:
 
 
 class TestTriggeredValidation:
-    def test_mismatched_trigger_mask(self):
+    def test_mismatched_control_trigger_mask(self):
         with pytest.raises(ValueError, match="same length"):
             TriggeredExperiment(
                 np.array([1.0, 2.0, 3.0]),
                 np.array([1.0, 2.0, 3.0]),
                 control_triggered=np.array([True, False]),  # wrong length
+            ).run()
+
+    def test_mismatched_treatment_trigger_mask(self):
+        with pytest.raises(ValueError, match="same length"):
+            TriggeredExperiment(
+                np.array([1.0, 2.0, 3.0]),
+                np.array([1.0, 2.0, 3.0]),
+                treatment_triggered=np.array([True, False]),  # wrong length
             ).run()
 
     def test_too_few_triggered(self):

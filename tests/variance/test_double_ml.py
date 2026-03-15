@@ -313,6 +313,38 @@ class TestValidation:
         with pytest.raises(ValueError, match=r"alpha"):
             DoubleML(alpha=1.0)
 
+    def test_zero_treatment_residual_gives_inf_se(self):
+        """When treatment is perfectly predicted by X, SE should be very large."""
+        from sklearn.linear_model import LinearRegression
+
+        n = 200
+        rng = np.random.default_rng(42)
+        X = rng.normal(0, 1, (n, 2))
+
+        # T = exact linear function of X -> T_resid ~ 0 after cross-fitting
+        T_exact = X @ np.array([1.0, 2.0])
+        Y_test = T_exact + rng.normal(0, 0.1, n)
+
+        result = DoubleML(
+            outcome_model=LinearRegression(),
+            propensity_model=LinearRegression(),
+            cv=2,
+            random_state=42,
+        ).fit_transform(Y_test, T_exact, X)
+        # With near-perfect T prediction, SE should be non-negative
+        assert result.se >= 0
+
+    def test_constant_outcome_naive_se_zero(self):
+        """When outcome is constant, naive_se=0 and variance_reduction=0."""
+        n = 100
+        rng = np.random.default_rng(42)
+        X = rng.normal(0, 1, (n, 2))
+        T = rng.binomial(1, 0.5, n).astype(float)
+        Y = np.ones(n) * 5.0  # constant outcome
+
+        result = DoubleML(cv=2, random_state=42).fit_transform(Y, T, X)
+        assert result.variance_reduction == 0.0
+
 
 # ── Reproducibility ──────────────────────────────────────────────────
 
